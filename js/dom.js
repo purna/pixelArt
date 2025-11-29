@@ -31,6 +31,7 @@ const UI = {
     // Info displays
     coords: document.getElementById('coords'),
     zoomDisplay: document.getElementById('zoomDisplay'),
+    zoomPercentage: document.getElementById('zoomPercentage'),
     paletteContainer: document.getElementById('palette-history'),
     
     // Buttons
@@ -44,6 +45,9 @@ const UI = {
     downloadSheetBtn: document.getElementById('downloadSheetBtn'),
     saveProjectBtn: document.getElementById('saveProjectBtn'),
     loadProjectBtn: document.getElementById('loadProjectBtn'),
+    zoomInBtn: document.getElementById('zoomInBtn'),
+    zoomOutBtn: document.getElementById('zoomOutBtn'),
+    zoomResetBtn: document.getElementById('zoomResetBtn'),
     
     // Inputs
     widthInput: document.getElementById('widthInput'),
