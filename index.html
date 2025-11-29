@@ -187,24 +187,7 @@
             <div class="text-[10px] text-gray-500">v3.1</div>
         </div>
 
-        <!-- Zoom Controls -->
-        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] uppercase font-bold text-gray-400">Zoom</span>
-                <span id="zoomPercentage" class="text-[10px] text-blue-400 font-mono">200%</span>
-            </div>
-            <div class="flex gap-2 items-center">
-                <button id="zoomOutBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-sm font-bold">
-                    <i class="fas fa-search-minus"></i>
-                </button>
-                <button id="zoomResetBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-xs">
-                    Reset
-                </button>
-                <button id="zoomInBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-sm font-bold">
-                    <i class="fas fa-search-plus"></i>
-                </button>
-            </div>
-        </div>
+    
 
         <!-- Preview -->
         <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700 relative group">
@@ -226,7 +209,7 @@
         </div>
 
         <!-- Layers -->
-        <div class="mb-3 flex-1 min-h-[100px] flex flex-col">
+        <div class="mb-3 flex-1 min-h-[200px] flex flex-col">
             <div class="flex justify-between items-end mb-1">
                 <h3 class="text-[10px] font-bold text-gray-400 uppercase">Layers</h3>
                 <button id="addLayerBtn" class="text-xs bg-blue-600 px-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
@@ -296,6 +279,25 @@
             </div>
             
             <div id="palette-history" class="flex gap-1 mt-2 flex-wrap"></div>
+        </div>
+
+            <!-- Zoom Controls -->
+        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] uppercase font-bold text-gray-400">Zoom</span>
+                <span id="zoomPercentage" class="text-[10px] text-blue-400 font-mono">200%</span>
+            </div>
+            <div class="flex gap-2 items-center">
+                <button id="zoomOutBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-sm font-bold">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button id="zoomResetBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-xs">
+                    Reset
+                </button>
+                <button id="zoomInBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-sm font-bold">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Export/Import -->
