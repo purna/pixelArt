@@ -68,7 +68,11 @@ const CanvasManager = {
             `linear-gradient(to right, rgba(128, 128, 128, 0.3) 1px, transparent 1px),
              linear-gradient(to bottom, rgba(128, 128, 128, 0.3) 1px, transparent 1px)` : 'none';
 
-        UI.zoomDisplay.textContent = `${Math.round(State.zoom * 10)}%`;
+        const percentage = Math.round(State.zoom * 10);
+        UI.zoomDisplay.textContent = `${percentage}%`;
+        if (UI.zoomPercentage) {
+            UI.zoomPercentage.textContent = `${percentage}%`;
+        }
         
         if (center) {
             UI.wrapper.scrollTo(
@@ -78,6 +82,31 @@ const CanvasManager = {
         }
         
         this.updateMinimap();
+    },
+
+    /**
+     * Zoom in
+     */
+    zoomIn() {
+        State.zoom = Math.min(State.zoom + 2, 60);
+        this.updateZoom();
+    },
+
+    /**
+     * Zoom out
+     */
+    zoomOut() {
+        State.zoom = Math.max(State.zoom - 2, 1);
+        this.updateZoom();
+    },
+
+    /**
+     * Reset zoom to fit canvas nicely
+     */
+    zoomReset() {
+        const zoom = 500 / Math.max(State.width, State.height);
+        State.zoom = Math.max(Math.min(zoom, 50), 4);
+        this.updateZoom(true);
     },
     
     /**
