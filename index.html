@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #e5e5e5;
+            overflow: hidden; /* Prevent body scroll, we handle inner scrolling */
+        }
+
+        /* The canvas needs to render pixels sharply, not blurry */
+        canvas {
+            image-rendering: pixelated; 
+            image-rendering: crisp-edges;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background-image: 
+                linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: white; /* Checkerboard base */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d2d2d; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777; 
+        }
+
+        .tool-btn.active {
+            background-color: #3b82f6; /* Blue-500 */
+            border-color: #60a5fa;
+            color: white;
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin-top: -6px; 
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #4b5563;
+            border-radius: 2px;
+        }
+
+        /* Grid Overlay Logic */
+        #canvas-wrapper {
+            position: relative;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            padding: 2rem;
+        }
+        
+        #grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* Let clicks pass through to canvas */
+            z-index: 10;
+            display: none; /* Hidden by default */
+            mix-blend-mode: difference;
+            opacity: 0.3;
+        }
+
+        #drawing-area {
+            position: relative;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row">
+
+    <!-- Sidebar / Toolbar -->
+    <aside class="w-full md:w-80 bg-gray-900 border-r border-gray-800 flex flex-col p-4 shadow-xl z-20 overflow-y-auto">
+        
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-blue-500 mb-1"><i class="fas fa-border-all mr-2"></i>PixlArt</h1>
+            <p class="text-xs text-gray-400">Create, Edit, Download.</p>
+        </div>
+
+        <!-- New Canvas Section -->
+        <div class="bg-gray-800 p-4 rounded-lg mb-6 border border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">New Canvas</h3>
+            <div class="flex gap-2 mb-3">
+                <div class="flex-1">
+                    <label class="text-xs text-gray-500 block mb-1">Width (px)</label>
+                    <input type="number" id="widthInput" value="32" min="4" max="128" class="w-full bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 focus:border-blue-500 outline-none">
+                </div>
+                <div class="flex-1">
+                    <label class="text-xs text-gray-500 block mb-1">Height (px)</label>
+                    <input type="number" id="heightInput" value="32" min="4" max="128" class="w-full bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 focus:border-blue-500 outline-none">
+                </div>
+            </div>
+            <button id="createBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-medium transition-colors">
+                Initialize Canvas
+            </button>
+        </div>
+
+        <!-- Tools Section -->
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Tools</h3>
+            
+            <!-- Color Picker -->
+            <div class="mb-4">
+                <label class="text-xs text-gray-500 block mb-2">Color</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" id="colorPicker" value="#000000" class="h-10 w-full cursor-pointer bg-transparent border-0 p-0 rounded">
+                    <button id="swapColorsBtn" class="text-gray-400 hover:text-white" title="Swap with Transparent (Eraser)">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tool Buttons -->
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button class="tool-btn active flex flex-col items-center justify-center p-3 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="pencil" title="Pencil (P)">
+                    <i class="fas fa-pencil-alt mb-1"></i>
+                    <span class="text-[10px]">Pencil</span>
+                </button>
+                <button class="tool-btn flex flex-col items-center justify-center p-3 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="bucket" title="Bucket (B)">
+                    <i class="fas fa-fill-drip mb-1"></i>
+                    <span class="text-[10px]">Bucket</span>
+                </button>
+                <button class="tool-btn flex flex-col items-center justify-center p-3 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="eraser" title="Eraser (E)">
+                    <i class="fas fa-eraser mb-1"></i>
+                    <span class="text-[10px]">Eraser</span>
+                </button>
+            </div>
+             <div class="grid grid-cols-2 gap-2">
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="eyedropper" title="Eyedropper (I)">
+                    <i class="fas fa-eye-dropper mb-1"></i>
+                    <span class="text-[10px]">Picker</span>
+                </button>
+                 <button id="clearBtn" class="flex flex-col items-center justify-center p-2 rounded bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 transition-all">
+                    <i class="fas fa-trash mb-1"></i>
+                    <span class="text-[10px]">Clear</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- View Controls -->
+        <div class="mb-auto">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">View</h3>
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-xs text-gray-400">Show Grid</label>
+                <input type="checkbox" id="gridToggle" class="accent-blue-500">
+            </div>
+            
+            <label class="text-xs text-gray-500 block mb-1">Zoom Level</label>
+            <input type="range" id="zoomSlider" min="5" max="50" value="20" class="w-full">
+            <div class="text-right text-xs text-gray-400 mt-1"><span id="zoomValue">20</span>px / pixel</div>
+        </div>
+
+        <!-- Export -->
+        <div class="pt-4 border-t border-gray-800 mt-4">
+            <button id="downloadBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-bold shadow-lg flex items-center justify-center gap-2 transition-transform transform active:scale-95">
+                <i class="fas fa-download"></i> Download Image
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 bg-gray-950 relative overflow-hidden">
+        <div id="canvas-wrapper">
+            <div id="drawing-area">
+                <canvas id="pixelCanvas"></canvas>
+                <div id="grid-overlay"></div>
+            </div>
+        </div>
+        
+        <!-- Coordinates Display -->
+        <div class="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur text-gray-300 px-3 py-1 rounded text-xs font-mono pointer-events-none">
+            <span id="coords">0, 0</span>
+        </div>
+    </main>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('pixelCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const gridOverlay = document.getElementById('grid-overlay');
+        const drawingArea = document.getElementById('drawing-area');
+        
+        const widthInput = document.getElementById('widthInput');
+        const heightInput = document.getElementById('heightInput');
+        const createBtn = document.getElementById('createBtn');
+        
+        const colorPicker = document.getElementById('colorPicker');
+        const toolBtns = document.querySelectorAll('.tool-btn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        const gridToggle = document.getElementById('gridToggle');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const zoomValue = document.getElementById('zoomValue');
+        const coordsDisplay = document.getElementById('coords');
+
+        // State
+        let canvasWidth = 32;
+        let canvasHeight = 32;
+        let zoom = 20; // CSS pixels per canvas pixel
+        let currentTool = 'pencil';
+        let isDrawing = false;
+        let currentColor = '#000000';
+        
+        // History for Undo (Basic implementation)
+        // For a full app, we'd implement a stack, but for this snippet, we keep it simple.
+
+        // Initialization
+        function initCanvas() {
+            // Validate inputs
+            let w = parseInt(widthInput.value);
+            let h = parseInt(heightInput.value);
+            
+            if (w > 256) w = 256; if (w < 1) w = 4;
+            if (h > 256) h = 256; if (h < 1) h = 4;
+            
+            canvasWidth = w;
+            canvasHeight = h;
+
+            // Set actual canvas size (resolution)
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            // Clear to transparent
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            updateZoom();
+        }
+
+        function updateZoom() {
+            zoom = parseInt(zoomSlider.value);
+            zoomValue.textContent = zoom;
+            
+            // We scale the canvas using CSS width/height, NOT context scale.
+            // This keeps the internal resolution low (pixelated) but the display large.
+            const displayWidth = canvasWidth * zoom;
+            const displayHeight = canvasHeight * zoom;
+            
+            canvas.style.width = `${displayWidth}px`;
+            canvas.style.height = `${displayHeight}px`;
+
+            // Update Grid Overlay
+            gridOverlay.style.width = `${displayWidth}px`;
+            gridOverlay.style.height = `${displayHeight}px`;
+            gridOverlay.style.backgroundSize = `${zoom}px ${zoom}px`;
+            
+            // CSS Grid pattern
+            if (zoom >= 4) { // Only show grid if pixels are big enough
+                 gridOverlay.style.backgroundImage = `
+                    linear-gradient(to right, rgba(128, 128, 128, 0.5) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(128, 128, 128, 0.5) 1px, transparent 1px)
+                `;
+            } else {
+                gridOverlay.style.backgroundImage = 'none';
+            }
+        }
+
+        // Helpers
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const x = Math.floor((clientX - rect.left) / zoom);
+            const y = Math.floor((clientY - rect.top) / zoom);
+            
+            return { x, y };
+        }
+
+        function hexToRgba(hex) {
+            let c;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+                c= hex.substring(1).split('');
+                if(c.length== 3){
+                    c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+                }
+                c= '0x'+c.join('');
+                return {
+                    r: (c>>16)&255,
+                    g: (c>>8)&255,
+                    b: c&255,
+                    a: 255
+                };
+            }
+            return {r:0, g:0, b:0, a:255};
+        }
+
+        function drawPixel(x, y) {
+            if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight) return;
+
+            if (currentTool === 'eraser') {
+                ctx.clearRect(x, y, 1, 1);
+            } else {
+                ctx.fillStyle = currentColor;
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+        function getColorAtPixel(imageData, x, y) {
+            const index = (y * canvasWidth + x) * 4;
+            return {
+                r: imageData.data[index],
+                g: imageData.data[index + 1],
+                b: imageData.data[index + 2],
+                a: imageData.data[index + 3]
+            };
+        }
+
+        function colorsMatch(c1, c2) {
+            return c1.r === c2.r && c1.g === c2.g && c1.b === c2.b && c1.a === c2.a;
+        }
+
+        // Bucket Fill (BFS Algorithm)
+        function floodFill(startX, startY, fillColorHex) {
+            const fillColor = currentTool === 'eraser' ? {r:0,g:0,b:0,a:0} : hexToRgba(fillColorHex);
+            
+            // Get current canvas state
+            const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+            const targetColor = getColorAtPixel(imageData, startX, startY);
+
+            // If attempting to fill with the same color, stop
+            if (colorsMatch(targetColor, fillColor)) return;
+
+            const pixelsToCheck = [[startX, startY]];
+            const pixelData = imageData.data;
+
+            while (pixelsToCheck.length > 0) {
+                const [x, y] = pixelsToCheck.pop();
+                const index = (y * canvasWidth + x) * 4;
+
+                const r = pixelData[index];
+                const g = pixelData[index+1];
+                const b = pixelData[index+2];
+                const a = pixelData[index+3];
+
+                if (colorsMatch({r,g,b,a}, targetColor)) {
+                    // Fill Pixel
+                    pixelData[index] = fillColor.r;
+                    pixelData[index+1] = fillColor.g;
+                    pixelData[index+2] = fillColor.b;
+                    pixelData[index+3] = fillColor.a;
+
+                    // Add neighbors
+                    if (x > 0) pixelsToCheck.push([x - 1, y]);
+                    if (x < canvasWidth - 1) pixelsToCheck.push([x + 1, y]);
+                    if (y > 0) pixelsToCheck.push([x, y - 1]);
+                    if (y < canvasHeight - 1) pixelsToCheck.push([x, y + 1]);
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function pickColor(x, y) {
+             const p = ctx.getImageData(x, y, 1, 1).data;
+             // If transparent, default to white, otherwise hex
+             if(p[3] === 0) return; // Don't pick transparent
+             
+             const hex = "#" + ("000000" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
+             colorPicker.value = hex;
+             currentColor = hex;
+             
+             // Switch back to pencil automatically for UX
+             setActiveTool('pencil');
+        }
+
+        // Tool Management
+        function setActiveTool(tool) {
+            currentTool = tool;
+            toolBtns.forEach(btn => {
+                if (btn.dataset.tool === tool) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Cursor management
+            if (tool === 'eyedropper') canvas.style.cursor = 'crosshair';
+            else if (tool === 'bucket') canvas.style.cursor = 'cell';
+            else canvas.style.cursor = 'default'; // We usually hide cursor and draw a custom one, but default is fine here
+        }
+
+        // Event Listeners
+        createBtn.addEventListener('click', () => {
+            // Simple confirm if canvas is not empty
+            initCanvas();
+        });
+
+        toolBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setActiveTool(btn.dataset.tool);
+            });
+        });
+
+        colorPicker.addEventListener('input', (e) => {
+            currentColor = e.target.value;
+            if (currentTool === 'eraser' || currentTool === 'eyedropper') {
+                setActiveTool('pencil');
+            }
+        });
+
+        gridToggle.addEventListener('change', (e) => {
+            gridOverlay.style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        zoomSlider.addEventListener('input', updateZoom);
+
+        clearBtn.addEventListener('click', () => {
+             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        });
+
+        // Mouse/Touch Interaction on Canvas
+        const handleStart = (e) => {
+            if (e.cancelable) e.preventDefault(); // Prevent scrolling on touch
+            isDrawing = true;
+            const { x, y } = getCoordinates(e);
+
+            if (currentTool === 'bucket') {
+                floodFill(x, y, currentColor);
+                isDrawing = false; // Bucket is one-shot
+            } else if (currentTool === 'eyedropper') {
+                pickColor(x, y);
+                isDrawing = false;
+            } else {
+                drawPixel(x, y);
+            }
+        };
+
+        const handleMove = (e) => {
+            const { x, y } = getCoordinates(e);
+            
+            // Update Coordinate Display
+            if (x >= 0 && x < canvasWidth && y >= 0 && y < canvasHeight) {
+                coordsDisplay.textContent = `${x}, ${y}`;
+            }
+
+            if (!isDrawing) return;
+            if (currentTool === 'bucket' || currentTool === 'eyedropper') return; // Dragging doesn't work for these
+
+            drawPixel(x, y);
+        };
+
+        const handleEnd = () => {
+            isDrawing = false;
+        };
+
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        // Touch support
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        canvas.addEventListener('touchmove', handleMove, { passive: false });
+        canvas.addEventListener('touchend', handleEnd);
+
+        // Download
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'pixel-art.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return; // Don't trigger if typing in inputs
+            
+            switch(e.key.toLowerCase()) {
+                case 'p': setActiveTool('pencil'); break;
+                case 'b': setActiveTool('bucket'); break;
+                case 'e': setActiveTool('eraser'); break;
+                case 'i': setActiveTool('eyedropper'); break;
+            }
+        });
+
+        // Init on load
+        initCanvas();
+
+    </script>
+</body>
+</html>
