@@ -19,10 +19,12 @@ function init() {
     console.log('PixlPro v3.1 initialized');
     console.log('Keyboard shortcuts:');
     console.log('  P - Pencil, B - Brush, E - Eraser, F - Fill');
+    console.log('  V - Mirror, D - Dither');
     console.log('  L - Line, R - Rectangle, C - Circle');
-    console.log('  I - Eyedropper, M - Move, D - Dither');
+    console.log('  I - Eyedropper, M - Move');
     console.log('  Space - Play/Stop animation');
     console.log('  Arrow Keys - Navigate frames');
+    console.log('  +/- - Zoom in/out, 0 - Reset zoom');
     console.log('  Ctrl+S - Save project, Ctrl+O - Load project');
     console.log('  Ctrl+Scroll - Zoom');
 }
