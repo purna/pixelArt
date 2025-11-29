@@ -3,23 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Studio - Animator</title>
+    <title>Pixel Art Studio - Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 
+      === CSS MODULE === 
+      Styles for layout, canvas rendering, and UI components.
+    -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a1a1a;
-            color: #e5e5e5;
-            overflow: hidden;
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-panel: #1f2937;
+            --accent: #3b82f6;
         }
 
-        /* Canvas Rendering */
-        canvas {
-            image-rendering: pixelated; 
-            image-rendering: crisp-edges;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e5e5e5;
+            overflow: hidden;
+            user-select: none; /* Prevent selection while drawing */
+        }
+
+        /* Canvas Stack System */
+        #drawing-area {
+            position: relative;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             background-image: 
                 linear-gradient(45deg, #ccc 25%, transparent 25%), 
@@ -31,807 +42,948 @@
             background-color: white; 
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #2d2d2d; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #555; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #777; 
-        }
-
-        .tool-btn.active {
-            background-color: #3b82f6;
-            border-color: #60a5fa;
-            color: white;
-        }
-
-        /* Sliders */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #3b82f6;
-            margin-top: -6px; 
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #4b5563;
-            border-radius: 2px;
-        }
-
-        /* Layout Specifics */
-        #canvas-wrapper {
-            position: relative;
-            overflow: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* Reserve space for timeline */
-            height: calc(100% - 100px); 
-            width: 100%;
-            padding: 2rem;
-            background-color: #0f0f0f;
-        }
-        
-        #grid-overlay {
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
-            pointer-events: none;
-            z-index: 10;
-            display: none;
-            mix-blend-mode: difference;
-            opacity: 0.3;
+            image-rendering: pixelated; 
+            image-rendering: crisp-edges;
         }
 
-        #drawing-area {
+        /* Layer z-indices */
+        #mainCanvas { z-index: 10; }
+        #previewLayer { z-index: 20; pointer-events: none; } /* Shows shapes while dragging */
+        #grid-overlay { z-index: 30; pointer-events: none; mix-blend-mode: difference; opacity: 0.3; }
+
+        /* UI Elements */
+        .tool-btn {
             position: relative;
         }
-
-        /* Timeline Styles */
-        #timeline-container {
-            height: 100px;
-            background-color: #1f2937;
-            border-top: 1px solid #374151;
-            display: flex;
-            align-items: center;
-            padding: 0 1rem;
-            gap: 1rem;
+        .tool-btn.active {
+            background-color: var(--accent);
+            border-color: #60a5fa;
+            color: white;
         }
         
-        #frames-list {
-            display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
-            flex: 1;
-            padding: 0.5rem 0;
-            height: 100%;
-            align-items: center;
+        .palette-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #4b5563;
+        }
+        .palette-swatch:hover { transform: scale(1.2); }
+
+        /* Scrollbars & Ranges */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #2d2d2d; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px;
+            border-radius: 50%; background: var(--accent); margin-top: -5px; 
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: #4b5563; border-radius: 2px;
+        }
+
+        /* Layout */
+        #canvas-wrapper {
+            height: calc(100% - 110px); 
+            background-color: #0f0f0f;
+        }
+        
+        #timeline-container {
+            height: 110px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid #374151;
         }
 
         .frame-preview {
-            width: 60px;
-            height: 60px;
+            width: 60px; height: 60px;
             background-color: #374151;
             border: 2px solid #4b5563;
             border-radius: 4px;
-            cursor: pointer;
-            position: relative;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            cursor: pointer; position: relative; flex-shrink: 0;
         }
-        
-        .frame-preview canvas {
-            max-width: 100%;
-            max-height: 100%;
-            box-shadow: none;
-            background-image: none;
-            background-color: transparent;
-        }
-
-        .frame-preview.active {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-        }
-
-        .frame-number {
-            position: absolute;
-            top: 2px;
-            left: 4px;
-            font-size: 10px;
-            color: #9ca3af;
-            font-weight: bold;
-            text-shadow: 1px 1px 0 #000;
-        }
+        .frame-preview.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
+        .frame-preview canvas { width: 100%; height: 100%; }
         
         .delete-frame-btn {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background: #ef4444;
-            color: white;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
+            position: absolute; top: -5px; right: -5px;
+            background: #ef4444; color: white;
+            width: 16px; height: 16px; border-radius: 50%;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s;
         }
-        
-        .frame-preview:hover .delete-frame-btn {
-            opacity: 1;
-        }
+        .frame-preview:hover .delete-frame-btn { opacity: 1; }
 
-        #preview-window {
-            width: 100%;
-            aspect-ratio: 1;
-            background-color: #000;
-            border: 1px solid #374151;
+        .tooltip-group {
+            position: relative;
+        }
+        .tooltip-group:hover::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 4px 8px;
             border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.5rem;
-            overflow: hidden;
-            background-image: 
-                linear-gradient(45deg, #333 25%, transparent 25%), 
-                linear-gradient(-45deg, #333 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #333 75%), 
-                linear-gradient(-45deg, transparent 75%, #333 75%);
-            background-size: 10px 10px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 50;
+            pointer-events: none;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- Sidebar / Toolbar -->
-    <aside class="w-full md:w-80 bg-gray-900 border-r border-gray-800 flex flex-col p-4 shadow-xl z-20 overflow-y-auto h-full md:h-screen shrink-0">
+    <!-- 
+      === HTML MODULE ===
+      Layout structure: Sidebar (Tools/Settings) | Main (Canvas) | Timeline (Bottom)
+    -->
+
+    <aside class="w-full md:w-80 bg-gray-900 border-r border-gray-800 flex flex-col p-3 shadow-xl z-20 overflow-y-auto h-full md:h-screen shrink-0 text-sm">
         
-        <div class="mb-6 flex justify-between items-center">
+        <div class="mb-4 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-blue-500 mb-1"><i class="fas fa-film mr-2"></i>Animator</h1>
-                <p class="text-xs text-gray-400">Pixel Art & Animation</p>
+                <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-layer-group mr-2"></i>PixlPro</h1>
             </div>
+             <div class="text-[10px] text-gray-500">v2.0</div>
         </div>
 
-        <!-- Animation Preview Section -->
-        <div class="bg-gray-800 p-3 rounded-lg mb-4 border border-gray-700">
-            <h3 class="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wider flex justify-between">
-                Preview
-                <span id="fpsDisplay" class="text-blue-400">12 FPS</span>
-            </h3>
+        <!-- Preview & Playback -->
+        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] uppercase font-bold text-gray-400">Preview</span>
+                <span id="fpsDisplay" class="text-[10px] text-blue-400 font-mono">12 FPS</span>
+            </div>
             
-            <div id="preview-window">
+            <div class="w-full aspect-square bg-black rounded mb-2 flex items-center justify-center overflow-hidden border border-gray-700" style="background-image: linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%); background-size: 10px 10px;">
                 <canvas id="previewCanvas"></canvas>
             </div>
 
-            <div class="flex items-center gap-2 mb-2">
-                <button id="playBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded text-xs font-bold transition-colors">
-                    <i class="fas fa-play mr-1"></i> Play
-                </button>
-                <button id="stopBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-xs font-bold transition-colors">
-                    <i class="fas fa-stop mr-1"></i> Stop
-                </button>
+            <div class="flex gap-1 mb-2">
+                <button id="playBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 rounded text-xs"><i class="fas fa-play"></i></button>
+                <button id="stopBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1 rounded text-xs"><i class="fas fa-stop"></i></button>
             </div>
-            
-            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-full">
+            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer">
         </div>
 
-        <!-- Tools Section -->
+        <!-- Tools Grid -->
         <div class="mb-4">
-            <h3 class="text-xs font-semibold text-gray-300 mb-3 uppercase tracking-wider">Tools</h3>
-            
-            <!-- Color Picker -->
-            <div class="mb-3">
-                <div class="flex items-center gap-2">
-                    <input type="color" id="colorPicker" value="#000000" class="h-9 w-12 cursor-pointer bg-transparent border-0 p-0 rounded">
-                    <div class="flex-1 text-xs text-gray-400 font-mono" id="colorHex">#000000</div>
-                    <button id="swapColorsBtn" class="text-gray-400 hover:text-white px-2" title="Swap with Transparent (Eraser)">
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>
+            <div class="flex justify-between items-end mb-2">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase">Tools</h3>
+                <div id="palette-history" class="flex gap-1">
+                    <!-- Dynamic palette swatches -->
                 </div>
             </div>
 
-            <!-- Tool Buttons -->
-            <div class="grid grid-cols-4 gap-2 mb-2">
-                <button class="tool-btn active flex flex-col items-center justify-center p-2 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="pencil" title="Pencil (P)">
-                    <i class="fas fa-pencil-alt mb-1 text-sm"></i>
+            <!-- Primary Tools -->
+            <div class="grid grid-cols-4 gap-1 mb-2">
+                <button class="tool-btn active p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil (P)">
+                    <i class="fas fa-pencil-alt text-xs"></i>
                 </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="bucket" title="Bucket (B)">
-                    <i class="fas fa-fill-drip mb-1 text-sm"></i>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="mirror" data-title="Vertical Mirror (V)">
+                    <i class="fas fa-columns text-xs"></i>
                 </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="eraser" title="Eraser (E)">
-                    <i class="fas fa-eraser mb-1 text-sm"></i>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="bucket" data-title="Bucket (B)">
+                    <i class="fas fa-fill-drip text-xs"></i>
                 </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-all" data-tool="eyedropper" title="Eyedropper (I)">
-                    <i class="fas fa-eye-dropper mb-1 text-sm"></i>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eraser" data-title="Eraser (E)">
+                    <i class="fas fa-eraser text-xs"></i>
+                </button>
+                
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="stroke" data-title="Line Tool (L)">
+                    <i class="fas fa-slash text-xs"></i>
+                </button>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="rect" data-title="Rectangle (R)">
+                    <i class="far fa-square text-xs"></i>
+                </button>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="circle" data-title="Circle (C)">
+                    <i class="far fa-circle text-xs"></i>
+                </button>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="move" data-title="Move (M)">
+                    <i class="fas fa-arrows-alt text-xs"></i>
+                </button>
+
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eyedropper" data-title="Picker (I)">
+                    <i class="fas fa-eye-dropper text-xs"></i>
+                </button>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="lighten" data-title="Lighten/Darken (D)">
+                    <i class="fas fa-adjust text-xs"></i>
                 </button>
             </div>
-             <button id="clearBtn" class="w-full flex items-center justify-center p-1.5 rounded bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 transition-all text-xs mb-2">
-                <i class="fas fa-trash mr-1"></i> Clear Frame
-            </button>
+
+            <!-- Color & Options -->
+            <div class="bg-gray-800 p-2 rounded border border-gray-700 flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                     <input type="color" id="colorPicker" value="#000000" class="h-6 w-8 bg-transparent border-0 p-0 cursor-pointer">
+                     <span id="colorHex" class="text-[10px] font-mono text-gray-400 flex-1">#000000</span>
+                     <button id="swapColorsBtn" class="text-gray-400 hover:text-white"><i class="fas fa-exchange-alt"></i></button>
+                </div>
+                
+                <!-- Brush Size -->
+                <div id="brushSizeControl">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-[10px] text-gray-400">Pen Size</span>
+                        <span id="brushSizeDisplay" class="text-[10px] text-blue-400">1px</span>
+                    </div>
+                    <input type="range" id="brushSizeSlider" min="1" max="8" value="1" class="w-full h-1 bg-gray-600 rounded-lg">
+                </div>
+            </div>
         </div>
 
-        <!-- Settings -->
-        <div class="mb-auto">
-            <h3 class="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wider">Canvas & View</h3>
-            
-            <div class="grid grid-cols-2 gap-2 mb-3">
-                 <div>
-                    <label class="text-[10px] text-gray-500 block">W</label>
-                    <input type="number" id="widthInput" value="32" class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs border border-gray-700">
-                </div>
-                <div>
-                    <label class="text-[10px] text-gray-500 block">H</label>
-                    <input type="number" id="heightInput" value="32" class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs border border-gray-700">
-                </div>
+        <!-- Transformations -->
+        <div class="mb-4">
+            <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Transforms</h3>
+            <div class="grid grid-cols-3 gap-1">
+                <button id="flipHBtn" class="bg-gray-800 p-1.5 rounded border border-gray-700 text-xs hover:bg-gray-700 text-gray-300" title="Flip Horizontal">
+                    <i class="fas fa-arrows-alt-h"></i>
+                </button>
+                <button id="flipVBtn" class="bg-gray-800 p-1.5 rounded border border-gray-700 text-xs hover:bg-gray-700 text-gray-300" title="Flip Vertical">
+                    <i class="fas fa-arrows-alt-v"></i>
+                </button>
+                <button id="rotateBtn" class="bg-gray-800 p-1.5 rounded border border-gray-700 text-xs hover:bg-gray-700 text-gray-300" title="Rotate 90">
+                    <i class="fas fa-redo"></i>
+                </button>
             </div>
-            <button id="resizeBtn" class="w-full bg-blue-900/40 hover:bg-blue-900/60 text-blue-300 py-1.5 rounded text-xs mb-4 border border-blue-900/50">New Canvas</button>
+        </div>
 
-            <div class="flex items-center justify-between mb-2">
-                <label class="text-xs text-gray-400">Show Grid</label>
+        <!-- Canvas Settings -->
+        <div class="mb-auto">
+            <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Canvas</h3>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <input type="number" id="widthInput" value="32" class="bg-gray-800 text-white px-2 py-1 rounded text-xs border border-gray-700">
+                <input type="number" id="heightInput" value="32" class="bg-gray-800 text-white px-2 py-1 rounded text-xs border border-gray-700">
+            </div>
+            <button id="resizeBtn" class="w-full bg-blue-900/30 text-blue-400 border border-blue-900/50 hover:bg-blue-900/50 py-1 rounded text-xs mb-2">New</button>
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] text-gray-400">Grid</span>
                 <input type="checkbox" id="gridToggle" class="accent-blue-500">
             </div>
-            
-            <label class="text-xs text-gray-500 block mb-1">Zoom</label>
-            <input type="range" id="zoomSlider" min="5" max="50" value="20" class="w-full">
         </div>
 
         <!-- Export -->
-        <div class="pt-3 border-t border-gray-800 mt-2 space-y-2">
-            <button id="downloadFrameBtn" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2">
-                <i class="fas fa-image"></i> Save Frame (.PNG)
-            </button>
+        <div class="pt-2 border-t border-gray-800 gap-2 flex flex-col mt-2">
             <button id="downloadSheetBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2">
-                <i class="fas fa-file-export"></i> Save Sprite Sheet
+                <i class="fas fa-download"></i> Export Sprite Sheet
             </button>
         </div>
     </aside>
 
     <!-- Main Workspace -->
-    <main class="flex-1 flex flex-col h-full bg-gray-950 relative overflow-hidden">
-        
-        <!-- Canvas Area -->
-        <div id="canvas-wrapper">
+    <main class="flex-1 flex flex-col h-full bg-gray-950 relative">
+        <div id="canvas-wrapper" class="flex items-center justify-center overflow-hidden">
             <div id="drawing-area">
-                <canvas id="pixelCanvas"></canvas>
+                <!-- Main canvas stores the actual pixel data -->
+                <canvas id="mainCanvas"></canvas>
+                <!-- Preview layer is for ghost shapes while dragging -->
+                <canvas id="previewLayer"></canvas>
+                <!-- Grid overlay -->
                 <div id="grid-overlay"></div>
             </div>
         </div>
         
-        <!-- Timeline Area -->
-        <div id="timeline-container">
-            <div class="flex flex-col justify-center gap-2 mr-2">
-                <button id="addFrameBtn" class="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded flex items-center justify-center" title="Add Empty Frame">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <button id="duplicateFrameBtn" class="bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded flex items-center justify-center" title="Duplicate Current Frame">
-                    <i class="fas fa-copy"></i>
-                </button>
+        <!-- Timeline -->
+        <div id="timeline-container" class="flex items-center px-4 gap-4 overflow-x-auto relative">
+            <div class="flex flex-col gap-1 sticky left-0 z-10 bg-gray-800/90 p-1 rounded backdrop-blur">
+                <button id="addFrameBtn" class="bg-blue-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-blue-500"><i class="fas fa-plus"></i></button>
+                <button id="duplicateFrameBtn" class="bg-gray-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-gray-500"><i class="fas fa-copy"></i></button>
             </div>
-            
-            <div id="frames-list">
-                <!-- Frame Previews Injected Here -->
-            </div>
+            <div id="frames-list" class="flex gap-2 h-full items-center"></div>
         </div>
 
-        <!-- Coordinates Display -->
-        <div class="absolute bottom-[110px] right-4 bg-gray-900/80 backdrop-blur text-gray-300 px-3 py-1 rounded text-xs font-mono pointer-events-none border border-gray-700">
+        <div class="absolute bottom-[120px] right-4 bg-gray-900/80 backdrop-blur text-gray-400 px-2 py-1 rounded text-[10px] font-mono border border-gray-800">
             <span id="coords">0, 0</span>
         </div>
     </main>
 
+    <!-- 
+      === JAVASCRIPT MODULE ===
+      Organized into namespaced objects for better structure.
+    -->
     <script>
-        // --- DOM Elements ---
-        const canvas = document.getElementById('pixelCanvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const previewCanvas = document.getElementById('previewCanvas');
-        const previewCtx = previewCanvas.getContext('2d');
-        const gridOverlay = document.getElementById('grid-overlay');
-        const drawingArea = document.getElementById('drawing-area');
-        
-        const widthInput = document.getElementById('widthInput');
-        const heightInput = document.getElementById('heightInput');
-        const resizeBtn = document.getElementById('resizeBtn');
-        
-        const colorPicker = document.getElementById('colorPicker');
-        const colorHex = document.getElementById('colorHex');
-        const toolBtns = document.querySelectorAll('.tool-btn');
-        const clearBtn = document.getElementById('clearBtn');
-        
-        const gridToggle = document.getElementById('gridToggle');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const coordsDisplay = document.getElementById('coords');
+        // --- CONSTANTS & CONFIG ---
+        const Config = {
+            maxHistory: 20,
+            maxFrames: 100,
+            defaultSize: 32,
+            maxSize: 128
+        };
 
-        // Animation UI
-        const framesList = document.getElementById('frames-list');
-        const addFrameBtn = document.getElementById('addFrameBtn');
-        const duplicateFrameBtn = document.getElementById('duplicateFrameBtn');
-        const playBtn = document.getElementById('playBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const fpsSlider = document.getElementById('fpsSlider');
-        const fpsDisplay = document.getElementById('fpsDisplay');
-        const downloadFrameBtn = document.getElementById('downloadFrameBtn');
-        const downloadSheetBtn = document.getElementById('downloadSheetBtn');
+        // --- STATE MANAGEMENT ---
+        const State = {
+            width: 32,
+            height: 32,
+            zoom: 20,
+            color: '#000000',
+            tool: 'pencil',
+            brushSize: 1,
+            isDrawing: false,
+            frames: [], // Array of ImageData
+            currentFrameIndex: 0,
+            isPlaying: false,
+            fps: 12,
+            recentColors: ['#000000', '#ffffff', '#3b82f6', '#ef4444', '#10b981'],
+            dragStart: { x: 0, y: 0 } // For shape tools
+        };
 
-        // --- State ---
-        let canvasWidth = 32;
-        let canvasHeight = 32;
-        let zoom = 20; 
-        let currentTool = 'pencil';
-        let isDrawing = false;
-        let currentColor = '#000000';
-        
-        // Animation State
-        let frames = []; // Array of ImageData
-        let currentFrameIndex = 0;
-        let isPlaying = false;
-        let fps = 12;
-        let animationInterval = null;
+        // --- DOM ELEMENTS ---
+        const UI = {
+            mainCanvas: document.getElementById('mainCanvas'),
+            previewLayer: document.getElementById('previewLayer'),
+            previewCanvas: document.getElementById('previewCanvas'),
+            gridOverlay: document.getElementById('grid-overlay'),
+            drawingArea: document.getElementById('drawing-area'),
+            framesList: document.getElementById('frames-list'),
+            colorPicker: document.getElementById('colorPicker'),
+            brushSizeSlider: document.getElementById('brushSizeSlider'),
+            brushSizeDisplay: document.getElementById('brushSizeDisplay'),
+            paletteContainer: document.getElementById('palette-history'),
+            toolBtns: document.querySelectorAll('.tool-btn'),
+            fpsSlider: document.getElementById('fpsSlider'),
+            fpsDisplay: document.getElementById('fpsDisplay'),
+            coords: document.getElementById('coords'),
+            widthInput: document.getElementById('widthInput'),
+            heightInput: document.getElementById('heightInput')
+        };
 
-        // --- Initialization ---
+        const ctx = UI.mainCanvas.getContext('2d', { willReadFrequently: true });
+        const pCtx = UI.previewLayer.getContext('2d');
+        const prevCtx = UI.previewCanvas.getContext('2d');
 
-        function initApp() {
-            // Set initial inputs
-            widthInput.value = canvasWidth;
-            heightInput.value = canvasHeight;
-            
-            // Initialize with one transparent frame
-            initCanvasDimensions();
-            const emptyFrame = new ImageData(canvasWidth, canvasHeight);
-            frames = [emptyFrame];
-            currentFrameIndex = 0;
-            
-            updateZoom();
-            renderCanvas();
-            renderTimeline();
-            updatePreviewWindow();
-        }
+        // --- CORE MODULES ---
 
-        function initCanvasDimensions() {
-            canvasWidth = parseInt(widthInput.value) || 32;
-            canvasHeight = parseInt(heightInput.value) || 32;
-            
-            // Limit size
-            if (canvasWidth > 128) canvasWidth = 128; 
-            if (canvasHeight > 128) canvasHeight = 128;
-            if (canvasWidth < 4) canvasWidth = 4;
-            if (canvasHeight < 4) canvasHeight = 4;
-
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            
-            // Preview canvas size matches aspect ratio but smaller
-            previewCanvas.width = canvasWidth;
-            previewCanvas.height = canvasHeight;
-        }
-
-        // --- Core Drawing Logic ---
-
-        function updateZoom() {
-            zoom = parseInt(zoomSlider.value);
-            
-            const displayWidth = canvasWidth * zoom;
-            const displayHeight = canvasHeight * zoom;
-            
-            canvas.style.width = `${displayWidth}px`;
-            canvas.style.height = `${displayHeight}px`;
-
-            gridOverlay.style.width = `${displayWidth}px`;
-            gridOverlay.style.height = `${displayHeight}px`;
-            gridOverlay.style.backgroundSize = `${zoom}px ${zoom}px`;
-            
-            if (zoom >= 4) {
-                 gridOverlay.style.backgroundImage = `
-                    linear-gradient(to right, rgba(128, 128, 128, 0.5) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(128, 128, 128, 0.5) 1px, transparent 1px)
-                `;
-            } else {
-                gridOverlay.style.backgroundImage = 'none';
-            }
-        }
-
-        function renderCanvas() {
-            // Puts the current frame data onto the main canvas
-            if (frames[currentFrameIndex]) {
-                ctx.putImageData(frames[currentFrameIndex], 0, 0);
-            } else {
-                ctx.clearRect(0,0, canvasWidth, canvasHeight);
-            }
-        }
-
-        function saveCurrentFrame() {
-            // Saves current canvas state to the frames array
-            frames[currentFrameIndex] = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-            updateTimelineThumb(currentFrameIndex);
-            updatePreviewWindow();
-        }
-
-        // --- Timeline & Animation Logic ---
-
-        function renderTimeline() {
-            framesList.innerHTML = '';
-            
-            frames.forEach((frameData, index) => {
-                const div = document.createElement('div');
-                div.className = `frame-preview ${index === currentFrameIndex ? 'active' : ''}`;
-                div.onclick = () => switchFrame(index);
+        const CanvasManager = {
+            init(w, h) {
+                State.width = Math.min(Math.max(w, 4), Config.maxSize);
+                State.height = Math.min(Math.max(h, 4), Config.maxSize);
                 
-                // Number
-                const num = document.createElement('span');
-                num.className = 'frame-number';
-                num.innerText = index + 1;
-                div.appendChild(num);
-
-                // Thumbnail Canvas
-                const thumbCanvas = document.createElement('canvas');
-                thumbCanvas.width = canvasWidth;
-                thumbCanvas.height = canvasHeight;
-                const thumbCtx = thumbCanvas.getContext('2d');
-                thumbCtx.putImageData(frameData, 0, 0);
-                div.appendChild(thumbCanvas);
+                // Resize Canvases
+                [UI.mainCanvas, UI.previewLayer].forEach(c => {
+                    c.width = State.width;
+                    c.height = State.height;
+                });
                 
-                // Delete Button (Only if more than 1 frame)
-                if (frames.length > 1) {
-                    const delBtn = document.createElement('div');
-                    delBtn.className = 'delete-frame-btn';
-                    delBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    delBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        deleteFrame(index);
-                    };
-                    div.appendChild(delBtn);
+                UI.previewCanvas.width = State.width;
+                UI.previewCanvas.height = State.height;
+
+                // Create initial frame
+                State.frames = [new ImageData(State.width, State.height)];
+                State.currentFrameIndex = 0;
+                
+                this.updateZoom();
+                this.render();
+                AnimationManager.renderTimeline();
+                UI.widthInput.value = State.width;
+                UI.heightInput.value = State.height;
+            },
+
+            updateZoom() {
+                // Auto calculate nice zoom based on screen size? For now, fixed range.
+                const zoom = 500 / Math.max(State.width, State.height); 
+                State.zoom = Math.max(Math.min(zoom, 50), 4); // Clamp
+
+                const w = State.width * State.zoom;
+                const h = State.height * State.zoom;
+
+                UI.drawingArea.style.width = `${w}px`;
+                UI.drawingArea.style.height = `${h}px`;
+                
+                // Style canvases via CSS for scaling
+                [UI.mainCanvas, UI.previewLayer, UI.gridOverlay].forEach(el => {
+                    el.style.width = '100%';
+                    el.style.height = '100%';
+                });
+
+                // Update Grid
+                UI.gridOverlay.style.backgroundSize = `${State.zoom}px ${State.zoom}px`;
+                if(State.zoom > 5) {
+                     UI.gridOverlay.style.backgroundImage = `
+                        linear-gradient(to right, rgba(128, 128, 128, 0.5) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(128, 128, 128, 0.5) 1px, transparent 1px)
+                    `;
+                } else {
+                    UI.gridOverlay.style.backgroundImage = 'none';
+                }
+            },
+
+            render() {
+                ctx.clearRect(0, 0, State.width, State.height);
+                if(State.frames[State.currentFrameIndex]) {
+                    ctx.putImageData(State.frames[State.currentFrameIndex], 0, 0);
+                }
+                this.updateMiniPreview();
+            },
+
+            updateMiniPreview() {
+                prevCtx.clearRect(0,0, State.width, State.height);
+                if(State.frames[State.currentFrameIndex]) {
+                    prevCtx.putImageData(State.frames[State.currentFrameIndex], 0, 0);
+                }
+            },
+
+            saveFrame() {
+                State.frames[State.currentFrameIndex] = ctx.getImageData(0, 0, State.width, State.height);
+                AnimationManager.updateTimelineThumb(State.currentFrameIndex);
+                this.updateMiniPreview();
+            },
+            
+            clearPreviewLayer() {
+                pCtx.clearRect(0, 0, State.width, State.height);
+            }
+        };
+
+        const ToolManager = {
+            // Helper: Hex to RGBA
+            hexToRgba(hex) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return { r, g, b, a: 255 };
+            },
+
+            plot(x, y, color, context = ctx) {
+                // Respect Brush Size (Simple Square Brush)
+                const size = (State.tool === 'pencil' || State.tool === 'mirror') ? 1 : State.brushSize;
+                const offset = Math.floor(size/2);
+                
+                context.fillStyle = color;
+                context.fillRect(x - offset, y - offset, size, size);
+            },
+            
+            // Bresenham's Line Algorithm
+            drawLine(x0, y0, x1, y1, color, context = ctx) {
+                const dx = Math.abs(x1 - x0);
+                const dy = Math.abs(y1 - y0);
+                const sx = (x0 < x1) ? 1 : -1;
+                const sy = (y0 < y1) ? 1 : -1;
+                let err = dx - dy;
+
+                while (true) {
+                    this.plot(x0, y0, color, context);
+                    if (x0 === x1 && y0 === y1) break;
+                    const e2 = 2 * err;
+                    if (e2 > -dy) { err -= dy; x0 += sx; }
+                    if (e2 < dx) { err += dx; y0 += sy; }
+                }
+            },
+            
+            drawRect(x0, y0, x1, y1, color, context = ctx) {
+                const w = x1 - x0;
+                const h = y1 - y0;
+                // Hollow rect
+                // Top
+                this.drawLine(x0, y0, x1, y0, color, context);
+                // Bottom
+                this.drawLine(x0, y1, x1, y1, color, context);
+                // Left
+                this.drawLine(x0, y0, x0, y1, color, context);
+                // Right
+                this.drawLine(x1, y0, x1, y1, color, context);
+            },
+
+            drawCircle(x0, y0, x1, y1, color, context = ctx) {
+                // Midpoint ellipse/circle algorithm simplified
+                let r = Math.floor(Math.sqrt(Math.pow(x1-x0, 2) + Math.pow(y1-y0, 2)));
+                let x = r, y = 0;
+                let P = 1 - r;
+                
+                const plotCircle = (cx, cy, x, y) => {
+                    this.plot(cx + x, cy + y, color, context);
+                    this.plot(cx - x, cy + y, color, context);
+                    this.plot(cx + x, cy - y, color, context);
+                    this.plot(cx - x, cy - y, color, context);
+                    this.plot(cx + y, cy + x, color, context);
+                    this.plot(cx - y, cy + x, color, context);
+                    this.plot(cx + y, cy - x, color, context);
+                    this.plot(cx - y, cy - x, color, context);
+                };
+
+                while (x > y) {
+                    y++;
+                    if (P <= 0) P = P + 2 * y + 1;
+                    else {
+                        x--;
+                        P = P + 2 * y - 2 * x + 1;
+                    }
+                    if (x < y) break;
+                    plotCircle(x0, y0, x, y);
+                }
+            },
+
+            // --- Tool Actions ---
+
+            start(x, y) {
+                State.isDrawing = true;
+                State.dragStart = { x, y };
+
+                if (State.tool === 'pencil' || State.tool === 'brush') {
+                    this.plot(x, y, State.color);
+                } else if (State.tool === 'eraser') {
+                    ctx.clearRect(x - Math.floor(State.brushSize/2), y - Math.floor(State.brushSize/2), State.brushSize, State.brushSize);
+                } else if (State.tool === 'mirror') {
+                    this.plot(x, y, State.color);
+                    this.plot(State.width - 1 - x, y, State.color);
+                } else if (State.tool === 'bucket') {
+                    this.floodFill(x, y, State.color);
+                    State.isDrawing = false; // One shot
+                } else if (State.tool === 'eyedropper') {
+                    this.pickColor(x, y);
+                    State.isDrawing = false;
+                } else if (State.tool === 'lighten') {
+                    this.lightenPixel(x, y);
+                }
+                // Shape tools don't draw on start, they wait for move/end
+            },
+
+            move(x, y) {
+                if (!State.isDrawing) return;
+
+                if (State.tool === 'pencil' || State.tool === 'brush') {
+                    // Simple interpolation could go here for smooth lines
+                    this.plot(x, y, State.color);
+                } else if (State.tool === 'eraser') {
+                    ctx.clearRect(x - Math.floor(State.brushSize/2), y - Math.floor(State.brushSize/2), State.brushSize, State.brushSize);
+                } else if (State.tool === 'mirror') {
+                    this.plot(x, y, State.color);
+                    this.plot(State.width - 1 - x, y, State.color);
+                } else if (State.tool === 'stroke') {
+                    CanvasManager.clearPreviewLayer();
+                    this.drawLine(State.dragStart.x, State.dragStart.y, x, y, State.color, pCtx);
+                } else if (State.tool === 'rect') {
+                    CanvasManager.clearPreviewLayer();
+                    this.drawRect(State.dragStart.x, State.dragStart.y, x, y, State.color, pCtx);
+                } else if (State.tool === 'circle') {
+                    CanvasManager.clearPreviewLayer();
+                    this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, State.color, pCtx);
+                } else if (State.tool === 'move') {
+                    // Logic for realtime move is complex for this snippet, so we do "drag to offset"
+                    // Implementation: Just clear and move canvas content by (x - prevX)
+                    // For stability, let's just do click-drag offset on commit or simple visual feedback
+                    // Simplified: We will do the move on 'end' for simplicity or stick to arrow key logic for pixel precision
+                } else if (State.tool === 'lighten') {
+                    this.lightenPixel(x, y);
+                }
+            },
+
+            end(x, y) {
+                if (!State.isDrawing) return;
+                
+                // Commit shapes
+                if (State.tool === 'stroke') {
+                    this.drawLine(State.dragStart.x, State.dragStart.y, x, y, State.color, ctx);
+                } else if (State.tool === 'rect') {
+                    this.drawRect(State.dragStart.x, State.dragStart.y, x, y, State.color, ctx);
+                } else if (State.tool === 'circle') {
+                    this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, State.color, ctx);
+                } else if (State.tool === 'move') {
+                    const dx = x - State.dragStart.x;
+                    const dy = y - State.dragStart.y;
+                    this.shiftCanvas(dx, dy);
                 }
 
-                framesList.appendChild(div);
-            });
-            
-            // Scroll to active
-            const activeEl = framesList.children[currentFrameIndex];
-            if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
+                CanvasManager.clearPreviewLayer();
+                State.isDrawing = false;
+                CanvasManager.saveFrame();
+                ColorManager.addToHistory(State.color);
+            },
 
-        function updateTimelineThumb(index) {
-            const el = framesList.children[index];
-            if (!el) return; // Might happen during bulk updates
-            const thumbCanvas = el.querySelector('canvas');
-            const thumbCtx = thumbCanvas.getContext('2d');
-            thumbCtx.putImageData(frames[index], 0, 0);
-        }
+            // --- Complex Tools ---
 
-        function switchFrame(index) {
-            if (index < 0 || index >= frames.length) return;
-            currentFrameIndex = index;
-            renderCanvas();
-            
-            // Update active class in UI
-            Array.from(framesList.children).forEach((child, i) => {
-                if (i === index) child.classList.add('active');
-                else child.classList.remove('active');
-            });
-        }
-
-        function addFrame() {
-            // Add new transparent frame after current
-            const newFrame = new ImageData(canvasWidth, canvasHeight); // Transparent black by default
-            frames.splice(currentFrameIndex + 1, 0, newFrame);
-            switchFrame(currentFrameIndex + 1);
-            renderTimeline();
-        }
-
-        function duplicateFrame() {
-            // Deep copy current frame data
-            const currentData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-            const newData = new ImageData(
-                new Uint8ClampedArray(currentData.data),
-                canvasWidth,
-                canvasHeight
-            );
-            
-            frames.splice(currentFrameIndex + 1, 0, newData);
-            switchFrame(currentFrameIndex + 1);
-            renderTimeline();
-        }
-
-        function deleteFrame(index) {
-            if (frames.length <= 1) return;
-            
-            frames.splice(index, 1);
-            
-            // Adjust index if we deleted the last one or current one
-            if (currentFrameIndex >= frames.length) {
-                currentFrameIndex = frames.length - 1;
-            } else if (currentFrameIndex > index) {
-                currentFrameIndex--; 
-            }
-            
-            renderCanvas();
-            renderTimeline();
-        }
-
-        // --- Playback ---
-
-        function togglePlay() {
-            if (isPlaying) {
-                stopAnimation();
-            } else {
-                startAnimation();
-            }
-        }
-
-        function startAnimation() {
-            if (isPlaying) return;
-            isPlaying = true;
-            playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-            playBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
-            playBtn.innerHTML = '<i class="fas fa-pause mr-1"></i> Pause';
-            
-            let frameIdx = 0;
-            const animate = () => {
-                if (!isPlaying) return;
+            floodFill(startX, startY, fillColorHex) {
+                // ... BFS Logic ...
+                const fillColor = this.hexToRgba(fillColorHex);
+                const imageData = ctx.getImageData(0, 0, State.width, State.height);
                 
-                // Draw frameIdx to preview
-                previewCtx.clearRect(0,0, canvasWidth, canvasHeight);
-                previewCtx.putImageData(frames[frameIdx], 0, 0);
-                
-                frameIdx = (frameIdx + 1) % frames.length;
-                
-                // Calculate delay based on FPS
-                const delay = 1000 / fps;
-                animationInterval = setTimeout(animate, delay);
-            };
-            animate();
-        }
+                // Get start color
+                const idx = (startY * State.width + startX) * 4;
+                const startColor = {
+                    r: imageData.data[idx], g: imageData.data[idx+1], b: imageData.data[idx+2], a: imageData.data[idx+3]
+                };
 
-        function stopAnimation() {
-            isPlaying = false;
-            clearTimeout(animationInterval);
-            playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-            playBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
-            playBtn.innerHTML = '<i class="fas fa-play mr-1"></i> Play';
-            updatePreviewWindow(); // Reset to current editing frame
-        }
+                if (startColor.r === fillColor.r && startColor.g === fillColor.g && startColor.b === fillColor.b && startColor.a === fillColor.a) return;
 
-        function updatePreviewWindow() {
-            if (isPlaying) return; // Don't interrupt loop
-            previewCtx.clearRect(0,0, canvasWidth, canvasHeight);
-            if (frames[currentFrameIndex]) {
-                previewCtx.putImageData(frames[currentFrameIndex], 0, 0);
-            }
-        }
+                const stack = [[startX, startY]];
+                while (stack.length) {
+                    const [x, y] = stack.pop();
+                    const i = (y * State.width + x) * 4;
+                    
+                    const cur = { r: imageData.data[i], g: imageData.data[i+1], b: imageData.data[i+2], a: imageData.data[i+3] };
+                    if (cur.r === startColor.r && cur.g === startColor.g && cur.b === startColor.b && cur.a === startColor.a) {
+                        imageData.data[i] = fillColor.r;
+                        imageData.data[i+1] = fillColor.g;
+                        imageData.data[i+2] = fillColor.b;
+                        imageData.data[i+3] = fillColor.a;
 
-        // --- Tool Logic (Similar to previous, but calls saveCurrentFrame) ---
-
-        function getCoordinates(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: Math.floor((clientX - rect.left) / zoom),
-                y: Math.floor((clientY - rect.top) / zoom)
-            };
-        }
-
-        function hexToRgba(hex) {
-            let c;
-            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
-                c= hex.substring(1).split('');
-                if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
-                c= '0x'+c.join('');
-                return { r: (c>>16)&255, g: (c>>8)&255, b: c&255, a: 255 };
-            }
-            return {r:0, g:0, b:0, a:255};
-        }
-
-        function drawPixel(x, y) {
-            if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight) return;
-            if (currentTool === 'eraser') {
-                ctx.clearRect(x, y, 1, 1);
-            } else {
-                ctx.fillStyle = currentColor;
-                ctx.fillRect(x, y, 1, 1);
-            }
-        }
-
-        function getColorAtPixel(imageData, x, y) {
-            const index = (y * canvasWidth + x) * 4;
-            return {
-                r: imageData.data[index],
-                g: imageData.data[index + 1],
-                b: imageData.data[index + 2],
-                a: imageData.data[index + 3]
-            };
-        }
-
-        function colorsMatch(c1, c2) {
-            return c1.r === c2.r && c1.g === c2.g && c1.b === c2.b && c1.a === c2.a;
-        }
-
-        function floodFill(startX, startY, fillColorHex) {
-            const fillColor = currentTool === 'eraser' ? {r:0,g:0,b:0,a:0} : hexToRgba(fillColorHex);
-            const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-            const targetColor = getColorAtPixel(imageData, startX, startY);
-            if (colorsMatch(targetColor, fillColor)) return;
-
-            const pixelsToCheck = [[startX, startY]];
-            const pixelData = imageData.data;
-
-            while (pixelsToCheck.length > 0) {
-                const [x, y] = pixelsToCheck.pop();
-                const index = (y * canvasWidth + x) * 4;
-                const r = pixelData[index], g = pixelData[index+1], b = pixelData[index+2], a = pixelData[index+3];
-
-                if (colorsMatch({r,g,b,a}, targetColor)) {
-                    pixelData[index] = fillColor.r;
-                    pixelData[index+1] = fillColor.g;
-                    pixelData[index+2] = fillColor.b;
-                    pixelData[index+3] = fillColor.a;
-                    if (x > 0) pixelsToCheck.push([x - 1, y]);
-                    if (x < canvasWidth - 1) pixelsToCheck.push([x + 1, y]);
-                    if (y > 0) pixelsToCheck.push([x, y - 1]);
-                    if (y < canvasHeight - 1) pixelsToCheck.push([x, y + 1]);
+                        if (x > 0) stack.push([x-1, y]);
+                        if (x < State.width-1) stack.push([x+1, y]);
+                        if (y > 0) stack.push([x, y-1]);
+                        if (y < State.height-1) stack.push([x, y+1]);
+                    }
                 }
+                ctx.putImageData(imageData, 0, 0);
+                CanvasManager.saveFrame();
+            },
+
+            pickColor(x, y) {
+                const p = ctx.getImageData(x, y, 1, 1).data;
+                if (p[3] === 0) return; // Transparent
+                const hex = "#" + ("000000" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
+                ColorManager.setColor(hex);
+                this.setTool('pencil');
+            },
+
+            lightenPixel(x, y) {
+                 const p = ctx.getImageData(x, y, 1, 1);
+                 const d = p.data;
+                 if (d[3] === 0) return; // Ignore transparent
+                 
+                 // Simple lighten: increase RGB by 10
+                 const amt = 20;
+                 d[0] = Math.min(255, d[0] + amt);
+                 d[1] = Math.min(255, d[1] + amt);
+                 d[2] = Math.min(255, d[2] + amt);
+                 
+                 ctx.putImageData(p, x, y);
+            },
+
+            shiftCanvas(dx, dy) {
+                const img = ctx.getImageData(0, 0, State.width, State.height);
+                ctx.clearRect(0,0,State.width, State.height);
+                ctx.putImageData(img, dx, dy);
+            },
+            
+            setTool(name) {
+                State.tool = name;
+                UI.toolBtns.forEach(b => {
+                    b.classList.toggle('active', b.dataset.tool === name);
+                });
+                
+                // Cursor handling
+                if(['eyedropper', 'move'].includes(name)) UI.previewLayer.style.cursor = 'move'; // Or specialized cursors
+                else if (name === 'bucket') UI.previewLayer.style.cursor = 'cell';
+                else UI.previewLayer.style.cursor = 'crosshair';
             }
-            ctx.putImageData(imageData, 0, 0);
-            saveCurrentFrame(); // Save immediately for bucket
-        }
+        };
 
-        function pickColor(x, y) {
-             const p = ctx.getImageData(x, y, 1, 1).data;
-             if(p[3] === 0) return;
-             const hex = "#" + ("000000" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
-             colorPicker.value = hex;
-             currentColor = hex;
-             colorHex.textContent = hex;
-             setActiveTool('pencil');
-        }
+        const ColorManager = {
+            setColor(hex) {
+                State.color = hex;
+                UI.colorPicker.value = hex;
+                document.getElementById('colorHex').textContent = hex;
+            },
+            addToHistory(hex) {
+                if(!State.recentColors.includes(hex)) {
+                    State.recentColors.unshift(hex);
+                    if(State.recentColors.length > 8) State.recentColors.pop();
+                    this.renderPalette();
+                }
+            },
+            renderPalette() {
+                UI.paletteContainer.innerHTML = '';
+                State.recentColors.forEach(c => {
+                    const d = document.createElement('div');
+                    d.className = 'palette-swatch';
+                    d.style.backgroundColor = c;
+                    d.onclick = () => this.setColor(c);
+                    UI.paletteContainer.appendChild(d);
+                });
+            }
+        };
 
-        function setActiveTool(tool) {
-            currentTool = tool;
-            toolBtns.forEach(btn => {
-                if (btn.dataset.tool === tool) btn.classList.add('active');
-                else btn.classList.remove('active');
-            });
-            canvas.style.cursor = tool === 'eyedropper' ? 'crosshair' : (tool === 'bucket' ? 'cell' : 'default');
-        }
+        const TransformManager = {
+            flipH() {
+                const img = ctx.getImageData(0,0,State.width, State.height);
+                const newImg = ctx.createImageData(State.width, State.height);
+                for(let y=0; y<State.height; y++) {
+                    for(let x=0; x<State.width; x++) {
+                        const i = (y*State.width + x)*4;
+                        const mirI = (y*State.width + (State.width-1-x))*4;
+                        newImg.data[mirI] = img.data[i];
+                        newImg.data[mirI+1] = img.data[i+1];
+                        newImg.data[mirI+2] = img.data[i+2];
+                        newImg.data[mirI+3] = img.data[i+3];
+                    }
+                }
+                ctx.putImageData(newImg, 0, 0);
+                CanvasManager.saveFrame();
+            },
+            flipV() {
+                const img = ctx.getImageData(0,0,State.width, State.height);
+                const newImg = ctx.createImageData(State.width, State.height);
+                for(let y=0; y<State.height; y++) {
+                    for(let x=0; x<State.width; x++) {
+                        const i = (y*State.width + x)*4;
+                        const mirI = ((State.height-1-y)*State.width + x)*4;
+                        newImg.data[mirI] = img.data[i];
+                        newImg.data[mirI+1] = img.data[i+1];
+                        newImg.data[mirI+2] = img.data[i+2];
+                        newImg.data[mirI+3] = img.data[i+3];
+                    }
+                }
+                ctx.putImageData(newImg, 0, 0);
+                CanvasManager.saveFrame();
+            },
+            rotate() {
+                // 90deg rotation requires square or resize. Assuming square for simplicity or crop.
+                // For a robust app, we swap width/height. Here we crop/center if not square.
+                const img = ctx.getImageData(0,0,State.width, State.height);
+                ctx.clearRect(0,0,State.width, State.height);
+                
+                // Helper to get pixel
+                const getP = (x,y) => {
+                    if(x<0||x>=State.width||y<0||y>=State.height) return [0,0,0,0];
+                    const i = (y*State.width+x)*4;
+                    return [img.data[i], img.data[i+1], img.data[i+2], img.data[i+3]];
+                };
 
-        // --- Inputs & Exports ---
+                // Simple 90 deg clockwise
+                for(let y=0; y<State.height; y++) {
+                    for(let x=0; x<State.width; x++) {
+                         // New x,y based on rotation around center? 
+                         // Simplest: (x,y) -> (height-1-y, x) if square.
+                         // Let's stick to square logic for Piskel-lite
+                         const nx = State.height - 1 - y;
+                         const ny = x;
+                         if(nx < State.width && ny < State.height) {
+                            const p = getP(x,y);
+                            // Draw point
+                            ctx.fillStyle = `rgba(${p[0]},${p[1]},${p[2]},${p[3]/255})`;
+                            ctx.fillRect(nx, ny, 1, 1);
+                         }
+                    }
+                }
+                CanvasManager.saveFrame();
+            }
+        };
 
-        const handleStart = (e) => {
-            if (e.cancelable) e.preventDefault();
-            isDrawing = true;
-            const { x, y } = getCoordinates(e);
+        const AnimationManager = {
+            timer: null,
+            renderTimeline() {
+                UI.framesList.innerHTML = '';
+                State.frames.forEach((f, i) => {
+                    const div = document.createElement('div');
+                    div.className = `frame-preview ${i === State.currentFrameIndex ? 'active' : ''}`;
+                    div.onclick = () => this.switchFrame(i);
 
-            if (currentTool === 'bucket') {
-                floodFill(x, y, currentColor);
-                isDrawing = false;
-            } else if (currentTool === 'eyedropper') {
-                pickColor(x, y);
-                isDrawing = false;
+                    const c = document.createElement('canvas');
+                    c.width = State.width; c.height = State.height;
+                    c.getContext('2d').putImageData(f, 0, 0);
+                    div.appendChild(c);
+                    
+                    const num = document.createElement('div');
+                    num.className = 'absolute bottom-1 right-1 text-[8px] text-gray-400 font-bold';
+                    num.innerText = i + 1;
+                    div.appendChild(num);
+
+                    if(State.frames.length > 1) {
+                        const del = document.createElement('div');
+                        del.className = 'delete-frame-btn';
+                        del.innerHTML = '<i class="fas fa-times"></i>';
+                        del.onclick = (e) => { e.stopPropagation(); this.deleteFrame(i); };
+                        div.appendChild(del);
+                    }
+                    UI.framesList.appendChild(div);
+                });
+            },
+            updateTimelineThumb(i) {
+                if(!UI.framesList.children[i]) return;
+                const c = UI.framesList.children[i].querySelector('canvas');
+                c.getContext('2d').putImageData(State.frames[i], 0, 0);
+            },
+            switchFrame(i) {
+                State.currentFrameIndex = i;
+                CanvasManager.render();
+                Array.from(UI.framesList.children).forEach((el, idx) => {
+                    el.classList.toggle('active', idx === i);
+                });
+            },
+            addFrame() {
+                State.frames.splice(State.currentFrameIndex + 1, 0, new ImageData(State.width, State.height));
+                this.switchFrame(State.currentFrameIndex + 1);
+                this.renderTimeline();
+            },
+            duplicateFrame() {
+                const src = State.frames[State.currentFrameIndex];
+                const clone = new ImageData(new Uint8ClampedArray(src.data), State.width, State.height);
+                State.frames.splice(State.currentFrameIndex + 1, 0, clone);
+                this.switchFrame(State.currentFrameIndex + 1);
+                this.renderTimeline();
+            },
+            deleteFrame(i) {
+                if(State.frames.length <= 1) return;
+                State.frames.splice(i, 1);
+                if(State.currentFrameIndex >= State.frames.length) State.currentFrameIndex = State.frames.length - 1;
+                CanvasManager.render();
+                this.renderTimeline();
+            },
+            play() {
+                if(State.isPlaying) return;
+                State.isPlaying = true;
+                document.getElementById('playBtn').classList.add('bg-green-800'); // Dim
+                
+                let idx = 0;
+                const loop = () => {
+                    if(!State.isPlaying) return;
+                    prevCtx.clearRect(0,0,State.width, State.height);
+                    prevCtx.putImageData(State.frames[idx], 0, 0);
+                    idx = (idx + 1) % State.frames.length;
+                    this.timer = setTimeout(loop, 1000 / State.fps);
+                };
+                loop();
+            },
+            stop() {
+                State.isPlaying = false;
+                clearTimeout(this.timer);
+                document.getElementById('playBtn').classList.remove('bg-green-800');
+                CanvasManager.updateMiniPreview();
+            }
+        };
+
+        const ExportManager = {
+            downloadSpriteSheet() {
+                const c = document.createElement('canvas');
+                c.width = State.width * State.frames.length;
+                c.height = State.height;
+                const cx = c.getContext('2d');
+                State.frames.forEach((f, i) => cx.putImageData(f, i * State.width, 0));
+                
+                const a = document.createElement('a');
+                a.download = 'spritesheet.png';
+                a.href = c.toDataURL();
+                a.click();
+            }
+        };
+
+        // --- EVENT HANDLERS ---
+        
+        // Input Handling
+        const getCoords = (e) => {
+            const r = UI.mainCanvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: Math.floor((cx - r.left) / State.zoom),
+                y: Math.floor((cy - r.top) / State.zoom)
+            };
+        };
+
+        // Pointer Events (Mouse + Touch)
+        const start = (e) => {
+            if(e.cancelable) e.preventDefault();
+            const {x, y} = getCoords(e);
+            if(x>=0 && x<State.width && y>=0 && y<State.height) {
+                ToolManager.start(x, y);
+            }
+        };
+        const move = (e) => {
+            const {x, y} = getCoords(e);
+            if(x>=0 && x<State.width && y>=0 && y<State.height) {
+                UI.coords.innerText = `${x}, ${y}`;
+                ToolManager.move(x, y);
+            }
+        };
+        const end = (e) => {
+            // Need last known coords for end?
+            // Actually 'end' usually doesn't have coords in TouchEvent
+            // We use the last dragged position logic inside ToolManager if needed
+            // But here we can pass 0,0 or rely on State
+            // Let's pass the last known pos if possible, or just rely on state
+            // For shape tools, we need 'current mouse pos' which is tricky on 'mouseup'
+            // So we rely on the last 'move' event updating state, OR we track mouse globally.
+            // Simplified: Shape tools commit to the last drag position. 
+            // We can pass the MouseEvent clientX if available.
+            
+            // NOTE: For 'mouseup', e.clientX exists. For 'touchend', it doesn't.
+            let x=0, y=0;
+            if(e.changedTouches && e.changedTouches.length > 0) {
+                 const r = UI.mainCanvas.getBoundingClientRect();
+                 x = Math.floor((e.changedTouches[0].clientX - r.left) / State.zoom);
+                 y = Math.floor((e.changedTouches[0].clientY - r.top) / State.zoom);
             } else {
-                drawPixel(x, y);
+                 const r = UI.mainCanvas.getBoundingClientRect();
+                 x = Math.floor((e.clientX - r.left) / State.zoom);
+                 y = Math.floor((e.clientY - r.top) / State.zoom);
+            }
+            
+            ToolManager.end(x, y);
+        };
+
+        // Bindings
+        UI.previewLayer.addEventListener('mousedown', start);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+        
+        UI.previewLayer.addEventListener('touchstart', start, {passive:false});
+        window.addEventListener('touchmove', move, {passive:false});
+        window.addEventListener('touchend', end);
+
+        // UI Bindings
+        UI.toolBtns.forEach(b => b.onclick = () => ToolManager.setTool(b.dataset.tool));
+        UI.colorPicker.oninput = (e) => ColorManager.setColor(e.target.value);
+        UI.brushSizeSlider.oninput = (e) => {
+            State.brushSize = parseInt(e.target.value);
+            UI.brushSizeDisplay.innerText = State.brushSize + 'px';
+        };
+        document.getElementById('swapColorsBtn').onclick = () => {
+             // Logic to swap with transparent or secondary color? 
+             // For now just toggle eraser/pencil for quick usage
+             if(State.tool === 'eraser') ToolManager.setTool('pencil');
+             else ToolManager.setTool('eraser');
+        };
+
+        document.getElementById('flipHBtn').onclick = () => TransformManager.flipH();
+        document.getElementById('flipVBtn').onclick = () => TransformManager.flipV();
+        document.getElementById('rotateBtn').onclick = () => TransformManager.rotate();
+
+        document.getElementById('addFrameBtn').onclick = () => AnimationManager.addFrame();
+        document.getElementById('duplicateFrameBtn').onclick = () => AnimationManager.duplicateFrame();
+        document.getElementById('playBtn').onclick = () => AnimationManager.play();
+        document.getElementById('stopBtn').onclick = () => AnimationManager.stop();
+        UI.fpsSlider.oninput = (e) => {
+            State.fps = parseInt(e.target.value);
+            UI.fpsDisplay.innerText = State.fps + ' FPS';
+            if(State.isPlaying) { AnimationManager.stop(); AnimationManager.play(); }
+        };
+
+        document.getElementById('resizeBtn').onclick = () => {
+            if(confirm("New Canvas? Unsaved work will be lost.")) {
+                CanvasManager.init(parseInt(UI.widthInput.value), parseInt(UI.heightInput.value));
             }
         };
+        document.getElementById('downloadSheetBtn').onclick = () => ExportManager.downloadSpriteSheet();
 
-        const handleMove = (e) => {
-            const { x, y } = getCoordinates(e);
-            if (x >= 0 && x < canvasWidth && y >= 0 && y < canvasHeight) coordsDisplay.textContent = `${x}, ${y}`;
-            if (!isDrawing || currentTool === 'bucket' || currentTool === 'eyedropper') return;
-            drawPixel(x, y);
+        document.getElementById('gridToggle').onchange = (e) => {
+            UI.gridOverlay.style.display = e.target.checked ? 'block' : 'none';
         };
 
-        const handleEnd = () => {
-            if (isDrawing) {
-                isDrawing = false;
-                saveCurrentFrame(); // CRITICAL: Save state on mouse up
-            }
-        };
-
-        // --- Export Functions ---
-
-        function downloadFrame() {
-            const link = document.createElement('a');
-            link.download = `frame_${currentFrameIndex+1}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-
-        function downloadSpriteSheet() {
-            // Create a canvas large enough to hold all frames side-by-side
-            const sheetCanvas = document.createElement('canvas');
-            sheetCanvas.width = canvasWidth * frames.length;
-            sheetCanvas.height = canvasHeight;
-            const sheetCtx = sheetCanvas.getContext('2d');
-            
-            frames.forEach((frameData, index) => {
-                sheetCtx.putImageData(frameData, index * canvasWidth, 0);
-            });
-            
-            const link = document.createElement('a');
-            link.download = 'sprite_sheet.png';
-            link.href = sheetCanvas.toDataURL('image/png');
-            link.click();
-        }
-
-        // --- Event Listeners ---
-
-        canvas.addEventListener('mousedown', handleStart);
-        canvas.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-        canvas.addEventListener('touchstart', handleStart, { passive: false });
-        canvas.addEventListener('touchmove', handleMove, { passive: false });
-        canvas.addEventListener('touchend', handleEnd);
-
-        toolBtns.forEach(btn => btn.addEventListener('click', () => setActiveTool(btn.dataset.tool)));
-        
-        colorPicker.addEventListener('input', (e) => {
-            currentColor = e.target.value;
-            colorHex.textContent = currentColor;
-            if (['eraser','eyedropper'].includes(currentTool)) setActiveTool('pencil');
-        });
-
-        gridToggle.addEventListener('change', (e) => gridOverlay.style.display = e.target.checked ? 'block' : 'none');
-        zoomSlider.addEventListener('input', updateZoom);
-        
-        resizeBtn.addEventListener('click', () => {
-            if(confirm("This will clear your animation. Start new canvas?")) initApp();
-        });
-        
-        clearBtn.addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-            saveCurrentFrame();
-        });
-
-        // Animation Events
-        addFrameBtn.addEventListener('click', addFrame);
-        duplicateFrameBtn.addEventListener('click', duplicateFrame);
-        playBtn.addEventListener('click', togglePlay);
-        stopBtn.addEventListener('click', stopAnimation);
-        
-        fpsSlider.addEventListener('input', (e) => {
-            fps = parseInt(e.target.value);
-            fpsDisplay.textContent = `${fps} FPS`;
-        });
-
-        downloadFrameBtn.addEventListener('click', downloadFrame);
-        downloadSheetBtn.addEventListener('click', downloadSpriteSheet);
-
-        // Shortcuts
+        // Keyboard Shortcuts
         window.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT') return;
+            if(e.target.tagName === 'INPUT') return;
             switch(e.key.toLowerCase()) {
-                case 'p': setActiveTool('pencil'); break;
-                case 'b': setActiveTool('bucket'); break;
-                case 'e': setActiveTool('eraser'); break;
-                case 'i': setActiveTool('eyedropper'); break;
-                case ' ': e.preventDefault(); togglePlay(); break;
-                case 'arrowright': switchFrame(currentFrameIndex + 1); break;
-                case 'arrowleft': switchFrame(currentFrameIndex - 1); break;
+                case 'p': ToolManager.setTool('pencil'); break;
+                case 'e': ToolManager.setTool('eraser'); break;
+                case 'b': ToolManager.setTool('bucket'); break;
+                case 'v': ToolManager.setTool('mirror'); break;
+                case 'l': ToolManager.setTool('stroke'); break;
+                case 'r': ToolManager.setTool('rect'); break;
+                case 'c': ToolManager.setTool('circle'); break;
+                case 'm': ToolManager.setTool('move'); break;
+                case ' ': e.preventDefault(); State.isPlaying ? AnimationManager.stop() : AnimationManager.play(); break;
+                case 'arrowright': AnimationManager.switchFrame(State.currentFrameIndex + 1); break;
+                case 'arrowleft': AnimationManager.switchFrame(State.currentFrameIndex - 1); break;
             }
         });
 
-        // Start
-        initApp();
+        // Initialize
+        ColorManager.renderPalette();
+        CanvasManager.init(32, 32);
 
     </script>
 </body>
