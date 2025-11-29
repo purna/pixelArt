@@ -3,12 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Studio - Pro</title>
+    <title>Pixel Art Studio - Pro (Modular)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-panel: #1f2937;
+            --accent: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e5e5e5;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
+        }
+
+        #drawing-area {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background-image: 
+                linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: white; 
+            transform-origin: top left;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            image-rendering: pixelated; 
+            image-rendering: crisp-edges;
+        }
+
+        #layer-composition { z-index: 10; }
+        #previewLayer { z-index: 20; }
+        #grid-overlay { z-index: 30; pointer-events: none; mix-blend-mode: difference; opacity: 0.3; }
+
+        .tool-btn { position: relative; }
+        .tool-btn.active {
+            background-color: var(--accent);
+            border-color: #60a5fa;
+            color: white;
+        }
+        
+        .palette-swatch {
+            width: 20px; height: 20px;
+            border-radius: 4px; cursor: pointer;
+            border: 1px solid #4b5563;
+        }
+        .palette-swatch:hover { transform: scale(1.2); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #2d2d2d; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px;
+            border-radius: 50%; background: var(--accent); margin-top: -5px; 
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: #4b5563; border-radius: 2px;
+        }
+
+        #canvas-wrapper {
+            height: calc(100% - 130px); 
+            background-color: #0f0f0f;
+            overflow: auto;
+            position: relative;
+        }
+        
+        #timeline-container {
+            height: 130px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid #374151;
+        }
+
+        .frame-preview {
+            width: 70px; height: 70px;
+            background-color: #374151;
+            border: 2px solid #4b5563;
+            border-radius: 4px;
+            cursor: pointer; position: relative; flex-shrink: 0;
+        }
+        .frame-preview.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
+        .frame-preview canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+
+        .layer-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px; background: #374151;
+            margin-bottom: 4px; border-radius: 4px;
+            border: 1px solid transparent; cursor: pointer;
+            font-size: 11px;
+        }
+        .layer-item.active { border-color: var(--accent); background: #4b5563; }
+        .layer-vis-btn { color: #9ca3af; cursor: pointer; }
+        .layer-vis-btn:hover { color: white; }
+        .layer-vis-btn.hidden-layer { color: #ef4444; opacity: 0.5; }
+
+        #minimap-overlay {
+            position: absolute;
+            border: 2px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            pointer-events: none;
+        }
+
+        .tooltip-group:hover::after {
+            content: attr(data-title);
+            position: absolute; bottom: 100%; left: 50%;
+            transform: translateX(-50%); background: #000; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 10px;
+            white-space: nowrap; z-index: 50; pointer-events: none; margin-bottom: 5px;
+        }
+
+        .layer-name-input {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 2px 4px;
+            color: inherit;
+            font-size: inherit;
+            outline: none;
+            flex: 1;
+        }
+        .layer-name-input:focus {
+            border-color: var(--accent);
+            background: #1f2937;
+        }
+    </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
@@ -16,11 +149,11 @@
     <aside class="w-full md:w-72 bg-gray-900 border-r border-gray-800 flex flex-col p-3 shadow-xl z-20 overflow-y-auto h-full md:h-screen shrink-0 text-sm">
         
         <div class="mb-3 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-layer-group mr-2"></i>Pixel Art</h1>
-            <div class="text-[10px] text-gray-500">v3.0</div>
+            <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-layer-group mr-2"></i>PixlPro</h1>
+            <div class="text-[10px] text-gray-500">v3.1</div>
         </div>
 
-        <!-- Preview / Navigator -->
+        <!-- Preview -->
         <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700 relative group">
             <div class="flex justify-between items-center mb-1">
                 <span class="text-[10px] uppercase font-bold text-gray-400">Preview</span>
@@ -29,7 +162,6 @@
             
             <div id="preview-container" class="w-full aspect-square bg-black rounded mb-2 relative overflow-hidden cursor-move border border-gray-700" style="background-image: linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%); background-size: 10px 10px;">
                 <canvas id="previewCanvas" class="w-full h-full object-contain"></canvas>
-                <!-- Reference Rectangle for Panning -->
                 <div id="minimap-overlay"></div>
             </div>
 
@@ -40,14 +172,13 @@
             <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-full h-1 bg-gray-600 rounded-lg">
         </div>
 
-        <!-- Layer Manager -->
+        <!-- Layers -->
         <div class="mb-3 flex-1 min-h-[100px] flex flex-col">
             <div class="flex justify-between items-end mb-1">
                 <h3 class="text-[10px] font-bold text-gray-400 uppercase">Layers</h3>
                 <button id="addLayerBtn" class="text-xs bg-blue-600 px-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
             </div>
             <div id="layers-list" class="flex-1 overflow-y-auto bg-gray-800 p-1 rounded border border-gray-700">
-                <!-- Layers injected here -->
             </div>
         </div>
 
@@ -55,13 +186,13 @@
         <div class="mb-3">
             <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Tools</h3>
             <div class="grid grid-cols-5 gap-1 mb-2">
-                <button class="tool-btn active p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil (1px)">
+                <button class="tool-btn active p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil">
                     <i class="fas fa-pencil-alt text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="brush" data-title="Brush (Size)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="brush" data-title="Brush">
                     <i class="fas fa-paint-brush text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="dither" data-title="Dither Pattern">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="dither" data-title="Dither">
                     <i class="fas fa-border-style text-xs"></i>
                 </button>
                 <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eraser" data-title="Eraser">
@@ -88,21 +219,18 @@
                 </button>
             </div>
 
-            <!-- Color & Brush Settings -->
+            <!-- Color & Settings -->
             <div class="bg-gray-800 p-2 rounded border border-gray-700 flex flex-col gap-2">
                 <div class="flex items-center gap-2">
                      <input type="color" id="colorPicker" value="#000000" class="h-6 w-8 bg-transparent border-0 p-0 cursor-pointer">
                      <span id="colorHex" class="text-[10px] font-mono text-gray-400 flex-1">#000000</span>
-                     <button id="swapColorsBtn" class="text-gray-400 hover:text-white"><i class="fas fa-exchange-alt"></i></button>
                 </div>
                 
-                <!-- Opacity -->
                 <div class="flex items-center gap-2">
                     <span class="text-[10px] text-gray-400 w-10">Alpha</span>
                     <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="1" class="flex-1 h-1 bg-gray-600 rounded-lg">
                 </div>
 
-                <!-- Size -->
                 <div class="flex items-center gap-2">
                     <span class="text-[10px] text-gray-400 w-10">Size</span>
                     <input type="range" id="brushSizeSlider" min="1" max="10" value="1" class="flex-1 h-1 bg-gray-600 rounded-lg">
@@ -113,28 +241,35 @@
             <div id="palette-history" class="flex gap-1 mt-2 flex-wrap"></div>
         </div>
 
-        <!-- Export -->
+        <!-- Export/Import -->
         <div class="pt-2 border-t border-gray-800 gap-1 flex flex-col">
             <div class="grid grid-cols-2 gap-1 mb-1">
                  <input type="number" id="widthInput" value="32" class="bg-gray-800 text-white px-1 py-1 rounded text-xs border border-gray-700">
                  <input type="number" id="heightInput" value="32" class="bg-gray-800 text-white px-1 py-1 rounded text-xs border border-gray-700">
             </div>
             <button id="resizeBtn" class="bg-gray-800 hover:bg-gray-700 text-gray-300 py-1 rounded text-xs">New Canvas</button>
+            
+            <div class="grid grid-cols-2 gap-1 mt-1">
+                <button id="saveProjectBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded text-xs font-bold">
+                    <i class="fas fa-save mr-1"></i> Save
+                </button>
+                <button id="loadProjectBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded text-xs font-bold">
+                    <i class="fas fa-folder-open mr-1"></i> Load
+                </button>
+            </div>
+            
             <button id="downloadSheetBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold mt-1">
                 <i class="fas fa-download mr-1"></i> Export Sheet
             </button>
         </div>
     </aside>
 
-    <!-- Main Workspace -->
+    <!-- Main -->
     <main class="flex-1 flex flex-col h-full bg-gray-950 relative">
         <div id="canvas-wrapper" class="flex items-center justify-center">
             <div id="drawing-area">
-                <!-- Composition Layer (Visual Only) -->
                 <canvas id="layer-composition"></canvas>
-                <!-- Preview Layer (Interactions) -->
                 <canvas id="previewLayer"></canvas>
-                <!-- Grid -->
                 <div id="grid-overlay"></div>
             </div>
         </div>
@@ -154,6 +289,20 @@
         </div>
     </main>
 
-     <script src="scripts.js"></script>
+    <!-- Hidden file input for loading projects -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <!-- MODULE SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/dom.js"></script>
+    <script src="js/canvas-manager.js"></script>
+    <script src="js/layer-manager.js"></script>
+    <script src="js/tool-manager.js"></script>
+    <script src="js/animation-manager.js"></script>
+    <script src="js/color-manager.js"></script>
+    <script src="js/file-manager.js"></script>
+    <script src="js/input-handler.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
