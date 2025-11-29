@@ -130,7 +130,8 @@ const InputHandler = {
             'r': 'rect',
             'c': 'circle',
             'm': 'move',
-            'd': 'dither'
+            'd': 'dither',
+            'v': 'mirror'
         };
         
         if (toolShortcuts[key]) {
@@ -149,6 +150,18 @@ const InputHandler = {
         } else if (key === 'arrowleft') {
             e.preventDefault();
             AnimationManager.switchFrame(State.currentFrameIndex - 1);
+        }
+        
+        // Zoom shortcuts
+        if (key === '+' || key === '=') {
+            e.preventDefault();
+            CanvasManager.zoomIn();
+        } else if (key === '-' || key === '_') {
+            e.preventDefault();
+            CanvasManager.zoomOut();
+        } else if (key === '0') {
+            e.preventDefault();
+            CanvasManager.zoomReset();
         }
         
         // Save/Load shortcuts
@@ -236,5 +249,10 @@ const InputHandler = {
         UI.saveProjectBtn.addEventListener('click', () => FileManager.saveProject());
         UI.loadProjectBtn.addEventListener('click', () => FileManager.loadProject());
         UI.fileInput.addEventListener('change', (e) => FileManager.handleFileLoad(e));
+
+        // Zoom controls
+        UI.zoomInBtn.addEventListener('click', () => CanvasManager.zoomIn());
+        UI.zoomOutBtn.addEventListener('click', () => CanvasManager.zoomOut());
+        UI.zoomResetBtn.addEventListener('click', () => CanvasManager.zoomReset());
     }
 };
