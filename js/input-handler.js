@@ -279,13 +279,13 @@ const InputHandler = {
     toggleSlidePanel(clickedButton) {
         const panelId = clickedButton.dataset.panel; // 'layers' or 'settings'
 
+        // Check if this button was already active BEFORE removing classes
+        const wasActive = clickedButton.classList.contains('active');
+        const isOpen = UI.sidePanel.classList.contains('open');
+
         // Remove active class from all icon buttons
         UI.iconSidebar.querySelectorAll('.icon-tab-btn').forEach(btn => btn.classList.remove('active'));
         
-        // Determine if the panel is currently open and if this button was already active
-        const isOpen = UI.sidePanel.classList.contains('open');
-        const wasActive = clickedButton.classList.contains('active');
-
         // Hide all panel content first
         UI.layersPanel.classList.add('hidden');
         UI.settingsPanel.classList.add('hidden');
