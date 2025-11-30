@@ -1,10 +1,8 @@
-   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-        :root {
+       :root {
             --bg-dark: #1a1a1a;
             --bg-panel: #1f2937;
-            --accent: #3b82f6;
-        }
+       }
+ 
 
         body {
             font-family: 'Inter', sans-serif;
@@ -12,14 +10,12 @@
             color: #e5e5e5;
             overflow: hidden;
             user-select: none;
-            touch-action: none; /* Prevent browser zooming/scrolling on canvas */
+            touch-action: none;
         }
 
-        /* Canvas Stack */
         #drawing-area {
             position: relative;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            /* Checkerboard Background */
             background-image: 
                 linear-gradient(45deg, #ccc 25%, transparent 25%), 
                 linear-gradient(-45deg, #ccc 25%, transparent 25%), 
@@ -39,12 +35,10 @@
             image-rendering: crisp-edges;
         }
 
-        /* Z-Indices */
-        #layer-composition { z-index: 10; } /* The combined view of all layers */
-        #previewLayer { z-index: 20; } /* Ghost shapes / Current brush hover */
+        #layer-composition { z-index: 10; }
+        #previewLayer { z-index: 20; }
         #grid-overlay { z-index: 30; pointer-events: none; mix-blend-mode: difference; opacity: 0.3; }
 
-        /* UI Styles */
         .tool-btn { position: relative; }
         .tool-btn.active {
             background-color: var(--accent);
@@ -72,11 +66,10 @@
             width: 100%; height: 4px; background: #4b5563; border-radius: 2px;
         }
 
-        /* Layout Areas */
         #canvas-wrapper {
             height: calc(100% - 130px); 
             background-color: #0f0f0f;
-            overflow: auto; /* Allow scrolling */
+            overflow: auto;
             position: relative;
         }
         
@@ -96,7 +89,6 @@
         .frame-preview.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
         .frame-preview canvas { width: 100%; height: 100%; image-rendering: pixelated; }
 
-        /* Layer Item Styling */
         .layer-item {
             display: flex; align-items: center; gap: 8px;
             padding: 6px; background: #374151;
@@ -109,12 +101,11 @@
         .layer-vis-btn:hover { color: white; }
         .layer-vis-btn.hidden-layer { color: #ef4444; opacity: 0.5; }
 
-        /* Minimap Reference Square */
         #minimap-overlay {
             position: absolute;
             border: 2px solid #ef4444;
             background: rgba(239, 68, 68, 0.1);
-            pointer-events: none; /* Events handled by container */
+            pointer-events: none;
         }
 
         .tooltip-group:hover::after {
@@ -125,7 +116,6 @@
             white-space: nowrap; z-index: 50; pointer-events: none; margin-bottom: 5px;
         }
 
-        /* Layer Name Input Styling */
         .layer-name-input {
             background: transparent;
             border: 1px solid transparent;
@@ -140,7 +130,6 @@
             background: #1f2937;
         }
 
-        /* Drag and Drop Visual Feedback */
         .layer-item.dragging {
             opacity: 0.5;
             transform: rotate(2deg);
@@ -173,3 +162,53 @@
             background: rgba(59, 130, 246, 0.1);
             border: 2px dashed var(--accent);
         }
+
+
+
+/* Slide Panel Styles: makes the panel slide in/out */
+#side-panel.open {
+    transform: translateX(0);
+}
+
+/* Icon Button Styles: visual feedback for active panel */
+.icon-tab-btn {
+    transition: color 0.2s, background-color 0.2s;
+    display: flex; /* Ensure the icon is centered */
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-tab-btn.active {
+    color: var(--accent);
+    background-color: #1f2937; 
+}
+
+/* Palette Container Styles (Updated from #palette-history to #palette-container) */
+#palette-container { 
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: #2d3748; 
+    padding: 8px;
+    border-radius: 4px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Palette Swatch Styles (Slightly larger with a highlight border for selected color) */
+.palette-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px; 
+    cursor: pointer;
+    border: 1px solid #4b5563;
+    transition: transform 0.1s;
+    flex-shrink: 0;
+}
+.palette-swatch:hover { transform: scale(1.1); }
+/* Highlight style for the selected color */
+.palette-swatch.active-color {
+    border: 3px solid white !important;
+    transform: scale(1.15);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}

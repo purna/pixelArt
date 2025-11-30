@@ -23,10 +23,16 @@ const UI = {
     colorHex: document.getElementById('colorHex'),
     opacitySlider: document.getElementById('opacitySlider'),
     brushSizeSlider: document.getElementById('brushSizeSlider'),
+    opacityDisplay: document.getElementById('opacityDisplay'), // Added to HTML
     brushSizeDisplay: document.getElementById('brushSizeDisplay'),
-    toolBtns: document.querySelectorAll('.tool-btn'),
+    toolBtns: document.querySelectorAll('#tool-buttons .tool-btn'), // Updated selector    
     fpsSlider: document.getElementById('fpsSlider'),
     fpsDisplay: document.getElementById('fpsDisplay'),
+
+    // Palette & New Controls
+    paletteContainer: document.getElementById('palette-container'), // UPDATED ID
+    saveColorBtn: document.getElementById('saveColorBtn'), // NEW
+    paletteFileInput: document.getElementById('paletteFileInput'), // NEW
     
     // Info displays
     coords: document.getElementById('coords'),

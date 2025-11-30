@@ -1,16 +1,11 @@
-<!DOCTYPE html>
+
+
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Art Studio - Pro (Modular)</title>
-
-    <link rel="icon" type="image/png" href="/pixelArt/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/pixelArt/favicon.svg" />
-    <link rel="shortcut icon" href="/pixelArt/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/pixelArt/apple-touch-icon.png" />
-    <link rel="manifest" href="/pixelArt/site.webmanifest" />
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -18,355 +13,158 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        :root {
-            --bg-dark: #1a1a1a;
-            --bg-panel: #1f2937;
-            --accent: #3b82f6;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: #e5e5e5;
-            overflow: hidden;
-            user-select: none;
-            touch-action: none;
-        }
-
-        #drawing-area {
-            position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            background-image: 
-                linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-            background-color: white; 
-            transform-origin: top left;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            image-rendering: pixelated; 
-            image-rendering: crisp-edges;
-        }
-
-        #layer-composition { z-index: 10; }
-        #previewLayer { z-index: 20; }
-        #grid-overlay { z-index: 30; pointer-events: none; mix-blend-mode: difference; opacity: 0.3; }
-
-        .tool-btn { position: relative; }
-        .tool-btn.active {
-            background-color: var(--accent);
-            border-color: #60a5fa;
-            color: white;
-        }
-        
-        .palette-swatch {
-            width: 20px; height: 20px;
-            border-radius: 4px; cursor: pointer;
-            border: 1px solid #4b5563;
-        }
-        .palette-swatch:hover { transform: scale(1.2); }
-
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #2d2d2d; }
-        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-        
-        input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 14px; width: 14px;
-            border-radius: 50%; background: var(--accent); margin-top: -5px; 
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; background: #4b5563; border-radius: 2px;
-        }
-
-        #canvas-wrapper {
-            height: calc(100% - 130px); 
-            background-color: #0f0f0f;
-            overflow: auto;
-            position: relative;
-        }
-        
-        #timeline-container {
-            height: 130px;
-            background-color: var(--bg-panel);
-            border-top: 1px solid #374151;
-        }
-
-        .frame-preview {
-            width: 70px; height: 70px;
-            background-color: #374151;
-            border: 2px solid #4b5563;
-            border-radius: 4px;
-            cursor: pointer; position: relative; flex-shrink: 0;
-        }
-        .frame-preview.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
-        .frame-preview canvas { width: 100%; height: 100%; image-rendering: pixelated; }
-
-        .layer-item {
-            display: flex; align-items: center; gap: 8px;
-            padding: 6px; background: #374151;
-            margin-bottom: 4px; border-radius: 4px;
-            border: 1px solid transparent; cursor: pointer;
-            font-size: 11px;
-        }
-        .layer-item.active { border-color: var(--accent); background: #4b5563; }
-        .layer-vis-btn { color: #9ca3af; cursor: pointer; }
-        .layer-vis-btn:hover { color: white; }
-        .layer-vis-btn.hidden-layer { color: #ef4444; opacity: 0.5; }
-
-        #minimap-overlay {
-            position: absolute;
-            border: 2px solid #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-            pointer-events: none;
-        }
-
-        .tooltip-group:hover::after {
-            content: attr(data-title);
-            position: absolute; bottom: 100%; left: 50%;
-            transform: translateX(-50%); background: #000; color: #fff;
-            padding: 4px 8px; border-radius: 4px; font-size: 10px;
-            white-space: nowrap; z-index: 50; pointer-events: none; margin-bottom: 5px;
-        }
-
-        .layer-name-input {
-            background: transparent;
-            border: 1px solid transparent;
-            padding: 2px 4px;
-            color: inherit;
-            font-size: inherit;
-            outline: none;
-            flex: 1;
-        }
-        .layer-name-input:focus {
-            border-color: var(--accent);
-            background: #1f2937;
-        }
-
-        .layer-item.dragging {
-            opacity: 0.5;
-            transform: rotate(2deg);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .layer-item.drag-over {
-            border-color: var(--accent);
-            background: #1e3a8a;
-            box-shadow: inset 0 0 0 2px var(--accent);
-        }
-
-        .drag-handle {
-            cursor: grab;
-            color: #9ca3af;
-            padding: 2px;
-            border-radius: 2px;
-        }
-
-        .drag-handle:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        #layers-list.dragging {
-            background: rgba(59, 130, 246, 0.1);
-            border: 2px dashed var(--accent);
-        }
+ 
     </style>
 </head>
-<body class="h-screen flex flex-col md:flex-row overflow-hidden">
-
-    <!-- Sidebar -->
-    <aside class="w-full md:w-72 bg-gray-900 border-r border-gray-800 flex flex-col p-3 shadow-xl z-20 overflow-y-auto h-full md:h-screen shrink-0 text-sm">
-        
-        <div class="mb-3 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-layer-group mr-2"></i>Pixel Art</h1>
-            <div class="text-[10px] text-gray-500">v3.1</div>
-        </div>
-
+<body class="h-screen flex flex-col bg-gray-900">
     
-
-        <!-- Preview -->
-        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700 relative group">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] uppercase font-bold text-gray-400">Preview</span>
-                <span id="fpsDisplay" class="text-[10px] text-blue-400 font-mono">12 FPS</span>
-            </div>
-            
-            <div id="preview-container" class="w-full aspect-square bg-black rounded mb-2 relative overflow-hidden cursor-move border border-gray-700" style="background-image: linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%); background-size: 10px 10px;">
-                <canvas id="previewCanvas" class="w-full h-full object-contain"></canvas>
-                <div id="minimap-overlay"></div>
-            </div>
-
-            <div class="flex gap-1 mb-2">
-                <button id="playBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 rounded text-xs"><i class="fas fa-play"></i></button>
-                <button id="stopBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1 rounded text-xs"><i class="fas fa-stop"></i></button>
-            </div>
-            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-full h-1 bg-gray-600 rounded-lg">
+    <header class="h-10 flex-shrink-0 bg-gray-800 border-b border-gray-700 flex items-center px-4 z-50">
+        <h1 class="text-lg font-bold text-blue-400">PixlPro</h1>
+        <div class="ml-auto flex items-center space-x-2">
+            <button id="resizeBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-xs">New Canvas</button>
+            <button id="loadProjectBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-xs"><i class="fas fa-folder-open"></i> Load</button>
+            <button id="saveProjectBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-bold"><i class="fas fa-save mr-1"></i>Save</button>
         </div>
+    </header>
 
-        <!-- Layers -->
-        <div class="mb-3 flex-1 min-h-[200px] flex flex-col">
-            <div class="flex justify-between items-end mb-1">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase">Layers</h3>
-                <button id="addLayerBtn" class="text-xs bg-blue-600 px-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
-            </div>
-            <div id="layers-list" class="flex-1 overflow-y-auto bg-gray-800 p-1 rounded border border-gray-700">
-            </div>
-        </div>
-
-        <!-- Tools -->
-        <div class="mb-3">
-            <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Tools</h3>
-            <div class="grid grid-cols-5 gap-1 mb-2">
-                <button class="tool-btn active p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil (P)">
-                    <i class="fas fa-pencil-alt text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="brush" data-title="Brush (B)">
-                    <i class="fas fa-paint-brush text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="mirror" data-title="Mirror (V)">
-                    <i class="fas fa-columns text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="dither" data-title="Dither (D)">
-                    <i class="fas fa-th text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eraser" data-title="Eraser (E)">
-                    <i class="fas fa-eraser text-xs"></i>
-                </button>
-                
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="bucket" data-title="Fill (F)">
-                    <i class="fas fa-fill-drip text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="stroke" data-title="Line (L)">
-                    <i class="fas fa-slash text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="rect" data-title="Rectangle (R)">
-                    <i class="far fa-square text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="circle" data-title="Circle (C)">
-                    <i class="far fa-circle text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="move" data-title="Move (M)">
-                    <i class="fas fa-arrows-alt text-xs"></i>
-                </button>
-                
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eyedropper" data-title="Picker (I)">
-                    <i class="fas fa-eye-dropper text-xs"></i>
-                </button>
-            </div>
-
-            <!-- Color & Settings -->
-            <div class="bg-gray-800 p-2 rounded border border-gray-700 flex flex-col gap-2">
-                <div class="flex items-center gap-2">
-                     <input type="color" id="colorPicker" value="#000000" class="h-6 w-8 bg-transparent border-0 p-0 cursor-pointer">
-                     <span id="colorHex" class="text-[10px] font-mono text-gray-400 flex-1">#000000</span>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] text-gray-400 w-10">Alpha</span>
-                    <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="1" class="flex-1 h-1 bg-gray-600 rounded-lg">
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] text-gray-400 w-10">Size</span>
-                    <input type="range" id="brushSizeSlider" min="1" max="10" value="1" class="flex-1 h-1 bg-gray-600 rounded-lg">
-                    <span id="brushSizeDisplay" class="text-[10px] text-blue-400 w-4 text-right">1</span>
-                </div>
-            </div>
-            
-            <div id="palette-history" class="flex gap-1 mt-2 flex-wrap"></div>
-        </div>
-
-            <!-- Zoom Controls -->
-        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] uppercase font-bold text-gray-400">Zoom</span>
-                <span id="zoomPercentage" class="text-[10px] text-blue-400 font-mono">200%</span>
-            </div>
-            <div class="flex gap-2 items-center">
-                <button id="zoomOutBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-sm font-bold">
-                    <i class="fas fa-search-minus"></i>
-                </button>
-                <button id="zoomResetBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-xs">
-                    Reset
-                </button>
-                <button id="zoomInBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-sm font-bold">
-                    <i class="fas fa-search-plus"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Export/Import -->
-        <div class="pt-2 border-t border-gray-800 gap-1 flex flex-col">
-            <div class="grid grid-cols-2 gap-1 mb-1">
-                 <input type="number" id="widthInput" value="32" class="bg-gray-800 text-white px-1 py-1 rounded text-xs border border-gray-700">
-                 <input type="number" id="heightInput" value="32" class="bg-gray-800 text-white px-1 py-1 rounded text-xs border border-gray-700">
-            </div>
-            <button id="resizeBtn" class="bg-gray-800 hover:bg-gray-700 text-gray-300 py-1 rounded text-xs">New Canvas</button>
-            
-            <div class="grid grid-cols-2 gap-1 mt-1">
-                <button id="saveProjectBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded text-xs font-bold">
-                    <i class="fas fa-save mr-1"></i> Save
-                </button>
-                <button id="loadProjectBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded text-xs font-bold">
-                    <i class="fas fa-folder-open mr-1"></i> Load
-                </button>
-            </div>
-            
-            <button id="downloadSheetBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold mt-1">
-                <i class="fas fa-download mr-1"></i> Export Sheet
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main -->
-    <main class="flex-1 flex flex-col h-full bg-gray-950 relative">
-        <div id="canvas-wrapper" class="flex items-center justify-center">
-            <div id="drawing-area">
-                <canvas id="layer-composition"></canvas>
-                <canvas id="previewLayer"></canvas>
-                <div id="grid-overlay"></div>
-            </div>
-        </div>
+    <main class="flex-1 flex overflow-hidden">
         
-        <!-- Timeline -->
-        <div id="timeline-container" class="flex items-center px-4 gap-4 overflow-x-auto relative">
-            <div class="flex flex-col gap-1 sticky left-0 z-10 bg-gray-800/90 p-1 rounded backdrop-blur border border-gray-700">
-                <button id="addFrameBtn" class="bg-blue-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
-                <button id="duplicateFrameBtn" class="bg-gray-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-gray-500 text-white"><i class="fas fa-copy"></i></button>
-                 <button id="deleteFrameBtn" class="bg-red-900/50 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-red-800 text-red-300"><i class="fas fa-trash"></i></button>
-            </div>
-            <div id="frames-list" class="flex gap-2 h-full items-center p-2"></div>
+        <div id="icon-sidebar" class="w-12 flex-shrink-0 bg-gray-800 border-r border-gray-700 flex flex-col py-2 z-40">
+            <button class="icon-tab-btn w-full h-10 text-xl text-gray-400 hover:bg-gray-700 active" data-panel="layers" title="Layers"><i class="fas fa-layer-group"></i></button>
+            <button class="icon-tab-btn w-full h-10 text-xl text-gray-400 hover:bg-gray-700" data-panel="settings" title="Settings & Preview"><i class="fas fa-cog"></i></button>
         </div>
 
-        <div class="absolute bottom-[140px] right-4 bg-gray-900/80 backdrop-blur text-gray-400 px-2 py-1 rounded text-[10px] font-mono border border-gray-800 pointer-events-none">
-            <span id="coords">0, 0</span> | <span id="zoomDisplay">100%</span>
+        <div id="canvas-main-area" class="flex-1 flex flex-col overflow-hidden relative">
+            
+            <div class="flex-1 flex overflow-hidden">
+                
+                <div id="fixed-tools-panel" class="w-64 flex-shrink-0 bg-gray-800 border-r border-gray-700 p-3 flex flex-col overflow-y-auto z-30">
+                    
+                    <div class="mb-3">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Tools</h3>
+                        <div id="tool-buttons" class="grid grid-cols-5 gap-1 mb-2">
+                            <button class="tool-btn active p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil (P)"><i class="fas fa-pencil-alt text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="brush" data-title="Brush (B)"><i class="fas fa-paint-brush text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eraser" data-title="Eraser (E)"><i class="fas fa-eraser text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="fill" data-title="Fill (F)"><i class="fas fa-fill-drip text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eyedropper" data-title="Eyedropper (I)"><i class="fas fa-eye-dropper text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="stroke" data-title="Line (L)"><i class="fas fa-slash text-xs transform rotate-45"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="rect" data-title="Rectangle (R)"><i class="fas fa-vector-square text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="circle" data-title="Circle (C)"><i class="fas fa-circle-notch text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="move" data-title="Move Layer (M)"><i class="fas fa-arrows-alt text-xs"></i></button>
+                            <button class="tool-btn p-2 rounded bg-gray-900 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="dither" data-title="Dither (D)"><i class="fas fa-th text-xs"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Color</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="color" id="colorPicker" value="#000000" class="w-10 h-10 rounded overflow-hidden">
+                            <span id="colorHex" class="font-mono text-sm text-white bg-gray-700 px-2 py-1 rounded">#000000</span>
+                            <button id="saveColorBtn" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-bold" title="Save current color to palette">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Size: <span id="brushSizeDisplay">1</span>px</h3>
+                        <input type="range" id="brushSizeSlider" min="1" max="10" value="1" class="w-full">
+                    </div>
+
+                    <div class="mb-3">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Alpha: <span id="opacityDisplay">1.0</span></h3>
+                        <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="1" class="w-full">
+                    </div>
+
+                   <div class="flex flex-col mb-3 flex-1 min-h-32">
+                        <div class="flex justify-between items-end mb-1">
+                            <h3 class="text-[10px] font-bold text-gray-400 uppercase">Current Palette</h3>
+                            <button id="importPaletteUrlBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">
+                                <i class="fas fa-link mr-1"></i>URL
+                            </button>
+                        </div>
+                        <div id="palette-container" class="flex flex-wrap gap-1 bg-gray-700 p-2 rounded flex-1 overflow-y-auto border border-gray-600">
+                            </div>
+                    </div>
+                </div>
+
+                <div id="canvas-wrapper" class="flex-1 overflow-auto bg-gray-800 flex items-center justify-center relative">
+                    <div id="drawing-area" class="relative">
+                        <canvas id="layer-composition"></canvas>
+                        <canvas id="previewLayer"></canvas>
+                        <canvas id="grid-overlay"></canvas>
+                    </div>
+                </div>
+                
+                <div id="side-panel" class="absolute top-0 right-0 h-full w-64 bg-gray-800 border-l border-gray-700 shadow-xl transition-transform duration-300 transform translate-x-full z-20 p-3 overflow-y-auto">
+                    
+                    <div id="layers-panel" class="">
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-base font-bold text-white">Layers</h3>
+                            <button id="addLayerBtn" class="text-xs bg-blue-600 px-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i> Add Layer</button>
+                        </div>
+                        <div id="layers-list" class="flex-1 overflow-y-auto bg-gray-700 p-1 rounded border border-gray-600" style="min-height: 200px;">
+                            </div>
+                    </div>
+
+                    <div id="settings-panel" class="hidden">
+                         <h3 class="text-base font-bold text-white mb-2">Preview</h3>
+                         <div id="preview-container" class="w-32 h-32 bg-gray-700 mx-auto relative rounded shadow-lg border border-gray-600 mb-4">
+                             <canvas id="previewCanvas" width="32" height="32" class="w-full h-full block image-rendering: pixelated;"></canvas>
+                             <div id="minimap-overlay"></div>
+                         </div>
+                         
+                         <h3 class="text-base font-bold text-white mb-2 mt-4">Canvas Settings</h3>
+                         <div class="flex space-x-2 mb-2">
+                             <input type="number" id="widthInput" value="32" min="4" max="128" class="w-1/2 p-1 text-center bg-gray-700 text-xs border border-gray-600 rounded">
+                             <input type="number" id="heightInput" value="32" min="4" max="128" class="w-1/2 p-1 text-center bg-gray-700 text-xs border border-gray-600 rounded">
+                         </div>
+                         <div class="flex flex-col space-y-2 mt-4">
+                             <h3 class="text-[10px] font-bold text-gray-400 uppercase">Zoom Controls</h3>
+                             <div class="flex gap-2">
+                                 <button id="zoomInBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs flex-1"><i class="fas fa-search-plus"></i> In</button>
+                                 <button id="zoomOutBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs flex-1"><i class="fas fa-search-minus"></i> Out</button>
+                                 <button id="zoomResetBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs flex-1">Reset</button>
+                             </div>
+                             <span id="zoomPercentage" class="text-center text-xs text-gray-400 mt-2">100%</span>
+                         </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="timeline-container" class="h-32 flex-shrink-0 bg-gray-800 border-t border-gray-700 flex flex-col items-start px-4 z-40">
+                <div class="h-8 flex-shrink-0 flex items-center gap-2 pt-2">
+                    <button id="playBtn" class="bg-green-600 w-8 h-8 rounded text-sm flex items-center justify-center hover:bg-green-500 text-white"><i class="fas fa-play"></i></button>
+                    <button id="stopBtn" class="bg-red-600 w-8 h-8 rounded text-sm flex items-center justify-center hover:bg-red-500 text-white hidden"><i class="fas fa-stop"></i></button>
+                    <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-24">
+                    <span id="fpsDisplay" class="text-xs text-gray-400">12 FPS</span>
+                </div>
+                <div class="flex gap-2 h-full items-center p-2">
+                    <button id="addFrameBtn" class="bg-blue-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
+                    <button id="duplicateFrameBtn" class="bg-gray-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-gray-500 text-white"><i class="fas fa-copy"></i></button>
+                    <button id="deleteFrameBtn" class="bg-red-900/50 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-red-800 text-red-300"><i class="fas fa-trash"></i></button>
+                    <div id="frames-list" class="flex gap-2 h-full items-center p-2"></div>
+                </div>
+            </div>
+            
+            <div class="absolute bottom-[140px] left-4 bg-gray-900/80 backdrop-blur text-gray-400 px-2 py-1 rounded text-[10px] font-mono border border-gray-800 pointer-events-none z-50">
+                <span id="coords">0, 0</span> | <span id="zoomDisplay">100%</span>
+            </div>
         </div>
+
     </main>
 
-    <!-- Hidden file input for loading projects -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
-
-    <!-- MODULE SCRIPTS -->
-    <script src="js/config.js"></script>
+    <input type="file" id="paletteFileInput" accept=".ase" style="display: none;"> <script src="js/config.js"></script>
     <script src="js/state.js"></script>
     <script src="js/dom.js"></script>
     <script src="js/canvas-manager.js"></script>
     <script src="js/layer-manager.js"></script>
-    <script src="js/tool-manager.js"></script>
     <script src="js/animation-manager.js"></script>
     <script src="js/color-manager.js"></script>
+    <script src="js/tool-manager.js"></script>
     <script src="js/file-manager.js"></script>
     <script src="js/input-handler.js"></script>
     <script src="js/app.js"></script>

@@ -8,6 +8,11 @@ function init() {
     // Initialize canvas with default size
     CanvasManager.init(Config.defaultWidth, Config.defaultHeight);
     
+    // NEW: Initialize current palette (assuming Config.defaultPalette exists or is defined in state.js)
+    if (!State.currentPalette || State.currentPalette.length === 0) {
+        // Example default palette - adjust based on your state/config.js
+        State.currentPalette = Config.defaultPalette || ['#000000', '#ffffff', '#ff0000', '#0000ff', '#00ff00']; 
+    }
     // Render initial UI
     ColorManager.render();
     LayerManager.renderList();
