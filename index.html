@@ -1,26 +1,27 @@
 
 
-    <!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Art Studio - Pro (Modular)</title>
 
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/pixelArt/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/pixelArt/favicon.svg" />
     <link rel="shortcut icon" href="/pixelArt/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/pixelArt/apple-touch-icon.png" />
     <link rel="manifest" href="/pixelArt/site.webmanifest" />
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
- 
     </style>
 </head>
 <body class="h-screen flex flex-col bg-gray-900">
@@ -107,9 +108,9 @@
                 <div id="side-panel" class="absolute top-0 right-0 h-full w-64 bg-gray-800 border-l border-gray-700 shadow-xl transition-transform duration-300 transform translate-x-full z-20 p-3 overflow-y-auto">
                     
                     <div id="layers-panel" class="">
-                        <div class="flex justify-between items-end mb-2">
-                            <h3 class="text-base font-bold text-white">Layers</h3>
-                            <button id="addLayerBtn" class="text-xs bg-blue-600 px-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i> Add Layer</button>
+                        <div class="flex flex-col mb-2">
+                            <h3 class="text-base font-bold text-white mb-2">Layers</h3>
+                            <button id="addLayerBtn" class="w-full text-xs bg-blue-600 px-2 py-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i> Add Layer</button>
                         </div>
                         <div id="layers-list" class="flex-1 overflow-y-auto bg-gray-700 p-1 rounded border border-gray-600" style="min-height: 200px;">
                             </div>
@@ -164,7 +165,9 @@
     </main>
 
     <input type="file" id="fileInput" accept=".json" style="display: none;">
-    <input type="file" id="paletteFileInput" accept=".ase" style="display: none;"> <script src="js/config.js"></script>
+    <input type="file" id="paletteFileInput" accept=".ase" style="display: none;">
+    
+    <script src="js/config.js"></script>
     <script src="js/state.js"></script>
     <script src="js/dom.js"></script>
     <script src="js/canvas-manager.js"></script>

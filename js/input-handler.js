@@ -265,7 +265,7 @@ const InputHandler = {
         UI.zoomOutBtn.addEventListener('click', () => CanvasManager.zoomOut());
         UI.zoomResetBtn.addEventListener('click', () => CanvasManager.zoomReset());
 
-        // Slide panel icon buttons
+        // Slide panel icon buttons - THIS IS THE KEY ADDITION FOR PANEL TOGGLING
         const iconButtons = UI.iconSidebar.querySelectorAll('.icon-tab-btn');
         iconButtons.forEach(btn => {
             btn.addEventListener('click', () => this.toggleSlidePanel(btn));
@@ -273,30 +273,32 @@ const InputHandler = {
     },
 
     /**
-     * NEW: Toggle the slide panel visibility and content
+     * Toggle the slide panel visibility and content
+     * THIS FUNCTION MAKES THE LAYER/SETTINGS ICONS WORK
      */
     toggleSlidePanel(clickedButton) {
         const panelId = clickedButton.dataset.panel; // 'layers' or 'settings'
 
-        // 1. Handle Active State
+        // Remove active class from all icon buttons
         UI.iconSidebar.querySelectorAll('.icon-tab-btn').forEach(btn => btn.classList.remove('active'));
         
-        // Determine if the panel is currently open and if the clicked button is the active one
+        // Determine if the panel is currently open and if this button was already active
         const isOpen = UI.sidePanel.classList.contains('open');
         const wasActive = clickedButton.classList.contains('active');
 
-        // Clear all panel visibility
+        // Hide all panel content first
         UI.layersPanel.classList.add('hidden');
         UI.settingsPanel.classList.add('hidden');
         
         if (isOpen && wasActive) {
-            // Close panel if clicking the active button again
+            // Close panel if clicking the same active button again
             UI.sidePanel.classList.remove('open');
         } else {
-            // Open panel and show the new content
+            // Open panel and show the clicked panel's content
             UI.sidePanel.classList.add('open');
             clickedButton.classList.add('active');
             
+            // Show the appropriate panel content
             document.getElementById(`${panelId}-panel`).classList.remove('hidden');
         }
     }
