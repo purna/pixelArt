@@ -23,22 +23,28 @@ const UI = {
     colorHex: document.getElementById('colorHex'),
     opacitySlider: document.getElementById('opacitySlider'),
     brushSizeSlider: document.getElementById('brushSizeSlider'),
-    opacityDisplay: document.getElementById('opacityDisplay'), // Added to HTML
+    opacityDisplay: document.getElementById('opacityDisplay'),
     brushSizeDisplay: document.getElementById('brushSizeDisplay'),
-    toolBtns: document.querySelectorAll('#tool-buttons .tool-btn'), // Updated selector    
+    toolBtns: document.querySelectorAll('#tool-buttons .tool-btn'),
     fpsSlider: document.getElementById('fpsSlider'),
     fpsDisplay: document.getElementById('fpsDisplay'),
 
     // Palette & New Controls
-    paletteContainer: document.getElementById('palette-container'), // UPDATED ID
-    saveColorBtn: document.getElementById('saveColorBtn'), // NEW
-    paletteFileInput: document.getElementById('paletteFileInput'), // NEW
+    paletteContainer: document.getElementById('palette-container'),
+    saveColorBtn: document.getElementById('saveColorBtn'),
+    paletteFileInput: document.getElementById('paletteFileInput'),
+    
+    // Slide panel elements
+    sidePanel: document.getElementById('side-panel'),
+    layersPanel: document.getElementById('layers-panel'),
+    settingsPanel: document.getElementById('settings-panel'),
+    iconSidebar: document.getElementById('icon-sidebar'),
+    importPaletteUrlBtn: document.getElementById('importPaletteUrlBtn'),
     
     // Info displays
     coords: document.getElementById('coords'),
     zoomDisplay: document.getElementById('zoomDisplay'),
     zoomPercentage: document.getElementById('zoomPercentage'),
-    paletteContainer: document.getElementById('palette-history'),
     
     // Buttons
     addLayerBtn: document.getElementById('addLayerBtn'),

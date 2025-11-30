@@ -26,6 +26,7 @@ const State = {
     
     // History & UI
     recentColors: ['#000000', '#ffffff', '#3b82f6', '#ef4444', '#10b981'],
+    currentPalette: ['#000000', '#ffffff', '#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff', '#00ffff'],
     dragStart: { x: 0, y: 0 },
     
     // Offscreen canvases for performance

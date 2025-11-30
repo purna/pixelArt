@@ -124,14 +124,13 @@ const InputHandler = {
             'p': 'pencil',
             'b': 'brush',
             'e': 'eraser',
-            'f': 'bucket',
+            'f': 'fill',
             'i': 'eyedropper',
             'l': 'stroke',
             'r': 'rect',
             'c': 'circle',
             'm': 'move',
-            'd': 'dither',
-            'v': 'mirror'
+            'd': 'dither'
         };
         
         if (toolShortcuts[key]) {
@@ -180,8 +179,7 @@ const InputHandler = {
      * Initialize all event listeners
      */
     init() {
-
-       // New Palette & Color Listeners 
+        // New Palette & Color Listeners 
         UI.saveColorBtn.addEventListener('click', () => ColorManager.saveColorToPalette(State.color));
         
         // NEW: URL Import Listener
@@ -225,6 +223,7 @@ const InputHandler = {
 
         UI.opacitySlider.addEventListener('input', (e) => {
             State.opacity = parseFloat(e.target.value);
+            UI.opacityDisplay.textContent = e.target.value;
         });
 
         UI.brushSizeSlider.addEventListener('input', (e) => {
@@ -257,7 +256,6 @@ const InputHandler = {
             }
         });
 
-        UI.downloadSheetBtn.addEventListener('click', () => AnimationManager.exportSpritesheet());
         UI.saveProjectBtn.addEventListener('click', () => FileManager.saveProject());
         UI.loadProjectBtn.addEventListener('click', () => FileManager.loadProject());
         UI.fileInput.addEventListener('change', (e) => FileManager.handleFileLoad(e));
@@ -267,34 +265,39 @@ const InputHandler = {
         UI.zoomOutBtn.addEventListener('click', () => CanvasManager.zoomOut());
         UI.zoomResetBtn.addEventListener('click', () => CanvasManager.zoomReset());
 
+        // Slide panel icon buttons
+        const iconButtons = UI.iconSidebar.querySelectorAll('.icon-tab-btn');
+        iconButtons.forEach(btn => {
+            btn.addEventListener('click', () => this.toggleSlidePanel(btn));
+        });
     },
-        /**
-         * NEW: Toggle the slide panel visibility and content
-         */
-        toggleSlidePanel(clickedButton) {
-            const panelId = clickedButton.dataset.panel; // 'layers' or 'settings'
 
-            // 1. Handle Active State
-            UI.iconSidebar.querySelectorAll('.icon-tab-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // Determine if the panel is currently open and if the clicked button is the active one
-            const isOpen = UI.sidePanel.classList.contains('open');
-            const isActive = clickedButton.classList.contains('active');
+    /**
+     * NEW: Toggle the slide panel visibility and content
+     */
+    toggleSlidePanel(clickedButton) {
+        const panelId = clickedButton.dataset.panel; // 'layers' or 'settings'
 
-            // Clear all panel visibility
-            UI.layersPanel.classList.add('hidden');
-            UI.settingsPanel.classList.add('hidden');
+        // 1. Handle Active State
+        UI.iconSidebar.querySelectorAll('.icon-tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Determine if the panel is currently open and if the clicked button is the active one
+        const isOpen = UI.sidePanel.classList.contains('open');
+        const wasActive = clickedButton.classList.contains('active');
+
+        // Clear all panel visibility
+        UI.layersPanel.classList.add('hidden');
+        UI.settingsPanel.classList.add('hidden');
+        
+        if (isOpen && wasActive) {
+            // Close panel if clicking the active button again
+            UI.sidePanel.classList.remove('open');
+        } else {
+            // Open panel and show the new content
+            UI.sidePanel.classList.add('open');
+            clickedButton.classList.add('active');
             
-            if (isOpen && isActive) {
-                // Close panel if clicking the active button again
-                UI.sidePanel.classList.remove('open');
-            } else {
-                // Open panel and show the new content
-                UI.sidePanel.classList.add('open');
-                clickedButton.classList.add('active');
-                
-                document.getElementById(`${panelId}-panel`).classList.remove('hidden');
-            }
+            document.getElementById(`${panelId}-panel`).classList.remove('hidden');
         }
-    
+    }
 };
