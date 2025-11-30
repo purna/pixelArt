@@ -88,16 +88,20 @@ const CanvasManager = {
      * Zoom in
      */
     zoomIn() {
+        console.log('Zoom In clicked, current zoom:', State.zoom);
         State.zoom = Math.min(State.zoom + 2, 60);
         this.updateZoom();
+        console.log('New zoom:', State.zoom);
     },
 
     /**
      * Zoom out
      */
     zoomOut() {
+        console.log('Zoom Out clicked, current zoom:', State.zoom);
         State.zoom = Math.max(State.zoom - 2, 1);
         this.updateZoom();
+        console.log('New zoom:', State.zoom);
     },
 
     /**

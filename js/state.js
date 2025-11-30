@@ -29,6 +29,11 @@ const State = {
     currentPalette: ['#000000', '#ffffff', '#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff', '#00ffff'],
     dragStart: { x: 0, y: 0 },
     
+    // Undo/Redo history system
+    history: [],
+    historyIndex: -1,
+    maxHistory: Config.maxHistory,
+    
     // Offscreen canvases for performance
     offscreenCanvas: document.createElement('canvas'),
     layerCanvas: document.createElement('canvas')

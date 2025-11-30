@@ -17,7 +17,7 @@ const ToolManager = {
      */
     plot(x, y, colorStr, context, isEraser = false) {
         let size = State.brushSize;
-        if (State.tool === 'pencil' || State.tool === 'mirror') size = 1;
+        if (State.tool === 'pencil') size = 1;
 
         // Dither pattern check
         if (State.tool === 'dither') {
@@ -180,6 +180,11 @@ const ToolManager = {
         const newData = layerCtx.getImageData(0, 0, State.width, State.height);
         State.frames[State.currentFrameIndex].layers[State.activeLayerIndex].data = newData;
         CanvasManager.saveLayerChange();
+        
+        // Save to history for undo/redo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -227,6 +232,11 @@ const ToolManager = {
         
         layerCtx.putImageData(data, 0, 0);
         CanvasManager.saveLayerChange();
+        
+        // Save to history for undo/redo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**

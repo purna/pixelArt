@@ -6,40 +6,49 @@ const FileManager = {
      * Save project as JSON file
      */
     saveProject() {
-        // Convert ImageData to base64 for JSON serialization
-        const serializeFrames = State.frames.map(frame => ({
-            layers: frame.layers.map(layer => ({
-                name: layer.name,
-                visible: layer.visible,
-                data: this.imageDataToBase64(layer.data)
-            }))
-        }));
+        try {
+            console.log('Starting project save...');
+            
+            // Convert ImageData to base64 for JSON serialization
+            const serializeFrames = State.frames.map(frame => ({
+                layers: frame.layers.map(layer => ({
+                    name: layer.name,
+                    visible: layer.visible,
+                    data: this.imageDataToBase64(layer.data)
+                }))
+            }));
 
-        const project = {
-            version: '3.1',
-            width: State.width,
-            height: State.height,
-            frames: serializeFrames,
-            fps: State.fps,
-            timestamp: new Date().toISOString()
-        };
+            const project = {
+                version: '3.1',
+                width: State.width,
+                height: State.height,
+                frames: serializeFrames,
+                fps: State.fps,
+                timestamp: new Date().toISOString()
+            };
 
-        const json = JSON.stringify(project, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.download = `pixel-art-${Date.now()}.json`;
-        link.href = url;
-        link.click();
-        
-        URL.revokeObjectURL(url);
+            const json = JSON.stringify(project, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = `pixel-art-${Date.now()}.json`;
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            console.log('Project saved successfully!');
+        } catch (error) {
+            console.error('Save failed:', error);
+            alert('Failed to save project: ' + error.message);
+        }
     },
 
     /**
      * Load project from JSON file
      */
     loadProject() {
+        console.log('Opening file dialog for project load...');
         UI.fileInput.click();
     },
 
@@ -132,25 +141,7 @@ const FileManager = {
     },
 
     /**
-     * Convert base64 string to ImageData
-     */
-    base64ToImageData(base64, width, height) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                resolve(ctx.getImageData(0, 0, width, height));
-            };
-            img.src = base64;
-        });
-    },
-
-    /**
-     * Synchronous version for loading (blocking)
+     * Convert base64 string to ImageData (synchronous version for loading)
      */
     base64ToImageData(base64, width, height) {
         const canvas = document.createElement('canvas');
@@ -161,8 +152,44 @@ const FileManager = {
         const img = new Image();
         img.src = base64;
         
-        // Force synchronous load (not ideal but works for data URLs)
+        // Force synchronous load (works for data URLs)
         ctx.drawImage(img, 0, 0);
         return ctx.getImageData(0, 0, width, height);
+    },
+
+    /**
+     * Export spritesheet as PNG
+     */
+    exportSpritesheet() {
+        try {
+            console.log('Starting spritesheet export...');
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = State.width * State.frames.length;
+            canvas.height = State.height;
+            const ctx = canvas.getContext('2d');
+            
+            State.frames.forEach((frame, i) => {
+                frame.layers.forEach(layer => {
+                    if (layer.visible) {
+                        const temp = document.createElement('canvas');
+                        temp.width = State.width;
+                        temp.height = State.height;
+                        temp.getContext('2d').putImageData(layer.data, 0, 0);
+                        ctx.drawImage(temp, i * State.width, 0);
+                    }
+                });
+            });
+            
+            const link = document.createElement('a');
+            link.download = `spritesheet-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            console.log('Spritesheet exported successfully!');
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export spritesheet: ' + error.message);
+        }
     }
 };

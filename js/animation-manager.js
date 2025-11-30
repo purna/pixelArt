@@ -10,7 +10,7 @@ const AnimationManager = {
         
         State.frames.forEach((frame, i) => {
             const div = document.createElement('div');
-            div.className = `frame-preview ${i === State.currentFrameIndex ? 'active' : ''}`;
+            div.className = `frame-thumb ${i === State.currentFrameIndex ? 'active' : ''}`;
             div.onclick = () => this.switchFrame(i);
             
             // Create thumbnail by compositing layers
@@ -33,7 +33,7 @@ const AnimationManager = {
             
             // Frame number label
             const num = document.createElement('span');
-            num.className = "absolute bottom-0 right-1 text-[9px] text-gray-300 font-bold bg-black/50 px-1 rounded";
+            num.className = "frame-number";
             num.innerText = i + 1;
             div.appendChild(num);
             
@@ -138,7 +138,7 @@ const AnimationManager = {
         if (State.isPlaying) return;
         
         State.isPlaying = true;
-        UI.playBtn.classList.add('bg-green-800');
+        UI.playBtn.classList.add('active');
         
         let frameIndex = 0;
         const loop = () => {
@@ -170,7 +170,7 @@ const AnimationManager = {
     stop() {
         State.isPlaying = false;
         clearTimeout(State.timer);
-        UI.playBtn.classList.remove('bg-green-800');
+        UI.playBtn.classList.remove('active');
         CanvasManager.render(); // Restore current frame view
     },
 
@@ -187,30 +187,5 @@ const AnimationManager = {
         }
     },
 
-    /**
-     * Export animation as spritesheet
-     */
-    exportSpritesheet() {
-        const canvas = document.createElement('canvas');
-        canvas.width = State.width * State.frames.length;
-        canvas.height = State.height;
-        const ctx = canvas.getContext('2d');
-        
-        State.frames.forEach((frame, i) => {
-            frame.layers.forEach(layer => {
-                if (layer.visible) {
-                    const temp = document.createElement('canvas');
-                    temp.width = State.width;
-                    temp.height = State.height;
-                    temp.getContext('2d').putImageData(layer.data, 0, 0);
-                    ctx.drawImage(temp, i * State.width, 0);
-                }
-            });
-        });
-        
-        const link = document.createElement('a');
-        link.download = 'spritesheet.png';
-        link.href = canvas.toDataURL();
-        link.click();
-    }
+
 };

@@ -5,6 +5,9 @@
  * Initialize the application
  */
 function init() {
+
+    initDOM();
+
     // Initialize canvas with default size
     CanvasManager.init(Config.defaultWidth, Config.defaultHeight);
     
@@ -12,6 +15,15 @@ function init() {
     ColorManager.render();
     LayerManager.renderList();
     AnimationManager.renderTimeline();
+    
+    // Initialize UI management
+    UIManager.init();
+    
+    // Load user settings
+    InputHandler.loadSettings();
+    
+    // Save initial state for undo/redo
+    InputHandler.saveState();
     
     // Set up event listeners
     InputHandler.init();
@@ -31,7 +43,7 @@ function init() {
 
 // Start application when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init); // Correctly waits for DOM
 } else {
     init();
 }

@@ -97,14 +97,14 @@ const ColorManager = {
         // RENDER CURRENT PALETTE
         State.currentPalette.forEach(color => {
             const swatch = document.createElement('div');
-            swatch.className = 'palette-swatch';
+            swatch.className = 'swatch';
             swatch.style.backgroundColor = color;
             swatch.title = color;
             swatch.onclick = () => this.setColor(color);
             
             // Highlight the currently selected color
             if (color.toLowerCase() === State.color.toLowerCase()) {
-                 swatch.classList.add('active-color');
+                 swatch.classList.add('active');
             }
             
             UI.paletteContainer.appendChild(swatch);
