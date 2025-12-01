@@ -181,6 +181,66 @@ const CanvasManager = {
     },
     
     /**
+     * Resize the canvas to new dimensions
+     */
+    resizeCanvas(newWidth, newHeight) {
+        const oldWidth = State.width;
+        const oldHeight = State.height;
+
+        // Update state
+        State.width = Math.min(Math.max(newWidth, Config.minSize), Config.maxSize);
+        State.height = Math.min(Math.max(newHeight, Config.minSize), Config.maxSize);
+
+        // Resize canvases
+        [UI.compositionCanvas, UI.previewLayer].forEach(c => {
+            c.width = State.width;
+            c.height = State.height;
+        });
+
+        State.offscreenCanvas.width = State.width;
+        State.offscreenCanvas.height = State.height;
+        State.layerCanvas.width = State.width;
+        State.layerCanvas.height = State.height;
+        UI.previewCanvas.width = State.width;
+        UI.previewCanvas.height = State.height;
+
+        // Resize all layer data in all frames
+        State.frames.forEach(frame => {
+            frame.layers.forEach(layer => {
+                const newData = new ImageData(State.width, State.height);
+                const oldData = layer.data;
+
+                // Copy pixels, cropping or padding as needed
+                const copyWidth = Math.min(oldWidth, State.width);
+                const copyHeight = Math.min(oldHeight, State.height);
+
+                for (let y = 0; y < copyHeight; y++) {
+                    for (let x = 0; x < copyWidth; x++) {
+                        const oldIndex = (y * oldWidth + x) * 4;
+                        const newIndex = (y * State.width + x) * 4;
+
+                        newData.data[newIndex] = oldData.data[oldIndex];     // R
+                        newData.data[newIndex + 1] = oldData.data[oldIndex + 1]; // G
+                        newData.data[newIndex + 2] = oldData.data[oldIndex + 2]; // B
+                        newData.data[newIndex + 3] = oldData.data[oldIndex + 3]; // A
+                    }
+                }
+
+                layer.data = newData;
+            });
+        });
+
+        // Update UI
+        UI.widthInput.value = State.width;
+        UI.heightInput.value = State.height;
+
+        this.updateZoom(true);
+        this.render();
+        AnimationManager.renderTimeline();
+        LayerManager.renderList();
+    },
+
+    /**
      * Clear the preview layer (used for shape tools)
      */
     clearPreviewLayer() {

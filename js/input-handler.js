@@ -292,6 +292,17 @@ const InputHandler = {
         // Note: Layer and Settings buttons are handled by UIManager.setupContextSwitching()
 
         // Settings panel controls
+        UI.applySettingsBtn.addEventListener('click', () => {
+            const newWidth = parseInt(UI.widthInput.value);
+            const newHeight = parseInt(UI.heightInput.value);
+            if (newWidth >= 4 && newWidth <= 128 && newHeight >= 4 && newHeight <= 128) {
+                CanvasManager.resizeCanvas(newWidth, newHeight);
+                this.saveState();
+                this.showNotification('Canvas resized successfully!', 'success');
+            } else {
+                this.showNotification('Invalid canvas size. Must be between 4 and 128.', 'error');
+            }
+        });
         UI.resetSettingsBtn.addEventListener('click', () => this.resetSetting());
         UI.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
 
@@ -302,6 +313,45 @@ const InputHandler = {
         UI.darkMode.addEventListener('change', (e) => this.updateSetting('darkMode', e.target.checked));
         UI.autoSave.addEventListener('change', (e) => this.updateSetting('autoSave', e.target.checked));
         UI.showCoords.addEventListener('change', (e) => this.updateSetting('showCoords', e.target.checked));
+
+        // Browser storage save/load functionality
+        if (UI.saveToBrowserBtn) {
+            UI.saveToBrowserBtn.addEventListener('click', () => {
+                const state = this.getState();
+                try {
+                    localStorage.setItem('pixelAudioProject', JSON.stringify(state));
+                    this.showNotification('Project saved to browser!', 'success');
+                } catch (e) {
+                    console.error('Failed to save project:', e);
+                    this.showNotification('Failed to save project', 'error');
+                }
+            });
+        }
+
+        if (UI.loadFromBrowserBtn) {
+            UI.loadFromBrowserBtn.addEventListener('click', () => {
+                const saved = localStorage.getItem('pixelAudioProject');
+                if (saved) {
+                    try {
+                        const state = JSON.parse(saved);
+                        this.setState(state);
+                        this.showNotification('Project loaded!', 'success');
+                    } catch (e) {
+                        console.error('Failed to load project:', e);
+                        this.showNotification('Failed to load project', 'error');
+                    }
+                } else {
+                    this.showNotification('No saved project found', 'info');
+                }
+            });
+        }
+
+        // Create global app object for compatibility
+        window.app = {
+            getState: () => this.getState(),
+            setState: (state) => this.setState(state),
+            showNotification: (message, type) => this.showNotification(message, type)
+        };
     },
 
     /**
@@ -529,6 +579,143 @@ const InputHandler = {
         // Snap to grid functionality would be implemented in the drawing logic
         // Auto-save functionality would be implemented with intervals
         // Dark mode would require CSS class changes
+    },
+
+    /**
+     * Get current application state for saving
+     */
+    getState() {
+        return {
+            width: State.width,
+            height: State.height,
+            zoom: State.zoom,
+            color: State.color,
+            opacity: State.opacity,
+            tool: State.tool,
+            brushSize: State.brushSize,
+            frames: State.frames,
+            currentFrameIndex: State.currentFrameIndex,
+            activeLayerIndex: State.activeLayerIndex,
+            fps: State.fps,
+            recentColors: State.recentColors,
+            currentPalette: State.currentPalette
+        };
+    },
+
+    /**
+     * Set application state from loaded data
+     */
+    setState(state) {
+        if (!state) return;
+        
+        // Update basic properties
+        State.width = state.width;
+        State.height = state.height;
+        State.zoom = state.zoom;
+        State.color = state.color;
+        State.opacity = state.opacity;
+        State.tool = state.tool;
+        State.brushSize = state.brushSize;
+        State.frames = state.frames;
+        State.currentFrameIndex = state.currentFrameIndex || 0;
+        State.activeLayerIndex = state.activeLayerIndex || 0;
+        State.fps = state.fps;
+        State.recentColors = state.recentColors || State.recentColors;
+        State.currentPalette = state.currentPalette || State.currentPalette;
+        
+        // Update canvas size and re-render
+        CanvasManager.resizeCanvas(State.width, State.height);
+        CanvasManager.render();
+        LayerManager.renderList();
+        AnimationManager.renderTimeline();
+        ColorManager.render();
+        
+        // Update UI elements
+        UI.colorPicker.value = State.color;
+        UI.colorHex.value = State.color;
+        UI.opacitySlider.value = Math.floor(State.opacity * 100);
+        UI.opacityDisplay.textContent = Math.floor(State.opacity * 100);
+        UI.brushSizeSlider.value = State.brushSize;
+        UI.brushSizeDisplay.textContent = State.brushSize;
+        UI.fpsSlider.value = State.fps;
+        UI.fpsDisplay.textContent = State.fps;
+        
+        // Save state for undo/redo
+        this.saveState();
+    },
+
+    /**
+     * Show notification to user
+     */
+    showNotification(message, type = 'info') {
+        // Remove existing notification
+        const existing = document.getElementById('notification');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.id = 'notification';
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 4px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+            word-wrap: break-word;
+        `;
+        
+        // Set color based on type
+        switch (type) {
+            case 'success':
+                notification.style.backgroundColor = '#10b981';
+                break;
+            case 'error':
+                notification.style.backgroundColor = '#ef4444';
+                break;
+            case 'info':
+            default:
+                notification.style.backgroundColor = '#3b82f6';
+                break;
+        }
+        
+        // Add animation keyframes if not exists
+        if (!document.querySelector('#notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 3000);
     },
 
     /**

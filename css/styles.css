@@ -137,6 +137,36 @@ button {
     border-color: var(--accent-primary);
 }
 
+.full-btn {
+    background: var(--bg-light);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.full-btn:hover {
+    background: var(--bg-medium);
+    border-color: var(--text-secondary);
+}
+
+.full-btn.secondary {
+    background: var(--bg-medium);
+    color: var(--text-secondary);
+}
+
+.full-btn.secondary:hover {
+    background: var(--bg-light);
+    color: var(--text-primary);
+}
+
 /* --- MAIN LAYOUT --- */
 .main-container {
     display: flex;

@@ -46,8 +46,11 @@ const UI = {
     darkMode: null,
     autoSave: null,
     showCoords: null,
+    applySettingsBtn: null,
     resetSettingsBtn: null,
     exportSettingsBtn: null,
+    saveToBrowserBtn: null,
+    loadFromBrowserBtn: null,
     
     // Info displays
     coords: null,
@@ -127,8 +130,11 @@ const initDOM = () => {
     UI.darkMode = document.getElementById('darkMode');
     UI.autoSave = document.getElementById('autoSave');
     UI.showCoords = document.getElementById('showCoords');
+    UI.applySettingsBtn = document.getElementById('apply-settings');
     UI.resetSettingsBtn = document.getElementById('resetSettingsBtn');
     UI.exportSettingsBtn = document.getElementById('exportSettingsBtn');
+    UI.saveToBrowserBtn = document.getElementById('saveToBrowserBtn');
+    UI.loadFromBrowserBtn = document.getElementById('loadFromBrowserBtn');
     
     // Info displays
     UI.coords = document.getElementById('coords');
