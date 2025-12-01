@@ -15,6 +15,7 @@ function init() {
     ColorManager.render();
     LayerManager.renderList();
     AnimationManager.renderTimeline();
+    FilterManager.initFilters();
     
     // Initialize UI management
     UIManager.init();

@@ -53,6 +53,7 @@
             <button class="tool-btn" data-tool="circle" title="Circle (C)"><i class="far fa-circle"></i></button>
             <div class="toolbar-spacer"></div>
             <button class="tool-btn" id="layersBtn" title="Layers (L)"><i class="fas fa-layer-group"></i></button>
+            <button class="tool-btn" id="filtersBtn" title="Filters"><i class="fas fa-magic"></i></button>
             <button class="tool-btn" id="settingsBtn" title="Settings (S)"><i class="fas fa-cog"></i></button>
         </aside>
 
@@ -177,6 +178,13 @@
             </div>
     </div>
 
+    <div id="panel-filters" class="panel-section hidden">
+        <div class="section-title"><span>Filters</span></div>
+        <div id="filters-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Filter buttons will be added here -->
+        </div>
+    </div>
+
     <div id="panel-settings" class="panel-section hidden">
         <div class="section-title"><span>Canvas Size</span></div>
         <div style="display:flex; gap:5px; margin-top:8px; margin-bottom:15px;">
@@ -263,6 +271,7 @@
     <input type="file" id="paletteFileInput" accept=".ase" style="display: none;">
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/gh/davidsonfellipe/lena.js/dist/lena.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/state.js"></script>
     <script src="js/dom.js"></script>
@@ -272,6 +281,7 @@
     <script src="js/layer-manager.js"></script>
     <script src="js/animation-manager.js"></script>
     <script src="js/color-manager.js"></script>
+    <script src="js/filter-manager.js"></script>
     <script src="js/file-manager.js"></script>
     <script src="js/ui-manager.js"></script>
     <script src="js/input-handler.js"></script>

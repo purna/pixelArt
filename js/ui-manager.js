@@ -24,8 +24,8 @@ const UIManager = {
     },
 
     setupContextSwitching() {
-        // 1. Listen for Drawing Tool Clicks (Pencil, Brush, etc) - exclude Layers/Settings buttons
-        const drawingToolBtns = document.querySelectorAll('[data-tool]:not(#layersBtn):not(#settingsBtn)');
+        // 1. Listen for Drawing Tool Clicks (Pencil, Brush, etc) - exclude Layers/Settings/Filters buttons
+        const drawingToolBtns = document.querySelectorAll('[data-tool]:not(#layersBtn):not(#settingsBtn):not(#filtersBtn)');
         drawingToolBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 // Determine tool name from data attribute
@@ -54,6 +54,15 @@ const UIManager = {
             e.stopPropagation();
             this.showPanelSections(['panel-settings']);
             this.setActiveSidebarButton('settingsBtn');
+        });
+
+        // 4. Listen for Filters Button (prevent event bubbling)
+        const filtersBtn = document.getElementById('filtersBtn');
+        filtersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showPanelSections(['panel-preview', 'panel-filters']);
+            this.setActiveSidebarButton('filtersBtn');
         });
     },
 
@@ -104,10 +113,11 @@ const UIManager = {
      */
     showPanelSections(idsToShow) {
         const allSections = [
-            'panel-preview', 
-            'panel-palette', 
-            'panel-tool-options', 
-            'panel-layers', 
+            'panel-preview',
+            'panel-palette',
+            'panel-tool-options',
+            'panel-layers',
+            'panel-filters',
             'panel-settings'
         ];
 
