@@ -12,7 +12,9 @@ const State = {
     opacity: Config.defaultOpacity,
     tool: 'pencil',
     brushSize: Config.defaultBrushSize,
+    brushBlur: 0,
     isDrawing: false,
+    mirrorAxis: 'x', // 'x', 'y', or 'both'
     
     // Frame structure: { layers: [ { name: string, visible: bool, data: ImageData }, ... ] }
     frames: [],
