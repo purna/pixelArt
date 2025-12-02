@@ -382,8 +382,26 @@ const InputHandler = {
         mirrorInputs.forEach(input => {
             input.addEventListener('change', (e) => {
                 State.mirrorAxis = e.target.value;
+                
+                // Update visual states for professional mirror options
+                document.querySelectorAll('.mirror-axis-option').forEach(option => {
+                    option.classList.remove('checked');
+                });
+                
+                if (e.target.checked) {
+                    e.target.closest('.mirror-axis-option').classList.add('checked');
+                }
+                
                 this.showNotification(`Mirror axis set to ${e.target.value.toUpperCase()} for next use.`, 'info');
             });
+        });
+
+        // Initialize mirror option states
+        document.querySelectorAll('.mirror-axis-option').forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                option.classList.add('checked');
+            }
         });
         // Settings panel controls
         UI.applySettingsBtn.addEventListener('click', () => {
