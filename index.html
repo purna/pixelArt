@@ -6,7 +6,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Art Studio Pro</title>
     <link rel="icon" type="image/png" href="/pixelArt/favicon-96x96.png" sizes="96x96" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css"></noscript>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FontAwesome === 'undefined' || !document.querySelector('.fa')) {
+                console.warn('Font Awesome not loaded, applying fallback styles');
+                const style = document.createElement('style');
+                style.textContent = `
+                    .fa, .fas, .far, .fal, .fat, .fad {
+                        font-family: Arial, sans-serif;
+                        font-weight: normal;
+                        font-style: normal;
+                    }
+                    /* Comprehensive Font Awesome icon fallbacks */
+                    .fa-undo:before { content: "↩"; }
+                    .fa-redo:before { content: "🔄"; }
+                    .fa-minus:before { content: "−"; }
+                    .fa-plus:before { content: "+"; }
+                    .fa-compress-arrows-alt:before { content: "🔍"; }
+                    .fa-folder-open:before { content: "📁"; }
+                    .fa-save:before { content: "💾"; }
+                    .fa-file-export:before { content: "📤"; }
+                    .fa-pencil-alt:before { content: "✏️"; }
+                    .fa-paint-brush:before { content: "🖌️"; }
+                    .fa-eraser:before { content: "🧽"; }
+                    .fa-fill-drip:before { content: "🎨"; }
+                    .fa-columns:before { content: "📊"; }
+                    .fa-th:before { content: "📦"; }
+                    .fa-eye-dropper:before { content: "🖱️"; }
+                    .fa-arrows-alt:before { content: "↔️"; }
+                    .fa-shapes:before { content: "🔺"; }
+                    .fa-slash:before { content: "⧸"; }
+                    .fa-square:before { content: "□"; }
+                    .fa-circle:before { content: "○"; }
+                    .fa-layer-group:before { content: "📄"; }
+                    .fa-magic:before { content: "✨"; }
+                    .fa-play:before { content: "▶"; }
+                    .fa-stop:before { content: "⏹"; }
+                    .fa-copy:before { content: "📋"; }
+                    .fa-trash:before { content: "🗑️"; }
+                    .fa-cloud-download-alt:before { content: "📥"; }
+                    .fa-arrows-alt-h:before { content: "↔"; }
+                    .fa-arrows-alt-v:before { content: "↕"; }
+                    .fa-expand-arrows-alt:before { content: "⤢"; }
+                    .fa-info-circle:before { content: "ℹ️"; }
+                    .fa-plus-circle:before { content: "➕"; }
+                    .fa-chevron-right:before { content: "➡"; }
+                    .fa-cog:before { content: "⚙️"; }
+                    .fa-sliders-h:before { content: "📊"; }
+                    .fa-image:before { content: "🖼️"; }
+                    .fa-download:before { content: "📥"; }
+                    .fa-graduation-cap:before { content: "🎓"; }
+                `;
+                document.head.appendChild(style);
+            }
+        });
+    </script>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/tutorials.css">
     <style>
