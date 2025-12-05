@@ -578,6 +578,47 @@ canvas {
     color: var(--accent-primary);
 }
 
+/* Tutorial Settings Section */
+.control-section {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--accent-tertiary);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.control-group {
+    margin-bottom: 12px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    position: relative;
+    opacity: 1;
+    cursor: pointer;
+    height: 18px;
+    width: 18px;
+    accent-color: var(--accent-primary);
+}
+
+.checkbox-group label {
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
 /* CUSTOM CHECKBOX STYLING */
 .setting-label input[type="checkbox"] {
     position: absolute;
@@ -1269,4 +1310,634 @@ input[type="color"]:focus {
 
 .seamless-grid-overlay.enabled .seamless-grid-cell:not(.center):hover canvas {
     opacity: 0.7;
+}
+
+/* SETTINGS MODAL */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-primary);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.modal-actions .btn {
+    min-width: 80px;
+}
+
+/* Settings Modal Scrollbar */
+.modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.modal::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* Settings Modal Scrollbar for Firefox */
+.modal {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary) var(--bg-dark);
+}
+
+/* Settings Tabs Container */
+.settings-tabs {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+/* Tab System Styling */
+.settings-tab {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 2px solid transparent;
+}
+
+.settings-tab:hover {
+    color: var(--text-primary);
+    background: var(--bg-light);
+}
+
+.settings-tab.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.settings-tab-content {
+    display: none;
+    padding: 10px 0;
+}
+
+.settings-tab-content.active {
+    display: block;
+}
+
+/* Modal Content Wrapper - Proper layout for tabbed content */
+.modal-content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 20px 20px 0;
+    box-sizing: border-box;
+}
+
+/* Settings Content Styling */
+.settings-content {
+    background: var(--bg-medium);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.property-group {
+    background: var(--bg-light);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.property-label {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.settings-content input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.settings-content input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+.settings-content input[type="color"] {
+    width: 60px;
+    height: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.settings-content select {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    width: 100%;
+    margin-top: 6px;
+}
+
+.settings-content input[type="number"] {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    width: 100px;
+}
+
+/* Scene Settings Content */
+.scene-settings-content {
+    background: var(--bg-medium);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Export Settings Content */
+.export-settings-content {
+    background: var(--bg-medium);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+}
+
+/* Modal Footer Styling */
+.modal footer {
+    flex-shrink: 0;
+    padding: 15px 20px 20px;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+    background: var(--bg-dark);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Modal Header Styling */
+.modal header {
+    flex-shrink: 0;
+    padding: 20px 20px 40px 20px;
+    width: 100%;
+    display: block;
+    margin-bottom: 40px;
+}
+
+.modal header > div {
+    width: 100%;
+}
+
+/* Modal Scrollable Content */
+.modal-scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 0 20px;
+}
+
+/* Ensure property labels have consistent font size */
+.property-label {
+    font-size: 0.75rem !important;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+/* Tutorial tab specific styling */
+.settings-tab-content[data-tab-content="tutorial"] .property-label {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+/* Fix for settings modal width */
+.modal-content-wrapper {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Ensure all tabs have consistent styling */
+.settings-tab-content {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Fix modal width to accommodate tabs */
+#unified-settings-modal .modal {
+    width: 500px;
+    max-width: 90%;
+}
+
+/* Settings Modal Scrollbar */
+#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar,
+#unified-settings-modal .modal .settings-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar-track,
+#unified-settings-modal .modal .settings-content::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar-thumb,
+#unified-settings-modal .modal .settings-content::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar-thumb:hover,
+#unified-settings-modal .modal .settings-content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* Settings Modal Scrollbar for Firefox */
+#unified-settings-modal .modal .scene-settings-content,
+#unified-settings-modal .modal .settings-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary) var(--bg-dark);
+}
+
+/* Make submenus float OVER the canvas, not inside the toolbar */
+.tool-submenu {
+    display: none;
+    position: fixed !important;   /* Changed from absolute to fixed */
+    left: 68px !important;        /* Just right of the 60px toolbar + 8px gap */
+    top: var(--submenu-top, 100px); /* Will be set dynamically via JS */
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    min-width: 48px;
+    backdrop-filter: blur(10px);
+}
+
+/* Optional: Add a little pointer arrow */
+.tool-submenu::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 16px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid var(--border-color);
+}
+
+/* Make submenu buttons slightly larger and nicer */
+.tool-submenu .tool-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(45, 55, 72, 0.8);
+}
+
+.tool-submenu .tool-btn:hover {
+    background: var(--accent-primary);
+    color: #000;
+    transform: scale(1.05);
+}
+
+/* Menu parent button styling */
+.tool-btn.menu-parent {
+    position: relative;
+}
+
+.tool-btn.menu-parent:hover .tool-submenu {
+    display: flex;
+}
+
+/* Tooltip styling */
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+    background: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* Pixel3D-style improvements for toolbat */
+
+/* Modernize tool buttons with better hover effects */
+.tool-btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.1), rgba(0, 217, 255, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+}
+
+.tool-btn:hover::before {
+    opacity: 1;
+}
+
+.tool-btn.active {
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Add subtle glow to active tools */
+.tool-btn.active::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    z-index: -1;
+    opacity: 0.8;
+}
+
+/* Improve toolbar spacing and layout */
+.toolbar {
+    gap: 6px;
+    padding: 8px 0;
+    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+}
+
+/* Add subtle border to separate toolbar from canvas */
+.toolbar {
+    border-right: 1px solid rgba(45, 55, 72, 0.3);
+    box-shadow: 1px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Modernize separator lines */
+.separator {
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+    height: 1px;
+    width: 80%;
+}
+
+/* Add subtle animation to tool changes */
+@keyframes toolPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.tool-btn.active {
+    animation: toolPulse 0.3s ease;
+}
+
+/* Improve header styling to match Pixel3D */
+header {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+}
+
+/* Add gradient background to header */
+header {
+    background: linear-gradient(135deg, var(--bg-dark), var(--bg-medium));
+}
+
+/* Modernize button styling */
+.btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Add subtle glow to primary buttons */
+.btn.primary {
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn.primary:hover {
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* Modernize the workspace area */
+.workspace {
+    background: linear-gradient(to bottom right,
+        rgba(0, 217, 255, 0.01),
+        rgba(255, 0, 110, 0.01),
+        rgba(0, 255, 65, 0.01));
+}
+
+/* Add subtle grid pattern to workspace background */
+#canvas-wrapper {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Modernize right panel styling */
+.right-panel {
+    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+    border-left: 1px solid rgba(45, 55, 72, 0.3);
+    box-shadow: -1px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Add subtle animation to panel toggle */
+#panel-toggle {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+#panel-toggle:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: -2px 0 12px rgba(0, 217, 255, 0.3);
+}
+
+/* Modernize section titles */
+.section-title {
+    font-family: 'Press Start 2P', cursive;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+/* Add subtle hover effects to panel sections */
+.panel-section {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(45, 55, 72, 0.3);
+}
+
+.panel-section:hover {
+    background: rgba(0, 255, 65, 0.01);
+    border-bottom-color: rgba(0, 255, 65, 0.2);
+}
+
+/* Modernize slider controls */
+input[type="range"] {
+    -webkit-appearance: none;
+    height: 6px;
+    background: linear-gradient(to right,
+        rgba(0, 255, 65, 0.2),
+        rgba(0, 217, 255, 0.2));
+    border-radius: 3px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-dark);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+/* Add subtle animations to interactive elements */
+@keyframes subtlePulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.9; }
+    100% { opacity: 1; }
+}
+
+/* Apply subtle pulse to active elements */
+.tool-btn.active,
+.btn.primary {
+    animation: subtlePulse 2s ease infinite;
+}
+
+/* Modernize the overall app with subtle gradients */
+body {
+    background: linear-gradient(135deg,
+        var(--bg-darkest) 0%,
+        var(--bg-dark) 50%,
+        var(--bg-medium) 100%);
+    background-attachment: fixed;
+}
+
+/* Add subtle scanline effect like Pixel3D */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+        rgba(0, 255, 65, 0.01) 1px,
+        transparent 1px),
+        linear-gradient(90deg,
+        rgba(0, 217, 255, 0.01) 1px,
+        transparent 1px);
+    background-size: 2px 2px, 2px 2px;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.3;
 }

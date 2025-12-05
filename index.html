@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="/pixelArt/favicon-96x96.png" sizes="96x96" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/tutorials.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap');
     </style>
@@ -60,9 +61,19 @@
                     class="fas fa-eye-dropper"></i></button>
             <button class="tool-btn" data-tool="move" title="Move (M)"><i class="fas fa-arrows-alt"></i></button>
             <div class="separator"></div>
-            <button class="tool-btn" data-tool="stroke" title="Line (L)"><i class="fas fa-slash"></i></button>
-            <button class="tool-btn" data-tool="rect" title="Rectangle (R)"><i class="far fa-square"></i></button>
-            <button class="tool-btn" data-tool="circle" title="Circle (C)"><i class="far fa-circle"></i></button>
+            <!-- Shapes Menu -->
+            <div class="tool-btn menu-parent" data-tooltip="**Shapes**
+Hover to see all available shapes">
+                <i class="fas fa-shapes"></i>
+                <div class="tool-submenu">
+                    <div class="tool-btn" data-action="tool" data-type="stroke" data-tooltip="**Line Tool**
+Draw straight lines"><i class="fas fa-slash"></i></div>
+                    <div class="tool-btn" data-action="tool" data-type="rect" data-tooltip="**Rectangle Tool**
+Draw rectangles and squares"><i class="far fa-square"></i></div>
+                    <div class="tool-btn" data-action="tool" data-type="circle" data-tooltip="**Circle Tool**
+Draw circles and ellipses"><i class="far fa-circle"></i></div>
+                </div>
+            </div>
             <div class="toolbar-spacer"></div>
             <button class="tool-btn" id="layersBtn" title="Layers (L)"><i class="fas fa-layer-group"></i></button>
             <button class="tool-btn" id="filtersBtn" title="Filters"><i class="fas fa-magic"></i></button>
@@ -318,77 +329,9 @@
         </div>
     </div>
 
-    <div id="panel-settings" class="panel-section hidden">
-        <div class="section-title"><span>Canvas Size</span></div>
-        <div style="display:flex; gap:5px; margin-top:8px; margin-bottom:15px;">
-            <input type="number" id="widthInput" value="32" min="4" max="128" 
-                   style="flex:1; padding:4px; font-family:monospace; text-align:center;">
-            <input type="number" id="heightInput" value="32" min="4" max="128" 
-                   style="flex:1; padding:4px; font-family:monospace; text-align:center;">
-        </div>
-        <button id="apply-settings" class="btn " style="width:100%; margin-bottom:15px;">Apply Resize</button>
-
-        <div class="section-title"><span>App Settings</span></div>
-        <div class="settings-content">
-            <div class="setting-item">
-                <label class="setting-label">
-                    <input type="checkbox" id="showGrid" checked>
-                    <span class="checkmark"></span> Show Grid
-                </label>
-            </div>
-            <div class="setting-item">
-                <label class="setting-label">
-                    <input type="checkbox" id="snapToGrid">
-                    <span class="checkmark"></span> Snap to Grid
-                </label>
-            </div>
-            <div class="setting-item">
-                <label class="setting-label">
-                    <input type="checkbox" id="showMinimap" checked>
-                    <span class="checkmark"></span> Minimap
-                </label>
-            </div>
-            <div class="setting-item">
-                <label class="setting-label">
-                    <input type="checkbox" id="showCoords" checked>
-                    <span class="checkmark"></span> Coordinates
-                </label>
-            </div>
-             <div class="setting-item">
-                <label class="setting-label">
-                    <input type="checkbox" id="darkMode">
-                    <span class="checkmark"></span> Dark Mode
-                </label>
-            </div>
-             <div class="setting-item">
-                <label class="setting-label">
-                    <input type="checkbox" id="autoSave">
-                    <span class="checkmark"></span> Auto Save
-                </label>
-            </div>
-        </div>
-        
-        <div class="setting-separator"></div>
-        <button id="resetSettingsBtn" class="btn" style="width:100%; margin-bottom:8px;">
-            <i class="fas fa-undo"></i> Reset Defaults
-        </button>
-    
-        <div class="setting-separator"></div>
-        <button id="exportSettingsBtn" class="btn" style="width:100%; margin-bottom:8px;">
-            <i class="fas fa-cloud-download-alt"></i> Export Defaults
-        </button>
-
-<div class="setting-separator"></div>
+       
 
 
-          <div class="settings-content">
-
-            <div class="section-title"><span>App Settings</span></div>
-                        <button id="saveToBrowserBtn" class="full-btn"><i class="fas fa-save"></i> Save to Browser</button>
-                        <div style="height:8px"></div>
-                        <button id="loadFromBrowserBtn" class="full-btn secondary"><i class="fas fa-download"></i> Load from Browser</button>
-                    </div>
-    </div>
 
 </aside>
 
@@ -398,6 +341,229 @@
         </div>
 
     </div>
+
+    <div class="modal-overlay" id="unified-settings-modal">
+    <div class="modal">
+        <header>
+            <div class="modal-title">
+                <i class="fas fa-cog"></i> Settings
+            </div>
+            <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:15px;">
+                Configure your Pixel Art Studio preferences
+            </div>
+
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="general" id="tab-general">
+                    <i class="fas fa-sliders-h"></i> General
+                </button>
+                <button class="settings-tab" data-tab="scene" id="tab-scene">
+                    <i class="fas fa-image"></i> Art
+                </button>
+                <button class="settings-tab" data-tab="export" id="tab-export">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button class="settings-tab" data-tab="tutorial" id="tab-tutorial">
+                    <i class="fas fa-graduation-cap"></i> Tutorial
+                </button>
+            </div>
+        </header>
+
+        <div class="modal-content-wrapper">
+
+            <div class="settings-tab-content active" data-tab-content="general">
+                <div class="settings-content">
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-grid" checked>
+                            <span class="checkmark"></span> Show Grid
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-tooltips" checked>
+                            <span class="checkmark"></span> Show Tooltips
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-helpers" checked>
+                            <span class="checkmark"></span> Show Helpers
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                        <input type="checkbox" id="setting-darkmode" checked>
+                        <span class="checkmark"></span> Dark Mode
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                        <input type="checkbox" id="setting-autosave" checked>
+                        <span class="checkmark"></span> Auto Save
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-tab-content" data-tab-content="scene">
+                <div class="scene-settings-content">
+                    <div class="property-group">
+                        <label class="property-label">
+                            Canvas Size:
+                        </label>
+                        <div style="display:flex; gap:5px; margin-top:8px; margin-bottom:15px;">
+                            <input type="number" id="setting-width" value="32" min="4" max="128"
+                                   style="flex:1; padding:4px; font-family:monospace; text-align:center;">
+                            <input type="number" id="setting-height" value="32" min="4" max="128"
+                                   style="flex:1; padding:4px; font-family:monospace; text-align:center;">
+                        </div>
+                        <button id="apply-canvas-size" class="btn" style="width:100%; margin-bottom:15px;">Apply Resize</button>
+                    </div>
+
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-show-minimap" checked>
+                            <span class="checkmark"></span> Show Minimap
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-snap-to-grid">
+                            <span class="checkmark"></span> Snap to Grid
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-show-coords" checked>
+                            <span class="checkmark"></span> Show Coordinates
+                        </label>
+                    </div>
+
+                    <div class="property-group">
+                        <label class="property-label">
+                            <input type="checkbox" id="setting-background-enabled" checked>
+                            Enable Custom Background
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">
+                            Background Color:
+                            <input type="color" id="setting-background-color" value="#1a1a2e">
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-ambient-light" checked>
+                            <span class="checkmark"></span> Enable Ambient Light
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">
+                            Ambient Light Color:
+                            <input type="color" id="setting-ambient-color" value="#ffffff">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-tab-content" data-tab-content="export">
+                <div class="export-settings-content">
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="setting-export-transparent" checked>
+                            <span class="checkmark"></span> Export with Transparent Background
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">
+                            Export Resolution:
+                            <select id="setting-export-resolution" style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; color: var(--text-primary); width: 100%; margin-top: 6px;">
+                                <option value="24x24">24×24 - Game Icon</option>
+                                <option value="36x36">36×36 - Game Icon</option>
+                                <option value="48x48">48×48 - Game Icon</option>
+                                <option value="128x128">128×128 - Game Sprite</option>
+                                <option value="512x512">512×512 - Game Texture</option>
+                                <option value="1024x1024">1024×1024 - High-res Texture</option>
+
+                                <option value="1920x1080">1920×1080 - Full HD</option>
+                                <option value="2560x1440">2560×1440 - 2K</option>
+                                <option value="3840x2160">3840×2160 - 4K</option>
+                                <option value="custom">Custom Size</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="property-group" id="custom-resolution-group" style="display: none;">
+                        <label class="property-label">
+                            Custom Width:
+                            <input type="number" id="setting-custom-width" value="1920" min="100" max="8000">
+                        </label>
+                        <label class="property-label">
+                            Custom Height:
+                            <input type="number" id="setting-custom-height" value="1080" min="100" max="8000">
+                        </label>
+                    </div>
+                    <div class="property-group" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                        <button id="exportSettingsBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
+                            <i class="fas fa-cloud-download-alt"></i> Export Defaults
+                        </button>
+                        <button id="saveToBrowserBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
+                            <i class="fas fa-save"></i> Save to Browser
+                        </button>
+                        <button id="loadFromBrowserBtn" class="btn secondary" style="width: 100%;">
+                            <i class="fas fa-download"></i> Load from Browser
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-tab-content" data-tab-content="tutorial">
+                <div class="settings-content">
+                    <div class="property-group">
+                        <label class="property-label">
+                            Tutorial Settings
+                        </label>
+                    </div>
+
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="enableTutorialsSettings" checked>
+                            <span class="checkmark"></span> Enable Tutorials
+                        </label>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
+                            Show interactive tutorials on startup
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="showTutorialHints" checked>
+                            <span class="checkmark"></span> Show Tutorial Hints
+                        </label>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
+                            Display helpful hints and tooltips
+                        </div>
+                    </div>
+
+                    <div class="property-group" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                        <button id="startTutorialBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
+                            <i class="fas fa-graduation-cap"></i> Start Tutorial
+                        </button>
+                        <button id="resetTutorialBtn" class="btn secondary" style="width: 100%;">
+                            <i class="fas fa-redo"></i> Reset Tutorial Progress
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div> <footer>
+            <div class="modal-actions">
+                <button class="btn" id="btn-settings-reset">Reset</button>
+                <button class="btn" id="btn-settings-close">Close</button>
+                <button class="btn primary" id="btn-settings-save">Save Settings</button>
+            </div>
+        </footer>
+    </div>
+</div>
 
     <!-- Hidden Inputs -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
@@ -419,7 +585,12 @@
     <script src="js/ui-manager.js"></script>
     <script src="js/input-handler.js"></script>
     <script src="js/tilemap-manager.js"></script>
+    <script src="js/tutorialConfig.js"></script>
+    <script src="js/tutorialSystem.js"></script>
+    <script src="js/settings-manager.js"></script>
+    <script src="js/notifications.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 
 </html>

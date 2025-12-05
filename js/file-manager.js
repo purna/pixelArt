@@ -30,17 +30,29 @@ const FileManager = {
             const json = JSON.stringify(project, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
+
             const link = document.createElement('a');
             link.download = `pixel-art-${Date.now()}.json`;
             link.href = url;
             link.click();
-            
+
             URL.revokeObjectURL(url);
             console.log('Project saved successfully!');
+
+            // Show success notification
+            if (typeof Notifications !== 'undefined') {
+                const notifications = new Notifications();
+                notifications.success('Project saved successfully!');
+            }
         } catch (error) {
             console.error('Save failed:', error);
             alert('Failed to save project: ' + error.message);
+
+            // Show error notification
+            if (typeof Notifications !== 'undefined') {
+                const notifications = new Notifications();
+                notifications.error('Failed to save project: ' + error.message);
+            }
         }
     },
 
@@ -126,6 +138,12 @@ const FileManager = {
         LayerManager.renderList();
 
         alert('Project loaded successfully!');
+
+        // Show success notification
+        if (typeof Notifications !== 'undefined') {
+            const notifications = new Notifications();
+            notifications.success('Project loaded successfully!');
+        }
     },
 
     /**
@@ -187,9 +205,21 @@ const FileManager = {
             link.click();
             
             console.log('Spritesheet exported successfully!');
+
+            // Show success notification
+            if (typeof Notifications !== 'undefined') {
+                const notifications = new Notifications();
+                notifications.success('Spritesheet exported successfully!');
+            }
         } catch (error) {
             console.error('Export failed:', error);
             alert('Failed to export spritesheet: ' + error.message);
+
+            // Show error notification
+            if (typeof Notifications !== 'undefined') {
+                const notifications = new Notifications();
+                notifications.error('Failed to export spritesheet: ' + error.message);
+            }
         }
     }
 };

@@ -32,8 +32,13 @@ const CanvasManager = {
         AnimationManager.renderTimeline();
         LayerManager.renderList();
         
-        UI.widthInput.value = State.width;
-        UI.heightInput.value = State.height;
+        // Update settings modal canvas size inputs if they exist
+        const settingWidthInput = document.getElementById('setting-width');
+        const settingHeightInput = document.getElementById('setting-height');
+        if (settingWidthInput && settingHeightInput) {
+            settingWidthInput.value = State.width;
+            settingHeightInput.value = State.height;
+        }
     },
 
     /**
@@ -261,9 +266,13 @@ const CanvasManager = {
             });
         });
 
-        // Update UI
-        UI.widthInput.value = State.width;
-        UI.heightInput.value = State.height;
+        // Update UI - use settings modal inputs if they exist
+        const settingWidthInput = document.getElementById('setting-width');
+        const settingHeightInput = document.getElementById('setting-height');
+        if (settingWidthInput && settingHeightInput) {
+            settingWidthInput.value = State.width;
+            settingHeightInput.value = State.height;
+        }
 
         this.updateZoom(true);
         this.render();

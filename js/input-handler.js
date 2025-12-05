@@ -266,6 +266,52 @@ const InputHandler = {
             }
         });
 
+        // Handle submenu tool buttons (for popout menus)
+        document.querySelectorAll('.tool-submenu .tool-btn').forEach(btn => {
+            if (btn.dataset.action === 'tool' && btn.dataset.type) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent event from bubbling to parent menu
+                    ToolManager.setTool(btn.dataset.type);
+                    // Close all submenus after selection
+                    document.querySelectorAll('.tool-submenu').forEach(menu => {
+                        menu.style.display = 'none';
+                    });
+                });
+            }
+        });
+
+        // Handle menu parent hover behavior
+        document.querySelectorAll('.tool-btn.menu-parent').forEach(menuParent => {
+            menuParent.addEventListener('mouseenter', (e) => {
+                const submenu = menuParent.querySelector('.tool-submenu');
+                if (submenu) {
+                    // Position the submenu relative to the parent button
+                    const rect = menuParent.getBoundingClientRect();
+                    submenu.style.setProperty('--submenu-top', `${rect.top + window.scrollY}px`);
+                    submenu.style.display = 'flex';
+                }
+            });
+
+            menuParent.addEventListener('mouseleave', (e) => {
+                // Use a small delay to allow moving to submenu
+                setTimeout(() => {
+                    const submenu = menuParent.querySelector('.tool-submenu');
+                    if (submenu && !submenu.matches(':hover')) {
+                        submenu.style.display = 'none';
+                    }
+                }, 200);
+            });
+        });
+
+        // Close submenus when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu-parent') && !e.target.closest('.tool-submenu')) {
+                document.querySelectorAll('.tool-submenu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+
         UI.colorPicker.addEventListener('input', (e) => {
             State.color = e.target.value;
             UI.colorHex.textContent = e.target.value;
@@ -403,18 +449,7 @@ const InputHandler = {
                 option.classList.add('checked');
             }
         });
-        // Settings panel controls
-        UI.applySettingsBtn.addEventListener('click', () => {
-            const newWidth = parseInt(UI.widthInput.value);
-            const newHeight = parseInt(UI.heightInput.value);
-            if (newWidth >= 4 && newWidth <= 128 && newHeight >= 4 && newHeight <= 128) {
-                CanvasManager.resizeCanvas(newWidth, newHeight);
-                this.saveState();
-                this.showNotification('Canvas resized successfully!', 'success');
-            } else {
-                this.showNotification('Invalid canvas size. Must be between 4 and 128.', 'error');
-            }
-        });
+      
         UI.resetSettingsBtn.addEventListener('click', () => {
             this.resetSetting();
             this.showNotification('Settings reset to defaults!', 'info');
@@ -853,3 +888,6 @@ const InputHandler = {
         });
     }
 };
+
+// Make InputHandler available globally
+window.InputHandler = InputHandler;

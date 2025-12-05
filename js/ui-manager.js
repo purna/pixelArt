@@ -59,8 +59,14 @@ const UIManager = {
             settingsBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.showPanelSections(['panel-settings']);
-                this.setActiveSidebarButton('settingsBtn');
+                // Use the new settings manager modal instead of the old panel
+                if (typeof SettingsManager !== 'undefined' && SettingsManager.toggleSettings) {
+                    SettingsManager.toggleSettings();
+                } else {
+                    // Fallback to old behavior if settings manager not available
+                    this.showPanelSections(['panel-settings']);
+                    this.setActiveSidebarButton('settingsBtn');
+                }
             });
         }
 

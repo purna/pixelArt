@@ -1,6 +1,11 @@
 // app.js
 // Application initialization and startup
 
+// Create app object to hold all managers and systems
+const app = {
+    tutorialConfig: tutorialConfig
+};
+
 /**
  * Initialize the application
  */
@@ -10,22 +15,40 @@ function init() {
 
     // Initialize canvas with default size
     CanvasManager.init(Config.defaultWidth, Config.defaultHeight);
-    
+
     // Render initial UI
     ColorManager.render();
     LayerManager.renderList();
     AnimationManager.renderTimeline();
     FilterManager.initFilters();
-    
+
     // Initialize UI management
     UIManager.init();
-    
-    // Load user settings
-    InputHandler.loadSettings();
-    
+
+    // Initialize Settings Manager
+    if (typeof SettingsManager !== 'undefined') {
+        SettingsManager.init();
+    }
+
+    // Initialize tutorial system
+    if (typeof TutorialSystem !== 'undefined') {
+        app.tutorialSystem = new TutorialSystem(app);
+        app.tutorialSystem.init();
+    }
+
+    // Load user settings using the new SettingsManager
+    if (typeof SettingsManager !== 'undefined') {
+        SettingsManager.loadSettings();
+    } else {
+        // Fallback to old InputHandler if SettingsManager not available
+        if (typeof InputHandler !== 'undefined') {
+            InputHandler.loadSettings();
+        }
+    }
+
     // Save initial state for undo/redo
     InputHandler.saveState();
-    
+
     // Set up event listeners
     InputHandler.init();
 
@@ -33,7 +56,7 @@ function init() {
     if (typeof TilemapManager !== 'undefined') {
         TilemapManager.init();
     }
-    
+
     console.log('PixlPro v3.1 initialized');
     console.log('Keyboard shortcuts:');
     console.log('  P - Pencil, B - Brush, E - Eraser, F - Fill');
@@ -45,6 +68,12 @@ function init() {
     console.log('  +/- - Zoom in/out, 0 - Reset zoom');
     console.log('  Ctrl+S - Save project, Ctrl+O - Load project');
     console.log('  Ctrl+Scroll - Zoom');
+
+    // Test tutorial system initialization
+    console.log('Tutorial System initialized:', typeof app.tutorialSystem !== 'undefined');
+    if (typeof app.tutorialSystem !== 'undefined') {
+        console.log('Tutorial System is ready');
+    }
 }
 
 // Start application when DOM is ready
