@@ -1,7 +1,7 @@
 // state.js
 // Global application state
 
-const State = {
+var State = {
     // Canvas dimensions
     width: Config.defaultWidth,
     height: Config.defaultHeight,
@@ -30,6 +30,14 @@ const State = {
     recentColors: ['#000000', '#ffffff', '#3b82f6', '#ef4444', '#10b981'],
     currentPalette: ['#000000', '#ffffff', '#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff', '#00ffff'],
     dragStart: { x: 0, y: 0 },
+
+    // Onion Skinning
+    onionSkinEnabled: true,
+    onionSkinOpacity: 0.3,
+    onionSkinFramesBefore: 1,
+    onionSkinFramesAfter: 1,
+    onionSkinColorBefore: 'rgba(0, 128, 255, 0.3)',
+    onionSkinColorAfter: 'rgba(255, 128, 0, 0.3)',
     
     // Undo/Redo history system
     history: [],

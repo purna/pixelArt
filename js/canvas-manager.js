@@ -163,8 +163,19 @@ const CanvasManager = {
      * Render current frame by compositing all visible layers
      */
     render() {
+        if (State.onionSkinEnabled) {
+            this.renderWithOnionSkin();
+        } else {
+            this.renderNormal();
+        }
+    },
+
+    /**
+     * Render current frame normally (without onion skin)
+     */
+    renderNormal() {
         ctx.clearRect(0, 0, State.width, State.height);
-        
+
         const frame = State.frames[State.currentFrameIndex];
         if (!frame) return;
 
@@ -179,16 +190,94 @@ const CanvasManager = {
         // Update preview window
         prevCtx.clearRect(0, 0, State.width, State.height);
         prevCtx.drawImage(UI.compositionCanvas, 0, 0);
-        
+
         // Update tilemap preview if available
         if (typeof TilemapManager !== 'undefined' && TilemapManager.refresh) {
             TilemapManager.refresh();
         }
-        
+
         // Update seamless grid overlay if enabled
         if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled) {
             this.updateSeamlessGridOverlay();
         }
+    },
+
+    /**
+     * Render current frame with onion skinning effect
+     */
+    renderWithOnionSkin() {
+        ctx.clearRect(0, 0, State.width, State.height);
+
+        const currentFrame = State.frames[State.currentFrameIndex];
+        if (!currentFrame) return;
+
+        // Draw previous frames (onion skin before)
+        for (let i = 1; i <= State.onionSkinFramesBefore; i++) {
+            const prevFrameIndex = State.currentFrameIndex - i;
+            if (prevFrameIndex >= 0) {
+                this.drawFrameWithOpacity(State.frames[prevFrameIndex], State.onionSkinOpacity, State.onionSkinColorBefore);
+            }
+        }
+
+        // Draw current frame normally
+        currentFrame.layers.forEach(layer => {
+            if (layer.visible) {
+                offCtx.clearRect(0, 0, State.width, State.height);
+                offCtx.putImageData(layer.data, 0, 0);
+                ctx.drawImage(State.offscreenCanvas, 0, 0);
+            }
+        });
+
+        // Draw next frames (onion skin after)
+        for (let i = 1; i <= State.onionSkinFramesAfter; i++) {
+            const nextFrameIndex = State.currentFrameIndex + i;
+            if (nextFrameIndex < State.frames.length) {
+                this.drawFrameWithOpacity(State.frames[nextFrameIndex], State.onionSkinOpacity, State.onionSkinColorAfter);
+            }
+        }
+
+        // Update preview window
+        prevCtx.clearRect(0, 0, State.width, State.height);
+        prevCtx.drawImage(UI.compositionCanvas, 0, 0);
+
+        // Update tilemap preview if available
+        if (typeof TilemapManager !== 'undefined' && TilemapManager.refresh) {
+            TilemapManager.refresh();
+        }
+
+        // Update seamless grid overlay if enabled
+        if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled) {
+            this.updateSeamlessGridOverlay();
+        }
+    },
+
+    /**
+     * Draw a frame with opacity and color tint for onion skinning
+     */
+    drawFrameWithOpacity(frame, opacity, color) {
+        // Save current context state
+        ctx.save();
+
+        // Set global alpha for onion skin effect
+        ctx.globalAlpha = opacity;
+
+        // Draw each layer of the frame
+        frame.layers.forEach(layer => {
+            if (layer.visible) {
+                offCtx.clearRect(0, 0, State.width, State.height);
+                offCtx.putImageData(layer.data, 0, 0);
+
+                // Apply color tint
+                ctx.fillStyle = color;
+                ctx.fillRect(0, 0, State.width, State.height);
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.drawImage(State.offscreenCanvas, 0, 0);
+                ctx.globalCompositeOperation = 'source-over';
+            }
+        });
+
+        // Restore context state
+        ctx.restore();
     },
     
     /**

@@ -119,7 +119,8 @@ Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
                 </div>
             </div>
 
-            <button class="tool-btn" id="moveBtn" title="Move ()"><i class="fas fa-hand-alt"></i></button>
+            <button class="tool-btn" id="moveBtn" title="Move ()"><i class="fa-solid fa-hand"></i></i></button>
+            
 
 
             <div class="toolbar-spacer"></div>
@@ -136,6 +137,16 @@ Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
         <!-- CENTER WORKSPACE -->
         <div class="workspace">
 
+            <!-- Floating Color History Overlay -->
+            <div class="floating-color-history">
+                <div class="color-history-swatches">
+                    <div class="color-swatch" data-color-index="0" title="Recent Color 1 (Press 1)"></div>
+                    <div class="color-swatch" data-color-index="1" title="Recent Color 2 (Press 2)"></div>
+                    <div class="color-swatch" data-color-index="2" title="Recent Color 3 (Press 3)"></div>
+                    <div class="color-swatch" data-color-index="3" title="Recent Color 4 (Press 4)"></div>
+                </div>
+            </div>
+
             <!-- CANVAS AREA -->
             <div id="canvas-wrapper">
                 <div id="drawing-area">
@@ -149,6 +160,7 @@ Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
                     <span id="coords">0, 0</span> | <span id="zoomDisplay">100%</span>
                 </div>
             </div>
+            
 
             <!-- TIMELINE PANEL -->
             <div class="timeline-panel">
@@ -156,6 +168,9 @@ Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
                     <div class="fps-controls">
                         <button id="playBtn" class="btn icon-only"><i class="fas fa-play"></i></button>
                         <button id="stopBtn" class="btn icon-only"><i class="fas fa-stop"></i></button>
+                        <button id="onionBtn" class="btn icon-only"><!--<i class="fas fa-onion"></i>-->
+                        <i class="fa-solid fa-photo-film"></i></button>
+                        
                         <div class="fps-spacer"></div>
                         <label class="fps-label">
                             FPS: <span id="fpsDisplay">12</span>
@@ -581,243 +596,7 @@ Invert all colors" data-content="filters-list"><i class="fas fa-magic"></i></but
 
     </div>
 
-    <!-- Unified Settings Modal -->
-    <div class="modal-overlay" id="unified-settings-modal">
-        <div class="modal">
-            <header>
-                <div class="modal-title">
-                    <i class="fas fa-cog"></i> Settings
-                </div>
-                <div class="modal-subtitle">
-                    Configure your Pixel Art Studio preferences
-                </div>
 
-                <div class="settings-tabs">
-                    <button class="settings-tab active" data-content="settings-general" id="tab-general">
-                        <i class="fas fa-sliders-h"></i> General
-                    </button>
-                    <button class="settings-tab" data-content="settings-scene" id="tab-scene">
-                        <i class="fas fa-image"></i> Art
-                    </button>
-                    <button class="settings-tab" data-content="settings-export" id="tab-export">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                    <button class="settings-tab" data-content="settings-tutorial" id="tab-tutorial">
-                        <i class="fas fa-graduation-cap"></i> Tutorial
-                    </button>
-                </div>
-            </header>
-
-            <div class="modal-content-wrapper">
-
-                <div class="settings-tab-content active" id="settings-general">
-                    <div class="settings-content">
-                        <div class="settings-section">
-                            <div class="section-heading">General Settings</div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-grid" checked>
-                                    <span class="checkmark"></span> Show Grid
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-tooltips" checked>
-                                    <span class="checkmark"></span> Show Tooltips
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-helpers" checked>
-                                    <span class="checkmark"></span> Show Helpers
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-darkmode" checked>
-                                    <span class="checkmark"></span> Dark Mode
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-autosave" checked>
-                                    <span class="checkmark"></span> Auto Save
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-tab-content" id="settings-scene">
-                    <div class="scene-settings-content">
-                        <div class="settings-section">
-                            <div class="section-heading">Canvas Settings</div>
-                            <div class="property-group">
-                                <label class="property-label">
-                                    Canvas Size:
-                                </label>
-                                <div style="display:flex; gap:5px; margin-top:8px; margin-bottom:15px;">
-                                    <input type="number" id="setting-width" value="32" min="4" max="128" style="flex:1; padding:4px; font-family:monospace; text-align:center;">
-                                    <input type="number" id="setting-height" value="32" min="4" max="128" style="flex:1; padding:4px; font-family:monospace; text-align:center;">
-                                </div>
-                                <button id="apply-canvas-size" class="btn" style="width:100%; margin-bottom:15px;">Apply Resize</button>
-                            </div>
-                        </div>
-                        <div class="settings-section">
-                            <div class="section-heading">Display Settings</div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-show-minimap" checked>
-                                    <span class="checkmark"></span> Show Minimap
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-snap-to-grid">
-                                    <span class="checkmark"></span> Snap to Grid
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-show-coords" checked>
-                                    <span class="checkmark"></span> Show Coordinates
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="settings-section">
-                            <div class="section-heading">Visual Settings</div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-background-enabled" checked>
-                                    <span class="checkmark"></span> Enable Custom Background
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="property-label">
-                                    Background Color:
-                                    <input type="color" id="setting-background-color" value="#1a1a2e">
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-ambient-light" checked>
-                                    <span class="checkmark"></span> Enable Ambient Light
-                                </label>
-                            </div>
-                            <div class="property-group">
-                                <label class="property-label">
-                                    Ambient Light Color:
-                                    <input type="color" id="setting-ambient-color" value="#ffffff">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-tab-content" id="settings-export">
-                    <div class="export-settings-content">
-                        <div class="settings-section">
-                            <div class="section-heading">Export Options</div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="setting-export-transparent" checked>
-                                    <span class="checkmark"></span> Export with Transparent Background
-                                </label>
-
-                                <label class="property-label">
-                                    Export Resolution:
-                                    <select id="setting-export-resolution" style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; color: var(--text-primary); width: 100%; margin-top: 6px;">
-                                        <option value="24x24">24×24 - Game Icon</option>
-                                        <option value="36x36">36×36 - Game Icon</option>
-                                        <option value="48x48">48×48 - Game Icon</option>
-                                        <option value="128x128">128×128 - Game Sprite</option>
-                                        <option value="512x512">512×512 - Game Texture</option>
-                                        <option value="1024x1024">1024×1024 - High-res Texture</option>
-                                        <option value="1920x1080">1920×1080 - Full HD</option>
-                                        <option value="2560x1440">2560×1440 - 2K</option>
-                                        <option value="3840x2160">3840×2160 - 4K</option>
-                                        <option value="custom">Custom Size</option>
-                                    </select>
-                                </label>
-                                <label class="property-label">
-                                    Custom Width:
-                                    <input type="number" id="setting-custom-width" value="1920" min="100" max="8000">
-                                </label>
-                                <label class="property-label">
-                                    Custom Height:
-                                    <input type="number" id="setting-custom-height" value="1080" min="100" max="8000">
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="settings-section">
-                            <div class="section-heading">Export Actions</div>
-                            <div class="property-group">
-                                <button id="exportSettingsBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
-                                    <i class="fas fa-cloud-download-alt"></i> Export Defaults
-                                </button>
-                                <button id="saveToBrowserBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
-                                    <i class="fas fa-save"></i> Save to Browser
-                                </button>
-                                <button id="loadFromBrowserBtn" class="btn secondary" style="width: 100%;">
-                                    <i class="fas fa-download"></i> Load from Browser
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-tab-content" id="settings-tutorial">
-                    <div class="settings-content">
-                        <div class="settings-section">
-                            <div class="section-heading">Tutorial Settings</div>
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="settings-enable-tutorials" checked>
-                                    <span class="checkmark"></span> Enable Tutorials
-                                </label>
-                                <div class="setting-description">
-                                    Show interactive tutorials on startup
-                                </div>
-                            </div>
-
-                            <div class="property-group">
-                                <label class="setting-label">
-                                    <input type="checkbox" id="settings-show-hints" checked>
-                                    <span class="checkmark"></span> Show Tutorial Hints
-                                </label>
-                                <div class="setting-description">
-                                    Display helpful hints and tooltips
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tutorial Actions Group -->
-                        <div class="settings-section">
-                            <div class="section-heading">Tutorial Actions</div>
-                            <div class="property-group">
-                                <button id="startTutorialBtn" class="btn">
-                                    <i class="fas fa-graduation-cap"></i> Start Tutorial
-                                </button>
-                                <button id="resetTutorialBtn" class="btn secondary">
-                                    <i class="fas fa-redo"></i> Reset Tutorial Progress
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <footer>
-                <div class="modal-actions">
-                    <button class="btn" id="btn-settings-reset">Reset</button>
-                    <button class="btn" id="btn-settings-close">Close</button>
-                    <button class="btn primary" id="btn-settings-save">Save Settings</button>
-                </div>
-            </footer>
-        </div>
-    </div>
     <!-- Keyboard Shortcuts Modal -->
     <div class="modal-overlay" id="keyboard-shortcuts-modal">
         <div class="modal">
@@ -1034,6 +813,7 @@ Invert all colors" data-content="filters-list"><i class="fas fa-magic"></i></but
                 </div>
             </footer>
         </div>
+    
     </div>
 
     <!-- Hidden Inputs -->

@@ -616,7 +616,7 @@ canvas,
 .frame-thumb {
     width: 60px;
     height: 60px;
-    background: #000;
+    background: #FFF;
     border: 2px solid var(--border-color);
     border-radius: 4px;
     position: relative;
@@ -627,6 +627,17 @@ canvas,
 .frame-thumb.active {
     border-color: var(--accent-tertiary);
     box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+/* Onion skin frame indicators */
+.frame-thumb.onion-before {
+    border-color: rgba(0, 128, 255, 0.5);
+    box-shadow: 0 0 6px rgba(0, 128, 255, 0.3);
+}
+
+.frame-thumb.onion-after {
+    border-color: rgba(255, 128, 0, 0.5);
+    box-shadow: 0 0 6px rgba(255, 128, 0, 0.3);
 }
 
 .frame-thumb canvas {
@@ -1518,3 +1529,52 @@ input[type="color"]:focus {
 /* ======================================================================================== */
 /* END OF PIXEL ART STUDIO PRO STYLESHEET */
 /* ======================================================================================== */
+/* Floating Color History Overlay */
+.floating-color-history {
+    position: fixed;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.color-history-swatches {
+    display: flex;
+    gap: 4px;
+}
+
+.color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+}
+
+.color-swatch.active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5);
+}
+
+/* Color history label */
+.color-history-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 2px;
+    font-family: 'Inter', sans-serif;
+}

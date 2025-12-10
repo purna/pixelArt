@@ -8,7 +8,7 @@ const FileManager = {
     saveProject() {
         try {
             console.log('Starting project save...');
-            
+
             // Convert ImageData to base64 for JSON serialization
             const serializeFrames = State.frames.map(frame => ({
                 layers: frame.layers.map(layer => ({
@@ -44,6 +44,10 @@ const FileManager = {
                 const notifications = new Notifications();
                 notifications.success('Project saved successfully!');
             }
+
+            // Save to database as well
+            this.saveProjectToDatabase(project);
+
         } catch (error) {
             console.error('Save failed:', error);
             alert('Failed to save project: ' + error.message);
@@ -53,6 +57,30 @@ const FileManager = {
                 const notifications = new Notifications();
                 notifications.error('Failed to save project: ' + error.message);
             }
+        }
+    },
+
+    /**
+     * Save project to database
+     */
+    async saveProjectToDatabase(project) {
+        try {
+            // Check if database manager is available
+            if (typeof DatabaseManager !== 'undefined' && typeof app !== 'undefined') {
+                // Create database manager instance if it doesn't exist
+                if (!app.databaseManager) {
+                    app.databaseManager = new DatabaseManager(app);
+                }
+
+                // Save to database
+                await app.databaseManager.saveProjectToDatabase(project);
+                console.log('Project saved to database successfully!');
+            } else {
+                console.log('DatabaseManager not available, skipping database save');
+            }
+        } catch (error) {
+            console.error('Database save failed:', error);
+            // Don't show error to user as the main file save already succeeded
         }
     },
 

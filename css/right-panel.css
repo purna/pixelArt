@@ -107,7 +107,40 @@
 
 
     .dropins-container.right.closed {
-        right: -var(--right-panel-width); /* Move off-screen to the right when closed */
+        right: -280px; /* Move off-screen to the right when closed - using hardcoded value */
+    }
+
+    /* Ensure the panel toggle button moves with the container */
+    #panel-toggle {
+        position: fixed;
+        right: 280px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-right: none;
+        padding: 10px 4px;
+        border-radius: 8px 0 0 8px;
+        cursor: pointer;
+        z-index: 100;
+        color: var(--accent-tertiary);
+        transition: right 0.3s ease-in-out, transform 0.2s ease;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* When container is closed, move button to edge of screen */
+    .dropins-container.right.closed ~ #panel-toggle {
+        right: 0;
+    }
+
+    #panel-toggle.closed-toggle {
+        right: 0;
+    }
+
+    #panel-toggle:hover {
+        background: var(--bg-medium);
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: -2px 0 12px rgba(0, 217, 255, 0.3);
     }
 
   

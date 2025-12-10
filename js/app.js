@@ -3,7 +3,8 @@
 
 // Create app object to hold all managers and systems
 const app = {
-    tutorialConfig: tutorialConfig
+    tutorialConfig: tutorialConfig,
+    databaseManager: null
 };
 
 /**
@@ -21,6 +22,11 @@ function init() {
     LayerManager.renderList();
     AnimationManager.renderTimeline();
     FilterManager.initFilters();
+
+    // Initialize color history overlay
+    if (typeof ColorManager !== 'undefined') {
+        ColorManager.initColorHistory();
+    }
 
     // Initialize Settings Manager first
     if (typeof SettingsManager !== 'undefined') {
@@ -44,6 +50,11 @@ function init() {
     if (typeof TutorialSystem !== 'undefined') {
         app.tutorialSystem = new TutorialSystem(app);
         app.tutorialSystem.init();
+    }
+
+    // Initialize database manager
+    if (typeof DatabaseManager !== 'undefined') {
+        app.databaseManager = new DatabaseManager(app);
     }
 
     // Save initial state for undo/redo

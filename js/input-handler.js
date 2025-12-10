@@ -233,6 +233,37 @@ const InputHandler = {
             e.preventDefault();
             AnimationManager.switchFrame(State.currentFrameIndex - 1);
         }
+
+        // Color history shortcuts (1-4)
+        if (['1', '2', '3', '4'].includes(key)) {
+            e.preventDefault();
+            const colorIndex = parseInt(key) - 1;
+            if (State.recentColors[colorIndex]) {
+                State.color = State.recentColors[colorIndex];
+                UI.colorPicker.value = State.recentColors[colorIndex];
+                UI.colorHex.textContent = State.recentColors[colorIndex];
+
+                // Update color history display
+                if (typeof ColorManager !== 'undefined') {
+                    ColorManager.updateColorHistoryDisplay();
+                }
+
+                // Show notification
+                this.showNotification(`Selected color: ${State.recentColors[colorIndex]}`, 'info');
+            }
+        }
+
+        // Onion skinning shortcut (Alt+O)
+        if (e.altKey && key === 'o') {
+            e.preventDefault();
+            State.onionSkinEnabled = !State.onionSkinEnabled;
+            const onionBtn = document.getElementById('onionBtn');
+            if (onionBtn) {
+                onionBtn.classList.toggle('active', State.onionSkinEnabled);
+            }
+            CanvasManager.render();
+            this.showNotification(State.onionSkinEnabled ? 'Onion Skin Enabled' : 'Onion Skin Disabled', 'info');
+        }
         
         // Zoom shortcuts
         if (key === '+' || key === '=') {
@@ -731,6 +762,21 @@ const InputHandler = {
             AnimationManager.stop();
             this.showNotification('Animation stopped!', 'info');
         });
+
+        // Onion skinning controls
+        const onionBtn = document.getElementById('onionBtn');
+        if (onionBtn) {
+            onionBtn.addEventListener('click', () => {
+                State.onionSkinEnabled = !State.onionSkinEnabled;
+                onionBtn.classList.toggle('active', State.onionSkinEnabled);
+                CanvasManager.render();
+                this.showNotification(State.onionSkinEnabled ? 'Onion Skin Enabled' : 'Onion Skin Disabled', 'info');
+            });
+
+            // Initialize button state
+            onionBtn.classList.toggle('active', State.onionSkinEnabled);
+            onionBtn.title = 'Toggle Onion Skin (Alt+O)';
+        }
 
         // Undo/Redo functionality
         UI.undoBtn.addEventListener('click', () => {

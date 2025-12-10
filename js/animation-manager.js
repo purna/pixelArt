@@ -13,21 +13,24 @@ const AnimationManager = {
             div.className = `frame-thumb ${i === State.currentFrameIndex ? 'active' : ''}`;
             div.onclick = () => this.switchFrame(i);
             
-            // Create thumbnail by compositing layers
+            // Create thumbnail by copying from composition canvas
             const canvas = document.createElement('canvas');
             canvas.width = State.width;
             canvas.height = State.height;
             const ctx = canvas.getContext('2d');
-            
-            frame.layers.forEach(layer => {
-                if (layer.visible) {
-                    const temp = document.createElement('canvas');
-                    temp.width = State.width;
-                    temp.height = State.height;
-                    temp.getContext('2d').putImageData(layer.data, 0, 0);
-                    ctx.drawImage(temp, 0, 0);
-                }
-            });
+
+            // Save current frame index
+            const currentFrameIndex = State.currentFrameIndex;
+
+            // Temporarily switch to this frame to render it
+            State.currentFrameIndex = i;
+            CanvasManager.render();
+
+            // Copy the rendered composition to thumbnail
+            ctx.drawImage(UI.compositionCanvas, 0, 0);
+
+            // Restore current frame index
+            State.currentFrameIndex = currentFrameIndex;
             
             div.appendChild(canvas);
             
@@ -46,20 +49,22 @@ const AnimationManager = {
      */
     updateTimelineThumb(index) {
         if (!UI.framesList.children[index]) return;
-        
+
         const canvas = UI.framesList.children[index].querySelector('canvas');
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, State.width, State.height);
-        
-        State.frames[index].layers.forEach(layer => {
-            if (layer.visible) {
-                const temp = document.createElement('canvas');
-                temp.width = State.width;
-                temp.height = State.height;
-                temp.getContext('2d').putImageData(layer.data, 0, 0);
-                ctx.drawImage(temp, 0, 0);
-            }
-        });
+
+        // Save current frame index
+        const currentFrameIndex = State.currentFrameIndex;
+
+        // Temporarily switch to this frame to render it
+        State.currentFrameIndex = index;
+        CanvasManager.render();
+
+        // Copy the rendered composition to thumbnail
+        ctx.drawImage(UI.compositionCanvas, 0, 0);
+
+        // Restore current frame index
+        State.currentFrameIndex = currentFrameIndex;
     },
 
     /**
@@ -67,14 +72,24 @@ const AnimationManager = {
      */
     switchFrame(index) {
         if (index < 0 || index >= State.frames.length) return;
-        
+
         State.currentFrameIndex = index;
         LayerManager.renderList();
         CanvasManager.render();
-        
+
         // Update active state in timeline
         Array.from(UI.framesList.children).forEach((el, idx) => {
             el.classList.toggle('active', idx === index);
+            el.classList.toggle('onion-before',
+                State.onionSkinEnabled &&
+                idx > State.currentFrameIndex - State.onionSkinFramesBefore &&
+                idx < State.currentFrameIndex
+            );
+            el.classList.toggle('onion-after',
+                State.onionSkinEnabled &&
+                idx > State.currentFrameIndex &&
+                idx <= State.currentFrameIndex + State.onionSkinFramesAfter
+            );
         });
     },
 
@@ -135,17 +150,20 @@ const AnimationManager = {
      * Start animation playback
      */
     play() {
-        if (State.isPlaying) return;
-        
+        // If already playing, just return (don't restart)
+        if (State.isPlaying) {
+            return;
+        }
+
         State.isPlaying = true;
-        UI.playBtn.classList.add('active');
-        
+        this.syncUIState();
+
         let frameIndex = 0;
         const loop = () => {
             if (!State.isPlaying) return;
-            
+
             prevCtx.clearRect(0, 0, State.width, State.height);
-            
+
             // Composite frame layers
             State.frames[frameIndex].layers.forEach(layer => {
                 if (layer.visible) {
@@ -156,11 +174,11 @@ const AnimationManager = {
                     prevCtx.drawImage(temp, 0, 0);
                 }
             });
-            
+
             frameIndex = (frameIndex + 1) % State.frames.length;
             State.timer = setTimeout(loop, 1000 / State.fps);
         };
-        
+
         loop();
     },
 
@@ -170,8 +188,19 @@ const AnimationManager = {
     stop() {
         State.isPlaying = false;
         clearTimeout(State.timer);
-        UI.playBtn.classList.remove('active');
+        this.syncUIState();
         CanvasManager.render(); // Restore current frame view
+    },
+
+    /**
+     * Synchronize UI state with internal animation state
+     */
+    syncUIState() {
+        if (State.isPlaying) {
+            UI.playBtn.classList.add('active');
+        } else {
+            UI.playBtn.classList.remove('active');
+        }
     },
 
     /**
@@ -180,11 +209,38 @@ const AnimationManager = {
     updateFPS(fps) {
         State.fps = fps;
         UI.fpsDisplay.textContent = `${fps} FPS`;
-        
+
         if (State.isPlaying) {
-            this.stop();
-            this.play();
+            // Clear the existing timer
+            clearTimeout(State.timer);
+
+            // Restart the animation loop with the new FPS
+            let frameIndex = 0;
+            const loop = () => {
+                if (!State.isPlaying) return;
+
+                prevCtx.clearRect(0, 0, State.width, State.height);
+
+                // Composite frame layers
+                State.frames[frameIndex].layers.forEach(layer => {
+                    if (layer.visible) {
+                        const temp = document.createElement('canvas');
+                        temp.width = State.width;
+                        temp.height = State.height;
+                        temp.getContext('2d').putImageData(layer.data, 0, 0);
+                        prevCtx.drawImage(temp, 0, 0);
+                    }
+                });
+
+                frameIndex = (frameIndex + 1) % State.frames.length;
+                State.timer = setTimeout(loop, 1000 / State.fps);
+            };
+
+            loop();
         }
+
+        // Ensure UI state is synchronized
+        this.syncUIState();
     },
 
 
