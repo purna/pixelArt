@@ -181,7 +181,7 @@ const SettingsManager = {
             tabButtons.forEach(button => {
                 if (button.classList.contains('active')) {
                     hasActiveTab = true;
-                    // Also ensure the corresponding content is active
+                    // Also ensure the corresponding content is active (same as keyboard-shortcuts-modal)
                     const contentId = button.dataset.content;
                     const content = document.getElementById(contentId);
                     if (content) {
@@ -237,6 +237,7 @@ const SettingsManager = {
 
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
+                // Use data-content attribute to match the content panel ID (same as keyboard-shortcuts-modal)
                 const contentId = button.dataset.content;
 
                 // Remove active class from all tabs and content

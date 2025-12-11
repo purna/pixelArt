@@ -3,6 +3,7 @@
 /* ============================================= */
 
 
+
 .dropins-container {
     width: var(--right-panel-width);
     position: fixed;
@@ -703,23 +704,12 @@
 /* 10. FILTER CONTROLS */
 /* ============================================= */
 
-.filter-list {
+.filter-options {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-#filters-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-#panel-filters .filter-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 
 /* ============================================= */
 /* 11. TILEMAP CONTROLS */
@@ -898,11 +888,163 @@
 /* 13. MIRROR CONTROLS */
 /* ============================================= */
 
-#mirror-options .mirror-controls {
+#mirror-options .mirror-controls,  #flip-options .mirror-controls{
     display: flex;
     flex-direction: column;
     gap: 12px;
     margin-top: 8px;
+}
+
+.mirror-axis-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-medium);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mirror-axis-option:hover {
+    border-color: var(--accent-tertiary);
+    background: rgba(0, 217, 255, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.15);
+}
+
+.mirror-axis-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.mirror-axis-option input[type="radio"]:checked ~ .mirror-info .mirror-title,
+.mirror-axis-option input[type="radio"]:checked ~ .mirror-info .mirror-subtitle {
+    color: var(--accent-primary);
+}
+
+.mirror-axis-option input[type="radio"]:checked ~ .mirror-info .mirror-icon {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #000;
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+.mirror-axis-option input[type="radio"]:checked ~ .mirror-preview .mirror-cell.highlight {
+    background: #000;
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
+}
+
+.mirror-axis-option input[type="radio"]:checked {
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 65, 0.08);
+    box-shadow: 0 0 12px var(--border-glow);
+}
+
+.mirror-axis-option.checked {
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 65, 0.08);
+    box-shadow: 0 0 12px var(--border-glow);
+}
+
+.mirror-axis-option.checked .mirror-title,
+.mirror-axis-option.checked .mirror-subtitle {
+    color: var(--accent-primary);
+}
+
+.mirror-axis-option.checked .mirror-icon {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #000;
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+.mirror-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+}
+
+.mirror-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 1px;
+    width: 45px;
+    height: 45px;
+    background: var(--bg-dark);
+    padding: 2px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.mirror-cell {
+    background: var(--bg-light);
+    border-radius: 1px;
+    transition: background 0.2s ease;
+}
+
+.mirror-cell.highlight {
+    background: var(--accent-primary);
+    box-shadow: 0 0 4px var(--border-glow);
+}
+
+.mirror-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.mirror-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.mirror-axis-option:hover .mirror-icon {
+    border-color: var(--accent-tertiary);
+    color: var(--accent-tertiary);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+}
+
+.mirror-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mirror-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.mirror-subtitle {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.2;
+    font-weight: 400;
+}
+
+.mirror-axis-option:hover .mirror-subtitle {
+    color: var(--accent-tertiary);
 }
 
 .mirror-note {
@@ -911,6 +1053,15 @@
     align-items: center;
     gap: 6px;
     margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(0, 217, 255, 0.05);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 6px;
+}
+
+.mirror-note:hover {
+    background: rgba(0, 217, 255, 0.08);
+    border-color: rgba(0, 217, 255, 0.3);
 }
 
 .mirror-note i {
@@ -1260,15 +1411,6 @@
       display: block;
   }
 
-  /* Show ALL panel-tab-content elements (they should always be visible) */
-  .panel-tab-content {
-      display: block;
-      height: 100%;
-      overflow: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent-primary) var(--bg-dark);
-  }
-
 .panel-tab-content::-webkit-scrollbar {
     width: 8px;
 }
@@ -1554,3 +1696,125 @@
     margin-top: 4px;
     padding-top: 6px;
 }
+
+
+        /* SIMPLE ALIGN OPTIONS */
+        .align-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .align-btn {
+            background-color: var(--bg-light);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .align-btn:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--accent-tertiary);
+        }
+
+        .align-btn.active {
+            background-color: var(--active-bg);
+            border-color: var(--accent-tertiary);
+        }
+
+        .align-btn input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .align-icon {
+            font-size: 1.2rem;
+            color: var(--accent-primary);
+            margin-bottom: 6px;
+        }
+
+        .align-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* SIMPLE ROTATE OPTIONS */
+        .rotate-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .rotate-btn {
+            background-color: var(--bg-light);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .rotate-btn:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--accent-tertiary);
+        }
+
+        .rotate-btn.active {
+            background-color: var(--active-bg);
+            border-color: var(--accent-primary);
+        }
+
+        .rotate-btn input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .rotate-icon {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+            margin-bottom: 8px;
+        }
+
+        .rotate-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .rotate-description {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* VISUAL PREVIEW */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 45px;
+            height: 45px;
+            margin: 0 auto 8px;
+        }
+
+        .preview-cell {
+            background-color: #111;
+            border-radius: 2px;
+        }
+
+        .preview-cell.highlight {
+            background-color: var(--accent-primary);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }

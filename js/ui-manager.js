@@ -228,21 +228,26 @@ const UIManager = {
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) {
             console.log('UIManager: Setting up settings button event listener');
-            settingsBtn.addEventListener('click', (e) => {
-                console.log('UIManager: Settings button clicked');
-                e.preventDefault();
-                e.stopPropagation();
-                // Use the new settings manager modal instead of the old panel
-                if (typeof SettingsManager !== 'undefined' && SettingsManager.toggleSettings) {
-                    console.log('UIManager: Calling SettingsManager.toggleSettings()');
-                    SettingsManager.toggleSettings();
-                } else {
-                    console.error('UIManager: SettingsManager not available, using fallback');
-                    // Fallback to old behavior if settings manager not available
-                    this.showPanelSections(['panel-settings']);
-                    this.setActiveSidebarButton('settingsBtn');
-                }
-            });
+            // Check if SettingsManager has already set up its listener
+            if (settingsBtn.hasAttribute('data-settings-listener')) {
+                console.log('UIManager: Settings button already has SettingsManager listener, skipping UIManager listener');
+            } else {
+                settingsBtn.addEventListener('click', (e) => {
+                    console.log('UIManager: Settings button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Use the new settings manager modal instead of the old panel
+                    if (typeof SettingsManager !== 'undefined' && SettingsManager.toggleSettings) {
+                        console.log('UIManager: Calling SettingsManager.toggleSettings()');
+                        SettingsManager.toggleSettings();
+                    } else {
+                        console.error('UIManager: SettingsManager not available, using fallback');
+                        // Fallback to old behavior if settings manager not available
+                        this.showPanelSections(['panel-settings']);
+                        this.setActiveSidebarButton('settingsBtn');
+                    }
+                });
+            }
         } else {
             console.error('UIManager: Settings button not found!');
         }
@@ -297,11 +302,6 @@ const UIManager = {
                 this.showPanelSections(['panel-preview', 'panel-palette', 'panel-tool-options']);
                 break;
 
-            case 'mirror':
-                // Mirror tool needs Palette, Options, and Mirror panel
-                this.showPanelSections(['panel-preview', 'panel-palette', 'panel-tool-options', 'mirror-options']);
-                break;
-
             case 'eraser':
                 // Eraser needs Size (Options) but not Palette
                 this.showPanelSections(['panel-preview', 'panel-tool-options']);
@@ -332,11 +332,12 @@ const UIManager = {
             'panel-preview',
             'panel-palette',
             'panel-tool-options',
+            'panel-effects',
+            'panel-transform',
             'panel-layers',
             'panel-filters',
-            'panel-tilemap',
-            'panel-settings',
-            'mirror-options'
+            'panel-tilemap'
+
         ];
 
         allSections.forEach(id => {
@@ -349,7 +350,7 @@ const UIManager = {
                 }
             }
         });
-        
+
         // Ensure panel is open if the user clicks a specific view
         const panel = document.getElementById('side-panel');
         if (panel && panel.classList.contains('closed')) {

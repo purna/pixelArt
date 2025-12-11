@@ -56,11 +56,11 @@ const FilterManager = {
      * Initialize filter buttons
      */
     initFilters() {
-        const filtersList = document.getElementById('filters-list');
+        const filtersList = document.getElementById('filters-container');
 
         // Check if filters-list element exists
         if (!filtersList) {
-            console.warn('filters-list element not found. Filters will not be initialized.');
+            console.warn('filters-container element not found. Filters will not be initialized.');
             return;
         }
 

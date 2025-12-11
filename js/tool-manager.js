@@ -606,9 +606,10 @@ const ToolManager = {
     },
 
     /**
-     * Flip current layer horizontally
+     * Flip current layer based on axis
+     * @param {string} axis - 'x', 'y', or 'both'
      */
-    flipCurrentLayer() {
+    flipCurrentLayer(axis = 'x') {
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
         const imageData = layer.data;
@@ -620,11 +621,18 @@ const ToolManager = {
         const flippedData = new ImageData(width, height);
         const flippedDataArray = flippedData.data;
 
-        // Flip horizontally
+        const flipX = axis === 'x' || axis === 'both';
+        const flipY = axis === 'y' || axis === 'both';
+
+        // Flip based on selected axis
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const originalIndex = (y * width + x) * 4;
-                const flippedIndex = (y * width + (width - 1 - x)) * 4;
+
+                // Calculate target coordinates based on flip axis
+                const targetX = flipX ? width - 1 - x : x;
+                const targetY = flipY ? height - 1 - y : y;
+                const flippedIndex = (targetY * width + targetX) * 4;
 
                 // Copy pixel data
                 flippedDataArray[flippedIndex] = data[originalIndex];
@@ -643,7 +651,16 @@ const ToolManager = {
             InputHandler.saveState();
         }
 
-        InputHandler.showNotification('Layer flipped horizontally!', 'success');
+        // Show appropriate notification based on flip axis
+        let notificationText;
+        if (axis === 'both') {
+            notificationText = 'Layer flipped on both X and Y axes!';
+        } else if (axis === 'y') {
+            notificationText = 'Layer flipped vertically!';
+        } else {
+            notificationText = 'Layer flipped horizontally!';
+        }
+        InputHandler.showNotification(notificationText, 'success');
     },
 
     /**
@@ -1049,3 +1066,4 @@ const ToolManager = {
         InputHandler.showNotification('Selection pasted to new layer', 'success');
     }
 };
+

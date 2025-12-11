@@ -158,16 +158,16 @@ class DatabaseManager {
                 {
                     collection: {
                         id: 1001,
-                        name: 'Game SFX Collection',
+                        name: 'Game Art Collection',
                         groups: [
                             {
                                 id: 2001,
-                                name: 'Explosions',
+                                name: 'Sprite Walk',
                                 layers: []
                             },
                             {
                                 id: 2002,
-                                name: 'Footsteps',
+                                name: 'Sprite Run',
                                 layers: []
                             }
                         ]

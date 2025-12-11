@@ -90,6 +90,11 @@ const UI = {
     mirrorOptions: null,
     mirrorX: null,
     mirrorY: null,
+
+    // Flip Controls
+    flipOptions: null,
+    flipX: null,
+    flipY: null,
     
     // Inputs
     widthInput: null,
@@ -192,6 +197,12 @@ const initDOM = () => {
     UI.mirrorX = document.getElementById('mirrorX');
     UI.mirrorY = document.getElementById('mirrorY');
     UI.mirrorBoth = document.getElementById('mirrorBoth');
+
+    // Flip Controls
+    UI.flipOptions = document.getElementById('flip-options');
+    UI.flipX = document.getElementById('flipX');
+    UI.flipy = document.getElementById('flipY');
+    UI.flipBoth = document.getElementById('flipoBoth');
     
     // Inputs
     UI.widthInput = document.getElementById('widthInput');

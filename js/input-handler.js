@@ -357,6 +357,8 @@ const InputHandler = {
         this.setupBrightnessControls();
 
         // Setup brightness preset buttons
+        // Setup brightness/contrast controls for contrast panel
+        this.setupBrightnessContrastControls();
         this.setupBrightnessPresets();
 
         // Drawing events
@@ -614,8 +616,16 @@ const InputHandler = {
             });
         });
     
-        // Close submenus when clicking outside
+        // Close submenus when clicking outside (but not on layer-related elements)
         document.addEventListener('click', (e) => {
+            // Don't interfere with layer-related interactions
+            if (e.target.closest('.layer-item') ||
+                e.target.closest('.layer-folder-item') ||
+                e.target.closest('.folder-header') ||
+                e.target.closest('.folder-contents')) {
+                return;
+            }
+            
             if (!e.target.closest('.tool-btn.menu-parent') && !e.target.closest('.tool-submenu')) {
                 document.querySelectorAll('.tool-submenu').forEach(submenu => {
                     submenu.classList.remove('visible');
@@ -719,12 +729,7 @@ const InputHandler = {
             AnimationManager.updateFPS(parseInt(e.target.value));
         });
 
-        // Layer controls
-        // Note: Event listener already added in the button setup loop above
-        // UI.addLayerBtn.addEventListener('click', () => {
-        //     LayerManager.addLayer();
-        //     this.showNotification('Layer added!', 'success');
-        // });
+
 
         // Folder controls
         document.getElementById('add-group-btn')?.addEventListener('click', () => {
@@ -831,6 +836,7 @@ const InputHandler = {
                 e.stopPropagation();
             });
         }
+        /*
 
         // Add event listeners for transform buttons
         if (UI.rotateBtn) {
@@ -857,7 +863,9 @@ const InputHandler = {
         if (UI.flipBtn) {
             UI.flipBtn.addEventListener('click', (e) => {
                 console.log('Flip button clicked');
-                ToolManager.flipCurrentLayer();
+                // Get the currently selected flip axis from the radio buttons
+                const selectedFlipAxis = document.querySelector('input[name="mirror-axis"]:checked')?.value || 'x';
+                ToolManager.flipCurrentLayer(selectedFlipAxis);
                 e.preventDefault();
                 e.stopPropagation();
             });
@@ -871,6 +879,7 @@ const InputHandler = {
                 e.stopPropagation();
             });
         }
+        */
 
         // Add specific handler for eyedropper tool button to ensure it works
         const eyedropperToolBtn = document.querySelector('.tool-btn[data-tool="eyedropper"]');
@@ -883,31 +892,79 @@ const InputHandler = {
                 e.stopPropagation();
             });
         }
+        
+        /*
+        // The mirror tool is now in the mirror-options panel
+
+        // Add specific handler for mirror tool button to ensure it works
+        const mirrorToolBtn = document.querySelector('.tool-btn[data-type="mirror"]');
+        if (mirrorToolBtn) {
+            mirrorToolBtn.addEventListener('click', (e) => {
+                console.log('Mirror tool button clicked');
+                // Get the currently selected mirror axis from the radio buttons
+                const selectedMirrorAxis = document.querySelector('input[name="mirror-axis"]:checked')?.value || 'x';
+                ToolManager.mirrorLayer();
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+        
 
         // Mirror Axis Controls
         const mirrorInputs = [UI.mirrorX, UI.mirrorY, UI.mirrorBoth].filter(Boolean);
         mirrorInputs.forEach(input => {
             input.addEventListener('change', (e) => {
                 State.mirrorAxis = e.target.value;
-                
-                // Update visual states for professional mirror options
-                document.querySelectorAll('.mirror-axis-option').forEach(option => {
+
+                 // Update visual states for professional mirror options - only in mirror-options panel
+                 document.querySelectorAll('#mirror-options .mirror-axis-option').forEach(option => {
                     option.classList.remove('checked');
                 });
-                
-                if (e.target.checked) {
+
+                 if (e.target.checked) {
                     e.target.closest('.mirror-axis-option').classList.add('checked');
                 }
-                
-                this.showNotification(`Mirror axis set to ${e.target.value.toUpperCase()} for next use.`, 'info');
+
+                 this.showNotification(`Mirror axis set to ${e.target.value.toUpperCase()} for next use.`, 'info');
             });
         });
 
+        */
+
+
+
+
         // Initialize mirror option states
-        document.querySelectorAll('.mirror-axis-option').forEach(option => {
+        document.querySelectorAll('#mirror-options .mirror-axis-option').forEach(option => {
             const radio = option.querySelector('input[type="radio"]');
             if (radio && radio.checked) {
                 option.classList.add('checked');
+            }
+        });
+
+        // Initialize flip option states and add event listeners
+        document.querySelectorAll('.flip-axis-container .mirror-axis-option').forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                option.classList.add('checked');
+            }
+
+            // Add event listener for flip radio buttons
+            if (radio) {
+                radio.addEventListener('change', (e) => {
+                    // Update visual states for flip options
+                    document.querySelectorAll('.flip-axis-container .mirror-axis-option').forEach(opt => {
+                        opt.classList.remove('checked');
+                    });
+
+                    if (e.target.checked) {
+                        e.target.closest('.mirror-axis-option').classList.add('checked');
+                    }
+
+                    // Show notification about the selected flip axis
+                    const axisText = e.target.value === 'both' ? 'X and Y' : e.target.value.toUpperCase();
+                    this.showNotification(`Flip axis set to ${axisText} for next flip operation.`, 'info');
+                });
             }
         });
       
@@ -1013,7 +1070,7 @@ const InputHandler = {
                         }))
                     };
 
-                    localStorage.setItem('pixelAudioProject', JSON.stringify(stateWithSerializedLayers));
+                    localStorage.setItem('pixelArtProject', JSON.stringify(stateWithSerializedLayers));
                     this.showNotification('Project saved to browser!', 'success');
                 } catch (e) {
                     console.error('Failed to save project:', e);
@@ -1024,7 +1081,7 @@ const InputHandler = {
 
         if (UI.loadFromBrowserBtn) {
             UI.loadFromBrowserBtn.addEventListener('click', () => {
-                const saved = localStorage.getItem('pixelAudioProject');
+                const saved = localStorage.getItem('pixelArtProject');
                 if (saved) {
                     try {
                         const state = JSON.parse(saved);
@@ -1525,6 +1582,123 @@ const InputHandler = {
         if (initialPreset) {
             initialPreset.classList.add('active');
         }
+    },
+
+    /**
+     * Setup brightness/contrast controls for contrast panel
+     */
+    setupBrightnessContrastControls() {
+        // Initialize brightness factor in state if not present
+        if (State.brightnessFactor === undefined) {
+            State.brightnessFactor = 1.0;
+        }
+
+        // Set initial display value
+        const brightnessContrastDisplay = document.getElementById('brightnessContrastDisplay');
+        if (brightnessContrastDisplay) {
+            brightnessContrastDisplay.textContent = State.brightnessFactor.toFixed(1);
+        }
+
+        // Brightness/Contrast slider event listener
+        const brightnessContrastSlider = document.getElementById('brightnessContrastSlider');
+        if (brightnessContrastSlider) {
+            brightnessContrastSlider.addEventListener('input', (e) => {
+                State.brightnessFactor = parseFloat(e.target.value);
+                if (brightnessContrastDisplay) {
+                    brightnessContrastDisplay.textContent = State.brightnessFactor.toFixed(1);
+                }
+            });
+        }
+
+        // Setup brightness preset buttons for contrast panel
+        document.querySelectorAll('#contrast-options .brightness-preset').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const factor = parseFloat(button.getAttribute('data-factor'));
+                State.brightnessFactor = factor;
+
+                // Update slider and display
+                if (brightnessContrastSlider) {
+                    brightnessContrastSlider.value = factor;
+                }
+                if (brightnessContrastDisplay) {
+                    brightnessContrastDisplay.textContent = factor.toFixed(1);
+                }
+
+                // Update active button state
+                document.querySelectorAll('#contrast-options .brightness-preset').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+
+                // Show notification
+                const effectName = factor > 1 ? (factor === 1.2 ? 'Slight Lighten' : 'Lighten') :
+                               factor < 1 ? (factor === 0.8 ? 'Slight Darken' : 'Darken') : 'Normal';
+                this.showNotification(`Brightness set to ${effectName} (${factor.toFixed(1)})`, 'success');
+            });
+        });
+
+        // Set initial active preset button
+        const initialPreset = document.querySelector('#contrast-options .brightness-preset[data-factor="1.0"]');
+        if (initialPreset) {
+            initialPreset.classList.add('active');
+        }
+
+        // Setup apply button
+        const applyBtn = document.getElementById('applyBrightnessContrastBtn');
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => {
+                this.applyBrightnessContrastToLayer();
+            });
+        }
+    },
+
+    /**
+     * Apply brightness/contrast adjustment to the selected layer
+     */
+    applyBrightnessContrastToLayer() {
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+        const imageData = layer.data;
+        const width = State.width;
+        const height = State.height;
+        const data = imageData.data;
+        const factor = State.brightnessFactor;
+
+        // Create a new ImageData for the adjusted result
+        const adjustedData = new ImageData(width, height);
+        const adjustedDataArray = adjustedData.data;
+
+        // Apply brightness/contrast adjustment to each pixel
+        for (let i = 0; i < data.length; i += 4) {
+            // Skip transparent pixels (alpha = 0)
+            if (data[i + 3] === 0) {
+                adjustedDataArray[i] = data[i];     // R
+                adjustedDataArray[i + 1] = data[i + 1]; // G
+                adjustedDataArray[i + 2] = data[i + 2]; // B
+                adjustedDataArray[i + 3] = data[i + 3]; // A
+                continue;
+            }
+
+            // Apply brightness/contrast adjustment
+            adjustedDataArray[i] = Math.min(255, Math.max(0, data[i] * factor));     // R
+            adjustedDataArray[i + 1] = Math.min(255, Math.max(0, data[i + 1] * factor)); // G
+            adjustedDataArray[i + 2] = Math.min(255, Math.max(0, data[i + 2] * factor)); // B
+            adjustedDataArray[i + 3] = data[i + 3]; // A (keep original alpha)
+        }
+
+        // Update layer data
+        layer.data = adjustedData;
+
+        // Update canvas and save history
+        CanvasManager.render();
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
+
+        // Show notification
+        const effectName = factor > 1 ? (factor === 1.2 ? 'Slight Lighten' : 'Lighten') :
+                       factor < 1 ? (factor === 0.8 ? 'Slight Darken' : 'Darken') : 'Normal';
+        this.showNotification(`Applied ${effectName} effect to layer!`, 'success');
     },
 
     /**
