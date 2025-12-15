@@ -911,7 +911,7 @@ const InputHandler = {
         
 
         // Mirror Axis Controls
-        const mirrorInputs = [UI.mirrorX, UI.mirrorY, UI.mirrorBoth].filter(Boolean);
+        const mirrorInputs = [UI.mirrorNone, UI.mirrorX, UI.mirrorY, UI.mirrorBoth].filter(Boolean);
         mirrorInputs.forEach(input => {
             input.addEventListener('change', (e) => {
                 State.mirrorAxis = e.target.value;
@@ -923,9 +923,10 @@ const InputHandler = {
 
                  if (e.target.checked) {
                     e.target.closest('.mirror-axis-option').classList.add('checked');
-                }
+                 }
 
-                 this.showNotification(`Mirror axis set to ${e.target.value.toUpperCase()} for next use.`, 'info');
+                 const axisText = e.target.value === 'both' ? 'X and Y' : e.target.value === 'none' ? 'None' : e.target.value.toUpperCase();
+                 this.showNotification(`Mirror axis set to ${axisText} for next use.`, 'info');
             });
         });
 
@@ -939,6 +940,27 @@ const InputHandler = {
             const radio = option.querySelector('input[type="radio"]');
             if (radio && radio.checked) {
                 option.classList.add('checked');
+            }
+
+            // Add event listener for mirror axis radio buttons
+            if (radio) {
+                radio.addEventListener('change', (e) => {
+                    // Update visual states for mirror options
+                    document.querySelectorAll('#mirror-options .mirror-axis-option').forEach(opt => {
+                        opt.classList.remove('checked');
+                    });
+
+                    if (e.target.checked) {
+                        e.target.closest('.mirror-axis-option').classList.add('checked');
+                    }
+
+                    // Update state
+                    State.mirrorAxis = e.target.value;
+
+                    // Show notification about the selected mirror axis
+                    const axisText = e.target.value === 'both' ? 'X and Y' : e.target.value === 'none' ? 'None' : e.target.value.toUpperCase();
+                    this.showNotification(`Mirror axis set to ${axisText} for next use.`, 'info');
+                });
             }
         });
 

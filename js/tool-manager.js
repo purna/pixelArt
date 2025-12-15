@@ -164,7 +164,14 @@ const ToolManager = {
      * Draw a mirrored line using Bresenham's algorithm
      */
     drawMirrorLine(x0, y0, x1, y1, color, ctx) {
-        // Draw the original line
+        // Check if mirroring is disabled
+        if (State.mirrorAxis === 'none') {
+            // Just draw the original line without mirroring
+            this.drawLine(x0, y0, x1, y1, color, ctx, false);
+            return;
+        }
+
+        // Draw the original line with current tool settings
         this.drawLine(x0, y0, x1, y1, color, ctx, false);
 
         // Get mirror settings
@@ -181,7 +188,7 @@ const ToolManager = {
         const startMirrored = mirrorPoint(x0, y0);
         const endMirrored = mirrorPoint(x1, y1);
 
-        // Draw mirrored lines
+        // Draw mirrored lines with current tool settings
         if (mirrorX && !mirrorY) {
             // X-axis only
             this.drawLine(State.width - 1 - x0, y0, State.width - 1 - x1, y1, color, ctx, false);
@@ -203,6 +210,12 @@ const ToolManager = {
      * Mirror the active layer based on State.mirrorAxis
      */
     mirrorLayer() {
+        // Check if mirroring is disabled
+        if (State.mirrorAxis === 'none') {
+            InputHandler.showNotification('Mirroring is disabled (set to "none")', 'info');
+            return;
+        }
+
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
 
@@ -211,31 +224,49 @@ const ToolManager = {
         const height = State.height;
         const data = imageData.data;
 
-        const newData = new ImageData(width, height);
-        const newDataArray = newData.data;
+        // Create a temporary canvas to apply mirroring with tool settings
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Draw the original layer content
+        tempCtx.putImageData(imageData, 0, 0);
+
+        // Set up tool properties
+        const brushSize = State.brushSize;
+        const brushBlur = State.brushBlur;
+        const opacity = State.opacity;
+        const color = State.color;
+
+        // Convert hex color to RGBA string with current opacity
+        const rgbaColor = this.hexToRgba(color, opacity);
 
         const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
         const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
 
+        // Apply mirroring with current tool settings
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const originalIndex = (y * width + x) * 4;
+
+                // Skip transparent pixels
+                if (data[originalIndex + 3] === 0) continue;
 
                 // Calculate mirrored coordinates
                 const targetX = mirrorX ? width - 1 - x : x;
                 const targetY = mirrorY ? height - 1 - y : y;
 
-                const newIndex = (targetY * width + targetX) * 4;
-
-                // Copy all 4 bytes (RGBA)
-                newDataArray[newIndex] = data[originalIndex];
-                newDataArray[newIndex + 1] = data[originalIndex + 1];
-                newDataArray[newIndex + 2] = data[originalIndex + 2];
-                newDataArray[newIndex + 3] = data[originalIndex + 3];
+                // Only mirror if the target position is different from source
+                if (targetX !== x || targetY !== y) {
+                    // Use the plot method to apply tool settings (brush size, blur, opacity)
+                    this.plot(targetX, targetY, rgbaColor, tempCtx, false);
+                }
             }
         }
 
-        layer.data = newData;
+        // Get the result and update the layer
+        layer.data = tempCtx.getImageData(0, 0, width, height);
 
         // Update canvas and save history
         CanvasManager.render();
@@ -245,7 +276,7 @@ const ToolManager = {
         }
 
         const axisText = State.mirrorAxis === 'both' ? 'X and Y' : State.mirrorAxis.toUpperCase();
-        InputHandler.showNotification(`Layer mirrored on ${axisText} axis!`, 'success');
+        InputHandler.showNotification(`Layer mirrored on ${axisText} axis with current tool settings!`, 'success');
     },
 
     /**
@@ -297,25 +328,61 @@ const ToolManager = {
         const isEraser = State.tool === 'eraser';
 
         if (['pencil', 'brush', 'dither', 'eraser'].includes(State.tool)) {
-            this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
+            // Check if mirroring is enabled for any tool (not just mirror tool)
+            if (State.mirrorAxis !== 'none' && State.mirrorAxis) {
+                // Apply mirroring to all drawing tools when mirror axis is selected
+
+                // Draw the original line
+                this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
+
+                // Draw mirrored lines based on mirror axis settings
+                const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
+                const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
+
+                if (mirrorX) {
+                    // Mirror on X axis (horizontal)
+                    this.drawLine(State.width - 1 - State.dragStart.x, State.dragStart.y,
+                                 State.width - 1 - x, y, rgba, layerCtx, isEraser);
+                }
+                if (mirrorY) {
+                    // Mirror on Y axis (vertical)
+                    this.drawLine(State.dragStart.x, State.height - 1 - State.dragStart.y,
+                                 x, State.height - 1 - y, rgba, layerCtx, isEraser);
+                }
+                if (mirrorX && mirrorY) {
+                    // Mirror on both axes
+                    this.drawLine(State.width - 1 - State.dragStart.x, State.height - 1 - State.dragStart.y,
+                                 State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, isEraser);
+                }
+            } else {
+                // Normal drawing without mirroring
+                this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
+            }
+
             State.dragStart = { x, y };
             this.updateLayerFromCtx();
         } else if (State.tool === 'mirror') {
-            // Draw the original point
-            this.plot(x, y, rgba, layerCtx, false);
+            // Check if mirroring is disabled
+            if (State.mirrorAxis === 'none') {
+                // Just draw normally without mirroring
+                this.plot(x, y, rgba, layerCtx, false);
+            } else {
+                // Draw the original point with current tool settings
+                this.plot(x, y, rgba, layerCtx, false);
 
-            // Draw mirrored points based on mirror axis settings
-            const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
-            const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
+                // Draw mirrored points based on mirror axis settings
+                const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
+                const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
 
-            if (mirrorX) {
-                this.plot(State.width - 1 - x, y, rgba, layerCtx, false);
-            }
-            if (mirrorY) {
-                this.plot(x, State.height - 1 - y, rgba, layerCtx, false);
-            }
-            if (mirrorX && mirrorY) {
-                this.plot(State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, false);
+                if (mirrorX) {
+                    this.plot(State.width - 1 - x, y, rgba, layerCtx, false);
+                }
+                if (mirrorY) {
+                    this.plot(x, State.height - 1 - y, rgba, layerCtx, false);
+                }
+                if (mirrorX && mirrorY) {
+                    this.plot(State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, false);
+                }
             }
 
             this.updateLayerFromCtx();

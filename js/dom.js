@@ -194,6 +194,7 @@ const initDOM = () => {
 
     // Mirror Controls
     UI.mirrorOptions = document.getElementById('mirror-options');
+    UI.mirrorNone = document.getElementById('mirrorNone');
     UI.mirrorX = document.getElementById('mirrorX');
     UI.mirrorY = document.getElementById('mirrorY');
     UI.mirrorBoth = document.getElementById('mirrorBoth');
