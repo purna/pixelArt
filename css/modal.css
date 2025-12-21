@@ -65,7 +65,7 @@
 /* Fix header vertical alignment - using exact pixelTilemaps styles */
 .modal header {
     flex-shrink: 0;
-    padding: 20px 20px 40px 20px;
+    padding: 0px 20px 50px 20px;
     width: 100%;
     display: block;
     margin-bottom: 40px;
