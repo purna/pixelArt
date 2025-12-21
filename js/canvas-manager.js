@@ -175,10 +175,10 @@ const CanvasManager = {
      */
     renderNormal() {
         ctx.clearRect(0, 0, State.width, State.height);
-
+        
         const frame = State.frames[State.currentFrameIndex];
         if (!frame) return;
-
+        
         frame.layers.forEach(layer => {
             if (layer.visible) {
                 offCtx.clearRect(0, 0, State.width, State.height);
@@ -186,19 +186,27 @@ const CanvasManager = {
                 ctx.drawImage(State.offscreenCanvas, 0, 0);
             }
         });
-
+        
         // Update preview window
         prevCtx.clearRect(0, 0, State.width, State.height);
         prevCtx.drawImage(UI.compositionCanvas, 0, 0);
-
+        
         // Update tilemap preview if available
         if (typeof TilemapManager !== 'undefined' && TilemapManager.refresh) {
             TilemapManager.refresh();
         }
-
+        
         // Update seamless grid overlay if enabled
         if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled) {
             this.updateSeamlessGridOverlay();
+        }
+        
+        // NEW: Restore selection preview after rendering if there's an active selection
+        // Use a separate method to ensure selections don't interfere with drawing tools
+        if (typeof ToolManager !== 'undefined' && ToolManager.selection && ToolManager.selection.active) {
+            ToolManager.drawSelectionPreview();
+        } else if (typeof ToolManager !== 'undefined' && ToolManager.selection && ToolManager.selection.pixels) {
+            ToolManager.showSelectionPreview();
         }
     },
 
@@ -248,6 +256,11 @@ const CanvasManager = {
         // Update seamless grid overlay if enabled
         if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled) {
             this.updateSeamlessGridOverlay();
+        }
+        
+        // NEW: Restore selection preview after rendering if there's an active selection
+        if (typeof ToolManager !== 'undefined' && ToolManager.selection && ToolManager.selection.pixels) {
+            ToolManager.showSelectionPreview();
         }
     },
 

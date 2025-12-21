@@ -3,6 +3,7 @@
 
 const InputHandler = {
     isPanningMap: false,
+    shiftKeyPressed: false,
 
     /**
      * Get canvas coordinates from mouse/touch event
@@ -41,6 +42,9 @@ const InputHandler = {
     onDrawMove(e) {
         const { x, y } = this.getCoords(e);
         
+        // Track shift key state for selection move
+        State.shiftKey = e.shiftKey;
+        
         if (x >= 0 && x < State.width && y >= 0 && y < State.height) {
             UI.coords.textContent = `${x}, ${y}`;
             
@@ -62,10 +66,8 @@ const InputHandler = {
 
         ToolManager.end(x, y);
 
-        // NEW: Handle selection end for selection tools
-        if (typeof ToolManager.endSelection === 'function' && State.tool && State.tool.startsWith('select-')) {
-            ToolManager.endSelection(x, y);
-        }
+        // Selection tools are now handled by SelectionToolManager via ToolManager.end()
+        // No need to call endSelection separately
     },
 
     /**
@@ -122,6 +124,9 @@ const InputHandler = {
      * Handle keyboard shortcuts
      */
     onKeyDown(e) {
+        // Track shift key state
+        State.shiftKey = e.shiftKey;
+        
         // Don't trigger shortcuts when typing in inputs
         if (e.target.tagName === 'INPUT') return;
         
@@ -144,7 +149,8 @@ const InputHandler = {
            'k': 'darken',
            '1': 'select-rect',
            '2': 'select-circle',
-           '3': 'select-lasso'
+           '3': 'select-lasso',
+           '4': 'select-shape'
        };
         
         if (toolShortcuts[key]) {
@@ -263,6 +269,14 @@ const InputHandler = {
             }
             CanvasManager.render();
             this.showNotification(State.onionSkinEnabled ? 'Onion Skin Enabled' : 'Onion Skin Disabled', 'info');
+        }
+        
+        // Clear selection with ESC key
+        if (key === 'escape') {
+            e.preventDefault();
+            if (typeof ToolManager !== 'undefined' && ToolManager.clearSelection) {
+                ToolManager.clearSelection();
+            }
         }
         
         // Zoom shortcuts
@@ -396,6 +410,10 @@ const InputHandler = {
 
         // Keyboard
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
+        window.addEventListener('keyup', (e) => {
+            // Track shift key release
+            State.shiftKey = e.shiftKey;
+        });
 
         // UI Controls - only for drawing tools (exclude layer/settings buttons)
         UI.toolBtns.forEach(btn => {
@@ -472,6 +490,36 @@ const InputHandler = {
             }
         });
 
+        // Handle selection tool buttons in the transform panel
+        document.querySelectorAll('#move-options .tool-btn[data-action="tool"]').forEach(btn => {
+            if (btn.dataset.type && btn.dataset.type.startsWith('select-')) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const toolType = btn.dataset.type;
+                    console.log('Selection tool button clicked:', toolType);
+                    
+                    // Set the selection tool
+                    ToolManager.setTool(toolType);
+                    
+                    // Update the panel for the selected tool
+                    if (typeof UIManager !== 'undefined' && UIManager.updatePanelForTool) {
+                        UIManager.updatePanelForTool(toolType);
+                    }
+                    
+                    // Show notification
+                    const toolNames = {
+                        'select-rect': 'Rectangular Selection',
+                        'select-circle': 'Circular Selection',
+                        'select-lasso': 'Lasso Selection',
+                        'select-shape': 'Shape Selection'
+                    };
+                    InputHandler.showNotification(`${toolNames[toolType]} tool activated`, 'success');
+                });
+            }
+        });
+        
         // Handle submenu tool buttons (for popout menus)
         document.querySelectorAll('.tool-submenu .tool-btn').forEach(btn => {
             if (btn.dataset.action === 'tool' && btn.dataset.type) {
@@ -481,24 +529,24 @@ const InputHandler = {
                     if (e.target === btn || e.target.closest('.tool-submenu .tool-btn') === btn) {
                         e.stopPropagation(); // Prevent event from bubbling to parent menu
                         const toolType = btn.dataset.type;
-
+        
                         // Set the tool
                         ToolManager.setTool(toolType);
                         // Ensure eyedropper tool is ready to use immediately
                         if (toolType === 'eyedropper') {
                             State.isDrawing = false;
                         }
-
+        
                         // Update the panel for the selected tool
                         if (typeof UIManager !== 'undefined' && UIManager.updatePanelForTool) {
                             UIManager.updatePanelForTool(toolType);
                         }
-
+        
                         // Activate the unified panel and ensure it's visible
                         const unifiedPanel = document.getElementById('unified-panel');
                         const toolsTab = document.querySelector('.tab[data-content="unified-panel"]');
                         const dropinsContainer = document.querySelector('.dropins-container');
-
+        
                         if (unifiedPanel) {
                             unifiedPanel.classList.remove('hidden');
                             unifiedPanel.classList.add('active');
@@ -515,21 +563,21 @@ const InputHandler = {
                         if (dropinsContainer) {
                             dropinsContainer.classList.add('showing');
                         }
-
+        
                         // Ensure the right panel sections are visible
                         const panelPreview = document.getElementById('panel-preview');
                         const panelPalette = document.getElementById('panel-palette');
                         const panelToolOptions = document.getElementById('panel-tool-options');
-
+        
                         if (panelPreview) panelPreview.classList.remove('hidden');
                         if (panelPalette) panelPalette.classList.remove('hidden');
                         if (panelToolOptions) panelToolOptions.classList.remove('hidden');
-
+        
                         // Special handling for dither tool - show effects tab and dither panel
                         if (toolType === 'dither') {
                             this.showDitherEffectsPanel();
                         }
-
+        
                         // Close all submenus after selection with a slight delay
                         setTimeout(() => {
                             document.querySelectorAll('.tool-submenu').forEach(menu => {
@@ -867,6 +915,20 @@ const InputHandler = {
             });
         }
 
+        // Add specific handler for select button to show selection tools
+        const selectBtn = document.getElementById('selectBtn');
+        if (selectBtn) {
+            selectBtn.addEventListener('click', (e) => {
+                console.log('Select button clicked');
+                // Show the selection tools panel
+                if (typeof ToolManager !== 'undefined' && ToolManager.showSelectOptionsPanel) {
+                    ToolManager.showSelectOptionsPanel();
+                }
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+        
         // Add specific handler for fill tool button to ensure it works
         const fillToolBtn = document.querySelector('.tool-btn[data-tool="bucket"]');
         if (fillToolBtn) {

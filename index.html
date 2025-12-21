@@ -42,6 +42,13 @@
             color: white;
             border-radius: 4px;
         }
+        
+        /* High-resolution selection canvas for smooth marching ants */
+        #selection-canvas {
+            image-rendering: -webkit-optimize-contrast !important;
+            image-rendering: crisp-edges !important;
+            /* Override any pixelated rendering */
+        }
     </style>
 
 
@@ -130,7 +137,7 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
             <!-- Selection Tool -->
             <button class="tool-btn" id="selectBtn" title="Select ()"><i class="fas fa-mouse-pointer"></i></button>
 
-            <!-- Move Tool -->
+            <!-- Selection Tool -->
             <button class="tool-btn" id="moveBtn" title="Move ()"><i class="fa-solid fa-hand"></i></button>
 
             <div class="toolbar-spacer"></div>
@@ -811,9 +818,9 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
                             <div id="move-options" class="sub-panel-section">
                                 <div class="section-title">
-                                    <span>Move Options</span>
+                                    <span>Selection Options</span>
                                     <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
-                                        Move instructions
+                                        Selection instructions
                                     </div>
                                 </div>
 
@@ -1386,6 +1393,10 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                         <div class="shortcut-key">3</div>
                                         <div class="shortcut-description">Lasso Selection</div>
                                     </div>
+                                    <div class="shortcut-item">
+                                        <div class="shortcut-key">4</div>
+                                        <div class="shortcut-description">Shape Selection</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1795,6 +1806,7 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
         <script src="js/brushpresets-manager.js"></script>
         <script src="js/right-panel-manager.js"></script>
         <script src="js/tool-manager.js"></script>
+        <script src="js/selectionToolManager.js"></script>
         <script src="js/canvas-manager.js"></script>
         <script src="js/layer-manager.js"></script>
         <script src="js/animation-manager.js"></script>

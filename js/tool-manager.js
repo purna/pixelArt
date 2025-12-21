@@ -290,13 +290,23 @@ const ToolManager = {
     start(x, y) {
         State.isDrawing = true;
         State.dragStart = { x, y };
-
+        
+        // For selection tools, delegate to SelectionToolManager
+        if (State.tool && State.tool.startsWith('select-')) {
+            if (typeof SelectionToolManager !== 'undefined') {
+                const selectionType = SelectionToolManager.getSelectionType(State.tool);
+                SelectionToolManager.startSelection(x, y, selectionType);
+            }
+            return; // Don't continue with normal drawing flow for selection tools
+        }
+        
+        // For regular drawing tools, use the layer context
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
         layerCtx.putImageData(layer.data, 0, 0);
-
+        
         const rgba = this.hexToRgba(State.color, State.opacity);
-
+        
         if (State.tool === 'pencil' || State.tool === 'brush' || State.tool === 'eraser') {
             // Standard drawing tools
             this.plot(x, y, rgba, layerCtx, false);
@@ -321,10 +331,6 @@ const ToolManager = {
         } else if (State.tool === 'mirror') {
             // Mirror tool behaves like a drawing tool - just start drawing
             // The actual mirroring logic is handled in move() and end() methods
-        } else if (State.tool.startsWith('select-')) {
-            // Handle selection tools
-            const selectionType = State.tool.replace('select-', '');
-            this.startSelection(x, y, selectionType);
         }
     },
 
@@ -333,45 +339,54 @@ const ToolManager = {
      */
     move(x, y) {
         if (!State.isDrawing) return;
-
+        
         const currentLayer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
         if (!currentLayer.visible) return;
-
+        
         const rgba = this.hexToRgba(State.color, State.opacity);
         const isEraser = State.tool === 'eraser';
-
+        
+        // Handle selection tools completely separately from drawing tools
+        if (State.tool && State.tool.startsWith('select-')) {
+            // Delegate to SelectionToolManager - pass shift key state for move functionality
+            if (typeof SelectionToolManager !== 'undefined') {
+                SelectionToolManager.updateSelection(x, y, State.shiftKey || false);
+            }
+            return; // Don't continue with normal drawing flow for selection tools
+        }
+        
         if (['pencil', 'brush', 'eraser'].includes(State.tool)) {
             // Check if mirroring is enabled for any tool (not just mirror tool)
             if (State.mirrorAxis !== 'none' && State.mirrorAxis) {
                 // Apply mirroring to all drawing tools when mirror axis is selected
-
+                
                 // Draw the original line
                 this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
-
+                
                 // Draw mirrored lines based on mirror axis settings
                 const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
                 const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
-
+                
                 if (mirrorX) {
                     // Mirror on X axis (horizontal)
                     this.drawLine(State.width - 1 - State.dragStart.x, State.dragStart.y,
-                                 State.width - 1 - x, y, rgba, layerCtx, isEraser);
+                                  State.width - 1 - x, y, rgba, layerCtx, isEraser);
                 }
                 if (mirrorY) {
                     // Mirror on Y axis (vertical)
                     this.drawLine(State.dragStart.x, State.height - 1 - State.dragStart.y,
-                                 x, State.height - 1 - y, rgba, layerCtx, isEraser);
+                                  x, State.height - 1 - y, rgba, layerCtx, isEraser);
                 }
                 if (mirrorX && mirrorY) {
                     // Mirror on both axes
                     this.drawLine(State.width - 1 - State.dragStart.x, State.height - 1 - State.dragStart.y,
-                                 State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, isEraser);
+                                  State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, isEraser);
                 }
             } else {
                 // Normal drawing without mirroring
                 this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
             }
-     
+        	
             State.dragStart = { x, y };
             this.updateLayerFromCtx();
         } else if (State.tool === 'dither') {
@@ -385,11 +400,11 @@ const ToolManager = {
             } else {
                 // Draw the original point with current tool settings
                 this.plot(x, y, rgba, layerCtx, false);
-
+                
                 // Draw mirrored points based on mirror axis settings
                 const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
                 const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
-
+                
                 if (mirrorX) {
                     this.plot(State.width - 1 - x, y, rgba, layerCtx, false);
                 }
@@ -400,7 +415,7 @@ const ToolManager = {
                     this.plot(State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, false);
                 }
             }
-
+            
             this.updateLayerFromCtx();
         } else if (['stroke', 'rect', 'circle'].includes(State.tool)) {
             pCtx.clearRect(0, 0, State.width, State.height);
@@ -410,9 +425,6 @@ const ToolManager = {
         } else if (State.tool === 'move') {
             // Show move preview during drag
             this.showMovePreview(x, y);
-        } else if (State.tool.startsWith('select-')) {
-            // Update selection during drag
-            this.updateSelection(x, y);
         }
     },
 
@@ -450,8 +462,12 @@ const ToolManager = {
             this.shiftLayer(dx, dy);
             InputHandler.showNotification('Layer content moved!', 'success');
         } else if (State.tool.startsWith('select-')) {
-            // End selection and capture pixels
-            this.endSelection();
+            // Delegate to SelectionToolManager - don't call old methods
+            if (typeof SelectionToolManager !== 'undefined') {
+                SelectionToolManager.endSelection(x, y);
+            }
+            // Don't call the old endSelection method
+            return;
         }
 
         ColorManager.addToHistory(State.color);
@@ -963,23 +979,69 @@ const ToolManager = {
      * Set active tool
      */
     setTool(name) {
+        // Check if clicking the same selection tool - toggle it off
+        if (name && name.startsWith('select-') && State.tool === name) {
+            // Toggle off - clear selection and switch to pencil
+            if (typeof SelectionToolManager !== 'undefined') {
+                SelectionToolManager.clearSelection();
+            }
+            State.tool = 'pencil';
+            
+            // Update UI
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const pencilBtn = document.querySelector('.tool-btn[data-tool="pencil"]');
+            if (pencilBtn) pencilBtn.classList.add('active');
+            
+            InputHandler.showNotification('Selection tool deactivated', 'info');
+            return;
+        }
+        
+        // Clear any active selection when switching to a non-selection tool
+        if (name && !name.startsWith('select-') && this.selection.pixels) {
+            if (typeof SelectionToolManager !== 'undefined') {
+                SelectionToolManager.clearSelection();
+            } else {
+                this.clearSelection();
+            }
+        }
+        
         State.tool = name;
-
+        
         // Handle both toolbar buttons and transform panel buttons
         const allToolButtons = [
             ...document.querySelectorAll('.tool-btn[data-tool]'),
             ...document.querySelectorAll('#transform-container .tool-btn')
         ];
-
-        allToolButtons.forEach(b => b.classList.toggle('active', b.dataset.tool === name || b.id === name + 'Btn'));
-
-        // Special handling for transform tools
-        if (name === 'move') {
-            // Highlight both move buttons (toolbar and transform panel)
-            const moveButtons = document.querySelectorAll('#moveBtn');
-            moveButtons.forEach(btn => btn.classList.add('active'));
+        
+        // Remove active class from all tool buttons first
+        allToolButtons.forEach(b => b.classList.remove('active'));
+        
+        // Special handling for selection tools - highlight the main select button
+        if (name && name.startsWith('select-')) {
+            // Highlight the main select button when any selection tool is active
+            const selectBtn = document.getElementById('selectBtn');
+            if (selectBtn) {
+                selectBtn.classList.add('active');
+            }
+            
+            // Also highlight the specific selection tool button in the transform panel
+            const selectionToolBtns = document.querySelectorAll(`[data-type="${name}"]`);
+            selectionToolBtns.forEach(btn => btn.classList.add('active'));
+            
+            // Show the transform panel and select options
+            this.showSelectOptionsPanel();
+        } else {
+            // For non-selection tools, use normal highlighting
+            allToolButtons.forEach(b => b.classList.toggle('active', b.dataset.tool === name || b.id === name + 'Btn'));
+            
+            // Special handling for transform tools
+            if (name === 'move') {
+                // Highlight both move buttons (toolbar and transform panel)
+                const moveButtons = document.querySelectorAll('#moveBtn');
+                moveButtons.forEach(btn => btn.classList.add('active'));
+            }
         }
-
+        
         // When selecting the brush tool, ensure blur value is at least 1
         if (name === 'brush' && State.brushBlur < 1) {
             State.brushBlur = 1;
@@ -991,6 +1053,92 @@ const ToolManager = {
                 UI.blurDisplay.textContent = 1;
             }
         }
+    },
+
+    /**
+     * Show the Select Options panel when a selection tool is activated
+     */
+    showSelectOptionsPanel() {
+        // Get all panel elements
+        const transformPanel = document.getElementById('transform-panel');
+        const transformTab = document.querySelector('.tab[data-content="transform-panel"]');
+        const dropinsContainer = document.querySelector('.dropins-container');
+        const panelContents = document.querySelectorAll('.contents .content');
+        
+        // Show the dropins container if hidden
+        if (dropinsContainer) {
+            dropinsContainer.classList.add('showing');
+        }
+        
+        // Activate the transform tab
+        if (transformTab) {
+            transformTab.classList.add('active');
+            // Remove active class from other tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab !== transformTab) {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+        
+        // Show the transform panel and hide other panels
+        if (panelContents) {
+            panelContents.forEach(panel => {
+                if (panel.id === 'transform-panel') {
+                    panel.classList.add('active');
+                    panel.style.display = 'block';
+                } else {
+                    panel.classList.remove('active');
+                    panel.style.display = 'none';
+                }
+            });
+        }
+        
+        // Show the move-options section which contains the selection tools
+        const moveOptions = document.getElementById('move-options');
+        if (moveOptions) {
+            moveOptions.style.display = 'block';
+        }
+        
+        // Update the title in the info section
+        const titleElement = document.getElementById('title');
+        if (titleElement) {
+            const toolNames = {
+                'select-rect': 'Rectangular selection (R)',
+                'select-circle': 'Circular selection (C)',
+                'select-lasso': 'Lasso selection (H)',
+                'select-shape': 'Shape selection (Z)'
+            };
+            titleElement.textContent = toolNames[State.tool] || 'Selection Tool';
+        }
+    },
+
+    /**
+     * Clear the current selection
+     */
+    clearSelection() {
+        // Delegate to SelectionToolManager if available
+        if (typeof SelectionToolManager !== 'undefined') {
+            SelectionToolManager.clearSelection();
+            return;
+        }
+        
+        this.selection = {
+            active: false,
+            startX: 0,
+            startY: 0,
+            endX: 0,
+            endY: 0,
+            type: null,
+            pixels: null,
+            lassoPoints: null
+        };
+        
+        // Clear the preview layer
+        pCtx.clearRect(0, 0, State.width, State.height);
+        pCtx.setLineDash([]);
+        
+        InputHandler.showNotification('Selection cleared', 'info');
     },
 
     // Selection Tools State
@@ -1008,6 +1156,9 @@ const ToolManager = {
      * Start selection operation
      */
     startSelection(x, y, type) {
+        // Clear any previous selection preview
+        this.clearSelectionPreview();
+        
         this.selection.active = true;
         this.selection.startX = x;
         this.selection.startY = y;
@@ -1020,6 +1171,26 @@ const ToolManager = {
         if (type === 'lasso') {
             this.selection.lassoPoints = [{x, y}];
         }
+        
+        // For shape selection, perform flood-fill based selection immediately
+        if (type === 'shape') {
+            this.captureShapeSelection(x, y);
+        }
+    },
+
+    /**
+     * Clear the selection preview from the canvas
+     */
+    clearSelectionPreview() {
+        // Create a temporary canvas to clear only the selection preview
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = State.width;
+        tempCanvas.height = State.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Clear the preview layer completely
+        pCtx.clearRect(0, 0, State.width, State.height);
+        pCtx.setLineDash([]);
     },
 
     /**
@@ -1027,18 +1198,27 @@ const ToolManager = {
      */
     updateSelection(x, y) {
         if (!this.selection.active) return;
-
+        
         this.selection.endX = x;
         this.selection.endY = y;
+        
+        // Use a completely independent drawing system for selections
+        this.drawSelectionPreview();
+    },
 
-        // Clear previous preview
-        pCtx.clearRect(0, 0, State.width, State.height);
-
-        // Draw selection preview in blue-grey (50% black with blue tint)
-        pCtx.strokeStyle = 'rgba(100, 100, 200, 0.7)';
-        pCtx.lineWidth = 1;
+    /**
+     * Draw selection preview using independent drawing system
+     */
+    drawSelectionPreview() {
+        // Clear the selection preview layer completely
+        this.clearSelectionPreview();
+        
+        // Set up selection-specific drawing styles
+        pCtx.strokeStyle = 'rgba(100, 150, 255, 0.9)';
+        pCtx.lineWidth = 2;
         pCtx.setLineDash([5, 3]);
-
+        
+        // Draw based on selection type
         if (this.selection.type === 'rect') {
             this.drawSelectionRect();
         } else if (this.selection.type === 'circle') {
@@ -1046,6 +1226,51 @@ const ToolManager = {
         } else if (this.selection.type === 'lasso') {
             this.drawSelectionLasso();
         }
+        
+        // Add a semi-transparent overlay to make selection more visible
+        this.drawSelectionOverlay();
+    },
+
+    /**
+     * Draw semi-transparent overlay for better selection visibility
+     */
+    drawSelectionOverlay() {
+        pCtx.save();
+        pCtx.globalAlpha = 0.1;
+        pCtx.fillStyle = 'rgba(100, 150, 255, 0.1)';
+        
+        if (this.selection.type === 'rect') {
+            const x0 = Math.min(this.selection.startX, this.selection.endX);
+            const y0 = Math.min(this.selection.startY, this.selection.endY);
+            const x1 = Math.max(this.selection.startX, this.selection.endX);
+            const y1 = Math.max(this.selection.startY, this.selection.endY);
+            pCtx.fillRect(x0, y0, x1 - x0, y1 - y0);
+        } else if (this.selection.type === 'circle') {
+            const x0 = this.selection.startX;
+            const y0 = this.selection.startY;
+            const x1 = this.selection.endX;
+            const y1 = this.selection.endY;
+            const r = Math.floor(Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2)));
+            pCtx.beginPath();
+            pCtx.arc(x0, y0, r, 0, 2 * Math.PI);
+            pCtx.fill();
+        } else if (this.selection.type === 'lasso' && this.selection.lassoPoints) {
+            // For lasso, create a polygon path and fill it
+            if (this.selection.lassoPoints.length > 2) {
+                pCtx.beginPath();
+                pCtx.moveTo(this.selection.lassoPoints[0].x, this.selection.lassoPoints[0].y);
+                
+                for (let i = 1; i < this.selection.lassoPoints.length; i++) {
+                    pCtx.lineTo(this.selection.lassoPoints[i].x, this.selection.lassoPoints[i].y);
+                }
+                
+                // Close the path to create a fillable area
+                pCtx.closePath();
+                pCtx.fill();
+            }
+        }
+        
+        pCtx.restore();
     },
 
     /**
@@ -1056,8 +1281,16 @@ const ToolManager = {
         const y0 = Math.min(this.selection.startY, this.selection.endY);
         const x1 = Math.max(this.selection.startX, this.selection.endX);
         const y1 = Math.max(this.selection.startY, this.selection.endY);
-
+        
+        // Draw rectangle with better visibility
         pCtx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+        
+        // Also draw a semi-transparent fill for better visibility
+        pCtx.save();
+        pCtx.globalAlpha = 0.2;
+        pCtx.fillStyle = 'rgba(100, 150, 255, 0.2)';
+        pCtx.fillRect(x0, y0, x1 - x0, y1 - y0);
+        pCtx.restore();
     },
 
     /**
@@ -1068,11 +1301,18 @@ const ToolManager = {
         const y0 = this.selection.startY;
         const x1 = this.selection.endX;
         const y1 = this.selection.endY;
-
+        
         const r = Math.floor(Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2)));
         pCtx.beginPath();
         pCtx.arc(x0, y0, r, 0, 2 * Math.PI);
         pCtx.stroke();
+        
+        // Also draw a semi-transparent fill for better visibility
+        pCtx.save();
+        pCtx.globalAlpha = 0.2;
+        pCtx.fillStyle = 'rgba(100, 150, 255, 0.2)';
+        pCtx.fill();
+        pCtx.restore();
     },
 
     /**
@@ -1080,17 +1320,13 @@ const ToolManager = {
      */
     endSelection() {
         if (!this.selection.active) return;
-
+        
         this.selection.active = false;
-
-        // Clear preview
-        pCtx.clearRect(0, 0, State.width, State.height);
-        pCtx.setLineDash([]);
-
+        
         // Capture the selected pixels
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
-
+        
         if (this.selection.type === 'rect') {
             this.captureRectSelection(layer.data);
         } else if (this.selection.type === 'circle') {
@@ -1098,6 +1334,21 @@ const ToolManager = {
         } else if (this.selection.type === 'lasso') {
             this.captureLassoSelection(layer.data);
         }
+        // Shape selection is handled in startSelection since it completes immediately
+        
+        // Keep the preview visible after selection is complete
+        // The user can clear it by making a new selection or pressing ESC
+        this.showSelectionPreview();
+    },
+
+    /**
+     * Show the selection preview after selection is complete
+     */
+    showSelectionPreview() {
+        if (!this.selection.pixels) return;
+        
+        // Use the independent drawing system
+        this.drawSelectionPreview();
     },
 
     /**
@@ -1196,51 +1447,123 @@ const ToolManager = {
         if (!this.selection.lassoPoints) {
             this.selection.lassoPoints = [];
         }
-        
+         
         // Add current point to the path
         this.selection.lassoPoints.push({
             x: this.selection.endX,
             y: this.selection.endY
         });
-        
-        // Draw the lasso path
+         
+        // Draw the lasso path with better visibility
         if (this.selection.lassoPoints.length > 1) {
             pCtx.beginPath();
             pCtx.moveTo(this.selection.lassoPoints[0].x, this.selection.lassoPoints[0].y);
-            
+             
             for (let i = 1; i < this.selection.lassoPoints.length; i++) {
                 pCtx.lineTo(this.selection.lassoPoints[i].x, this.selection.lassoPoints[i].y);
             }
-            
+             
             pCtx.stroke();
+            
+            // Draw small circles at each point for better visibility
+            pCtx.save();
+            pCtx.fillStyle = 'rgba(100, 150, 255, 0.8)';
+            for (let i = 0; i < this.selection.lassoPoints.length; i++) {
+                const point = this.selection.lassoPoints[i];
+                pCtx.beginPath();
+                pCtx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+                pCtx.fill();
+            }
+            pCtx.restore();
         }
     },
 
     /**
-     * Capture lasso selection pixels
+     * Capture shape selection pixels (color-based selection like magic wand)
      */
-    captureLassoSelection(imageData) {
-        if (!this.selection.lassoPoints || this.selection.lassoPoints.length < 3) {
-            InputHandler.showNotification('Lasso selection too small', 'error');
+    captureShapeSelection(x, y) {
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+        const imageData = layer.data;
+        const data = imageData.data;
+        
+        // Get the color of the pixel at the click position
+        const startPos = (y * State.width + x) * 4;
+        const targetR = data[startPos];
+        const targetG = data[startPos + 1];
+        const targetB = data[startPos + 2];
+        const targetA = data[startPos + 3];
+        
+        // Don't select if clicking on transparent pixel
+        if (targetA === 0) {
+            InputHandler.showNotification('Cannot select transparent area', 'error');
             return;
         }
         
-        // Find bounding box of lasso selection
-        let minX = State.width, minY = State.height, maxX = 0, maxY = 0;
+        // Use flood fill algorithm to find all connected pixels with the same color
+        const width = State.width;
+        const height = State.height;
+        const visited = new Uint8Array(width * height);
+        const stack = [{x, y}];
+        const selectedPixels = [];
         
-        for (const point of this.selection.lassoPoints) {
-            minX = Math.min(minX, point.x);
-            minY = Math.min(minY, point.y);
-            maxX = Math.max(maxX, point.x);
-            maxY = Math.max(maxY, point.y);
+        // Convert coordinates to index
+        const toIndex = (x, y) => y * width + x;
+        
+        // Check if pixel matches the target color (with some tolerance for anti-aliasing)
+        const matchColor = (x, y) => {
+            if (x < 0 || x >= width || y < 0 || y >= height) return false;
+            
+            const idx = toIndex(x, y) * 4;
+            // Check RGB with small tolerance, and alpha must be similar
+            return Math.abs(data[idx] - targetR) <= 10 &&
+                   Math.abs(data[idx + 1] - targetG) <= 10 &&
+                   Math.abs(data[idx + 2] - targetB) <= 10 &&
+                   Math.abs(data[idx + 3] - targetA) <= 10;
+        };
+        
+        // Flood fill algorithm to find all connected pixels
+        while (stack.length) {
+            const {x: cx, y: cy} = stack.pop();
+            const idx = toIndex(cx, cy);
+            
+            // Skip if already processed
+            if (visited[idx]) continue;
+            visited[idx] = 1;
+            
+            // Skip if doesn't match target color
+            if (!matchColor(cx, cy)) continue;
+            
+            // Add to selected pixels
+            selectedPixels.push({x: cx, y: cy});
+            
+            // Check neighboring pixels
+            [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]].forEach(([nx, ny]) => {
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height && !visited[toIndex(nx, ny)]) {
+                    stack.push({x: nx, y: ny});
+                }
+            });
         }
         
-        const width = maxX - minX + 1;
-        const height = maxY - minY + 1;
+        if (selectedPixels.length === 0) {
+            InputHandler.showNotification('No pixels selected', 'error');
+            return;
+        }
+        
+        // Find bounding box of selected pixels
+        let minX = width, minY = height, maxX = 0, maxY = 0;
+        for (const pixel of selectedPixels) {
+            minX = Math.min(minX, pixel.x);
+            minY = Math.min(minY, pixel.y);
+            maxX = Math.max(maxX, pixel.x);
+            maxY = Math.max(maxY, pixel.y);
+        }
+        
+        const selectionWidth = maxX - minX + 1;
+        const selectionHeight = maxY - minY + 1;
         
         // Create a new ImageData for the selection
-        const selectionData = new ImageData(width, height);
-        const srcData = imageData.data;
+        const selectionData = new ImageData(selectionWidth, selectionHeight);
         const destData = selectionData.data;
         
         // Clear the selection data (transparent background)
@@ -1251,17 +1574,109 @@ const ToolManager = {
             destData[i + 3] = 0;
         }
         
+        // Copy the selected pixels to the selection
+        for (const pixel of selectedPixels) {
+            const srcIdx = (pixel.y * width + pixel.x) * 4;
+            const destX = pixel.x - minX;
+            const destY = pixel.y - minY;
+            const destIdx = (destY * selectionWidth + destX) * 4;
+            
+            // Copy pixel data
+            destData[destIdx] = data[srcIdx];
+            destData[destIdx + 1] = data[srcIdx + 1];
+            destData[destIdx + 2] = data[srcIdx + 2];
+            destData[destIdx + 3] = data[srcIdx + 3];
+        }
+        
+        this.selection.pixels = selectionData;
+        this.selection.active = false; // Shape selection completes immediately
+        
+        // Show visual feedback of the selection
+        this.showShapeSelectionPreview(selectedPixels);
+        
+        InputHandler.showNotification(`Shape selection captured (${selectedPixels.length} pixels)`, 'success');
+    },
+
+    /**
+     * Show visual preview of shape selection
+     */
+    showShapeSelectionPreview(pixels) {
+        // Clear previous preview
+        pCtx.clearRect(0, 0, State.width, State.height);
+        
+        // Draw outline around selected area
+        pCtx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+        pCtx.lineWidth = 1;
+        pCtx.setLineDash([5, 3]);
+        
+        // Find bounding box
+        let minX = State.width, minY = State.height, maxX = 0, maxY = 0;
+        for (const pixel of pixels) {
+            minX = Math.min(minX, pixel.x);
+            minY = Math.min(minY, pixel.y);
+            maxX = Math.max(maxX, pixel.x);
+            maxY = Math.max(maxY, pixel.y);
+        }
+        
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+        
+        // Draw bounding rectangle
+        pCtx.strokeRect(minX, minY, width, height);
+        
+        // Keep the preview visible for a short time
+        setTimeout(() => {
+            pCtx.clearRect(0, 0, State.width, State.height);
+            pCtx.setLineDash([]);
+        }, 2000);
+    },
+
+    /**
+     * Capture lasso selection pixels
+     */
+    captureLassoSelection(imageData) {
+        if (!this.selection.lassoPoints || this.selection.lassoPoints.length < 3) {
+            InputHandler.showNotification('Lasso selection too small', 'error');
+            return;
+        }
+         
+        // Find bounding box of lasso selection
+        let minX = State.width, minY = State.height, maxX = 0, maxY = 0;
+         
+        for (const point of this.selection.lassoPoints) {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+        }
+         
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+         
+        // Create a new ImageData for the selection
+        const selectionData = new ImageData(width, height);
+        const srcData = imageData.data;
+        const destData = selectionData.data;
+         
+        // Clear the selection data (transparent background)
+        for (let i = 0; i < destData.length; i += 4) {
+            destData[i] = 0;
+            destData[i + 1] = 0;
+            destData[i + 2] = 0;
+            destData[i + 3] = 0;
+        }
+         
         // Use point-in-polygon algorithm to determine which pixels are inside the lasso
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const canvasX = minX + x;
                 const canvasY = minY + y;
-                
+                 
                 // Check if this pixel is inside the lasso polygon
                 if (this.isPointInPolygon(canvasX, canvasY, this.selection.lassoPoints)) {
                     const srcIdx = (canvasY * State.width + canvasX) * 4;
                     const destIdx = (y * width + x) * 4;
-                    
+                     
                     // Copy pixel data
                     destData[destIdx] = srcData[srcIdx];
                     destData[destIdx + 1] = srcData[srcIdx + 1];
@@ -1270,7 +1685,7 @@ const ToolManager = {
                 }
             }
         }
-        
+         
         this.selection.pixels = selectionData;
         InputHandler.showNotification(`Lasso selection captured (${width}x${height} pixels)`, 'success');
     },
@@ -1295,57 +1710,83 @@ const ToolManager = {
      * Copy selected pixels to clipboard (simulated)
      */
     copySelection() {
+        // Delegate to SelectionToolManager if available
+        if (typeof SelectionToolManager !== 'undefined') {
+            SelectionToolManager.copySelection();
+            return;
+        }
+        
         if (!this.selection.pixels) {
             InputHandler.showNotification('No active selection to copy', 'error');
             return;
         }
-
+        
         // Store selection in state for paste operation
-        State.copiedSelection = this.selection.pixels;
-        InputHandler.showNotification('Selection copied to clipboard', 'success');
+        State.copiedSelection = {
+            pixels: this.selection.pixels,
+            width: this.selection.pixels.width,
+            height: this.selection.pixels.height,
+            type: this.selection.type
+        };
+        InputHandler.showNotification(`Selection copied (${this.selection.pixels.width}x${this.selection.pixels.height})`, 'success');
     },
 
     /**
      * Paste copied pixels to a new layer
      */
     pasteSelection() {
-        if (!State.copiedSelection) {
+        // Delegate to SelectionToolManager if available
+        if (typeof SelectionToolManager !== 'undefined') {
+            SelectionToolManager.pasteSelection();
+            return;
+        }
+        
+        if (!State.copiedSelection || !State.copiedSelection.pixels) {
             InputHandler.showNotification('No copied selection to paste', 'error');
             return;
         }
-
+        
         // Create a new layer for the pasted content
         const currentFrame = State.frames[State.currentFrameIndex];
         const newLayer = this.createLayer('Pasted Selection');
-
+        
         // Position the paste at the center or at a reasonable position
         const pasteX = Math.max(0, Math.min(State.width - State.copiedSelection.width, State.width / 2 - State.copiedSelection.width / 2));
         const pasteY = Math.max(0, Math.min(State.height - State.copiedSelection.height, State.height / 2 - State.copiedSelection.height / 2));
-
+        
         // Create a temporary canvas to position the pasted content
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = State.width;
         tempCanvas.height = State.height;
         const tempCtx = tempCanvas.getContext('2d');
-
+        
         // Fill with transparent background
         tempCtx.clearRect(0, 0, State.width, State.height);
-
+        
         // Draw the copied selection at the paste position
-        tempCtx.putImageData(State.copiedSelection, pasteX, pasteY);
-
+        tempCtx.putImageData(State.copiedSelection.pixels, pasteX, pasteY);
+        
         // Get the result and store in the new layer
         newLayer.data = tempCtx.getImageData(0, 0, State.width, State.height);
-
+        
         // Add the new layer to the frame
         currentFrame.layers.push(newLayer);
         State.activeLayerIndex = currentFrame.layers.length - 1;
-
+        
         // Update UI
         CanvasManager.render();
         LayerManager.renderList();
-
-        InputHandler.showNotification('Selection pasted to new layer', 'success');
+        
+        InputHandler.showNotification(`Selection pasted to new layer (${State.copiedSelection.width}x${State.copiedSelection.height})`, 'success');
+    },
+    
+    /**
+     * Select all content on current layer
+     */
+    selectAll() {
+        if (typeof SelectionToolManager !== 'undefined') {
+            SelectionToolManager.selectAll();
+        }
     }
 };
 
