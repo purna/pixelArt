@@ -5,6 +5,9 @@ const UIManager = {
     isMenuOpen: false,
 
     init() {
+        // Clean up any existing toolbar event listeners before setting up new ones
+        this.cleanupMenuEventListeners();
+        
         this.setupPanelToggle();
         this.setupUIToggle();
         this.setupContextSwitching();
@@ -20,14 +23,8 @@ const UIManager = {
         const toolbar = document.getElementById('tool-buttons');
         if (!toolbar) return;
 
-        // Only clean up if we haven't already set up listeners
-        if (!this.menuEventListenersAdded) {
-            this.cleanupMenuEventListeners();
-        }
-
         let closeTimeout;
 
-            
         // Add event listener to toolbar for menu parent clicks
         toolbar.addEventListener('click', (e) => {
             const menuParent = e.target.closest('.tool-btn.menu-parent');

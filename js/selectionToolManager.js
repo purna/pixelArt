@@ -221,18 +221,75 @@ const SelectionToolManager = {
         const dashSize = Math.max(2, scale);
         const lineWidth = Math.max(1, scale / 3);
         
-        // Draw black dashed line
+        // Draw based on selection type
         ctx.save();
         ctx.strokeStyle = '#000';
         ctx.lineWidth = lineWidth;
         ctx.setLineDash([dashSize, dashSize]);
         ctx.lineDashOffset = -this.marchingAntsOffset * scale;
-        ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        
+        if (this.state.type === 'circle') {
+            // Draw circular marching ants
+            const centerX = this.state.startX * scale;
+            const centerY = this.state.startY * scale;
+            const r = Math.sqrt(
+                Math.pow(this.state.endX - this.state.startX, 2) +
+                Math.pow(this.state.endY - this.state.startY, 2)
+            ) * scale;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (this.state.type === 'lasso' && this.state.lassoPoints.length > 1) {
+            // Draw lasso polygon marching ants
+            ctx.beginPath();
+            ctx.moveTo(this.state.lassoPoints[0].x * scale, this.state.lassoPoints[0].y * scale);
+            
+            for (let i = 1; i < this.state.lassoPoints.length; i++) {
+                ctx.lineTo(this.state.lassoPoints[i].x * scale, this.state.lassoPoints[i].y * scale);
+            }
+            
+            ctx.closePath();
+            ctx.stroke();
+        } else if (this.state.type === 'shape') {
+            // For shape selection, draw the bounding box
+            ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        } else {
+            // Default to rectangle for rect selection
+            ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        }
         
         // Draw white dashed line (offset)
         ctx.strokeStyle = '#fff';
         ctx.lineDashOffset = -this.marchingAntsOffset * scale + dashSize;
-        ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        
+        if (this.state.type === 'circle') {
+            const centerX = this.state.startX * scale;
+            const centerY = this.state.startY * scale;
+            const r = Math.sqrt(
+                Math.pow(this.state.endX - this.state.startX, 2) +
+                Math.pow(this.state.endY - this.state.startY, 2)
+            ) * scale;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (this.state.type === 'lasso' && this.state.lassoPoints.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.state.lassoPoints[0].x * scale, this.state.lassoPoints[0].y * scale);
+            
+            for (let i = 1; i < this.state.lassoPoints.length; i++) {
+                ctx.lineTo(this.state.lassoPoints[i].x * scale, this.state.lassoPoints[i].y * scale);
+            }
+            
+            ctx.closePath();
+            ctx.stroke();
+        } else if (this.state.type === 'shape') {
+            ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        } else {
+            ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        }
+        
         ctx.restore();
     },
     
@@ -414,11 +471,60 @@ const SelectionToolManager = {
         ctx.lineWidth = lineWidth;
         ctx.setLineDash([dashSize, dashSize]);
         ctx.lineDashOffset = -this.marchingAntsOffset * scale;
-        ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
         
+        // Draw based on selection type
+        if (this.state.type === 'circle') {
+            // For circle selection, we need to store the original center and radius
+            // Use the bounds to calculate the circle
+            const centerX = x * scale + width * scale / 2;
+            const centerY = y * scale + height * scale / 2;
+            const r = (width * scale) / 2;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (this.state.type === 'lasso' && this.state.lassoPoints.length > 1) {
+            // For lasso, draw the polygon
+            ctx.beginPath();
+            ctx.moveTo(this.state.lassoPoints[0].x * scale, this.state.lassoPoints[0].y * scale);
+            
+            for (let i = 1; i < this.state.lassoPoints.length; i++) {
+                ctx.lineTo(this.state.lassoPoints[i].x * scale, this.state.lassoPoints[i].y * scale);
+            }
+            
+            ctx.closePath();
+            ctx.stroke();
+        } else {
+            // Default to rectangle
+            ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        }
+        
+        // Draw white dashed line (offset)
         ctx.strokeStyle = '#fff';
         ctx.lineDashOffset = -this.marchingAntsOffset * scale + dashSize;
-        ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        
+        if (this.state.type === 'circle') {
+            const centerX = x * scale + width * scale / 2;
+            const centerY = y * scale + height * scale / 2;
+            const r = (width * scale) / 2;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (this.state.type === 'lasso' && this.state.lassoPoints.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.state.lassoPoints[0].x * scale, this.state.lassoPoints[0].y * scale);
+            
+            for (let i = 1; i < this.state.lassoPoints.length; i++) {
+                ctx.lineTo(this.state.lassoPoints[i].x * scale, this.state.lassoPoints[i].y * scale);
+            }
+            
+            ctx.closePath();
+            ctx.stroke();
+        } else {
+            ctx.strokeRect(sx + 0.5, sy + 0.5, sw, sh);
+        }
+        
         ctx.restore();
     },
     
@@ -451,7 +557,7 @@ const SelectionToolManager = {
         }
         // Shape selection is handled in startSelection
         
-        // Keep the selection visible
+        // Keep the selection visible with marching ants
         if (this.state.bounds) {
             this.state.active = true;
             this.drawMarchingAnts();

@@ -929,16 +929,35 @@ const InputHandler = {
             });
         }
         
-        // Add specific handler for fill tool button to ensure it works
-        const fillToolBtn = document.querySelector('.tool-btn[data-tool="bucket"]');
-        if (fillToolBtn) {
-            fillToolBtn.addEventListener('click', (e) => {
-                console.log('Fill tool button clicked');
-                ToolManager.setTool('bucket');
-                State.isDrawing = false;
+        // Add specific handler for filters button to show filters-options panel
+        const filtersBtn = document.getElementById('filtersBtn');
+        if (filtersBtn) {
+            filtersBtn.addEventListener('click', (e) => {
+                console.log('Filters button clicked');
+                
+                // Hide other sub-panels in the effects panel
+                const mirrorOptions = document.getElementById('mirror-options');
+                const ditherOptions = document.getElementById('dither-options');
+                const contrastOptions = document.getElementById('contrast-options');
+                
+                if (mirrorOptions) mirrorOptions.classList.add('hidden');
+                if (ditherOptions) ditherOptions.classList.add('hidden');
+                if (contrastOptions) contrastOptions.classList.add('hidden');
+                
+                // Show filters-options panel
+                const filtersOptions = document.getElementById('filters-options');
+                if (filtersOptions) {
+                    filtersOptions.classList.remove('hidden');
+                    console.log('filters-options panel shown');
+                } else {
+                    console.log('filters-options panel not found');
+                }
+                
                 e.preventDefault();
                 e.stopPropagation();
             });
+        } else {
+            console.log('filtersBtn element not found');
         }
         /*
 
