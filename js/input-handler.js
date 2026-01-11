@@ -508,6 +508,15 @@ const InputHandler = {
                         UIManager.updatePanelForTool(toolType);
                     }
                     
+                    // Implement single selection functionality - remove selected class from all buttons first
+                    const moveOptionsButtons = document.querySelectorAll('#move-options .tool-btn');
+                    moveOptionsButtons.forEach(button => {
+                        button.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to the clicked button
+                    btn.classList.add('selected');
+                    
                     // Show notification
                     const toolNames = {
                         'select-rect': 'Rectangular Selection',
@@ -922,7 +931,7 @@ const InputHandler = {
                 console.log('Select button clicked');
                 // Show the selection tools panel
                 if (typeof ToolManager !== 'undefined' && ToolManager.showSelectOptionsPanel) {
-                    ToolManager.showSelectOptionsPanel();
+                    ToolManager.showSelectOptionsPanel(); // No specific tool name, will show default title
                 }
                 e.preventDefault();
                 e.stopPropagation();
@@ -935,26 +944,32 @@ const InputHandler = {
             filtersBtn.addEventListener('click', (e) => {
                 console.log('Filters button clicked');
                 
-                // Hide other sub-panels in the effects panel
-                const mirrorOptions = document.getElementById('mirror-options');
-                const ditherOptions = document.getElementById('dither-options');
-                const contrastOptions = document.getElementById('contrast-options');
-                
-                if (mirrorOptions) mirrorOptions.classList.add('hidden');
-                if (ditherOptions) ditherOptions.classList.add('hidden');
-                if (contrastOptions) contrastOptions.classList.add('hidden');
-                
-                // Show filters-options panel
-                const filtersOptions = document.getElementById('filters-options');
-                if (filtersOptions) {
-                    filtersOptions.classList.remove('hidden');
-                    console.log('filters-options panel shown');
+                // Use the RightPanelManager to switch to the filters tab
+                if (typeof rightPanelManager !== 'undefined' && rightPanelManager.switchToEffectsTab) {
+                    rightPanelManager.switchToEffectsTab('filters');
                 } else {
-                    console.log('filters-options panel not found');
+                    // Fallback: manually show filters-options panel
+                    // Hide other sub-panels in the effects panel
+                    const mirrorOptions = document.getElementById('mirror-options');
+                    const ditherOptions = document.getElementById('dither-options');
+                    const contrastOptions = document.getElementById('contrast-options');
+                    
+                    if (mirrorOptions) mirrorOptions.classList.add('hidden');
+                    if (ditherOptions) ditherOptions.classList.add('hidden');
+                    if (contrastOptions) contrastOptions.classList.add('hidden');
+                    
+                    // Show filters-options panel
+                    const filtersOptions = document.getElementById('filters-options');
+                    if (filtersOptions) {
+                        filtersOptions.classList.remove('hidden');
+                        console.log('filters-options panel shown');
+                    } else {
+                        console.log('filters-options panel not found');
+                    }
                 }
                 
-                e.preventDefault();
-                e.stopPropagation();
+                // Still allow the UI manager to handle showing the main filters panel
+                // Don't prevent default or stop propagation
             });
         } else {
             console.log('filtersBtn element not found');

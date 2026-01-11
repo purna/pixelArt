@@ -130,42 +130,63 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Setup selection descriptions using efficient event delegation
+    // DISABLED: This feature was interfering with the menu system
+    // Keeping the code commented out in case it needs to be re-enabled later
+    /*
     const setupSelectionDescriptions = () => {
         const selectnoteElement = document.getElementById('selectnote');
         if (!selectnoteElement) return;
-        
+         
         const header = selectnoteElement.querySelector('header');
         if (!header) return;
-        
+         
         // Store original header content
         const originalHeaderContent = header.innerHTML;
-        
-        // Use event delegation on the move-container for better performance
-        const moveContainer = document.querySelector('.move-container.tool-buttons');
-        if (moveContainer) {
-            moveContainer.addEventListener('mouseover', (e) => {
-                const button = e.target.closest('.tool-btn[data-type^="select-"]');
-                if (button) {
-                    const dataContent = button.getAttribute('data-content');
-                    if (dataContent) {
-                        header.innerHTML = '<strong>' + dataContent + '</strong>';
-                    }
-                }
-            }, { passive: true });
+         
+       // Use event delegation on the move-container for better performance
+       const moveContainer = document.querySelector('.move-container.tool-buttons');
+       if (moveContainer) {
+           moveContainer.addEventListener('mouseover', (e) => {
+               const button = e.target.closest('.tool-btn[data-type^="select-"]');
+               if (button) {
+                   const dataContent = button.getAttribute('data-content');
+                   if (dataContent) {
+                       header.innerHTML = '<strong>' + dataContent + '</strong>';
+                   }
+               }
+           }, { passive: true });
             
-            moveContainer.addEventListener('mouseout', (e) => {
-                // Only reset if we're leaving the container entirely, not just moving between buttons
-                if (!e.relatedTarget || !e.relatedTarget.closest('.move-container.tool-buttons')) {
-                    header.innerHTML = originalHeaderContent;
-                }
-            }, { passive: true });
-        }
+           moveContainer.addEventListener('mouseout', (e) => {
+               // Only reset if we're leaving the container entirely, not just moving between buttons
+               if (!e.relatedTarget || !e.relatedTarget.closest('.move-container.tool-buttons')) {
+                   header.innerHTML = originalHeaderContent;
+               }
+           }, { passive: true });
+           
+           // Add click event listener to handle button clicks
+           moveContainer.addEventListener('click', (e) => {
+               const button = e.target.closest('.tool-btn[data-type^="select-"]');
+               if (button) {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   const type = button.getAttribute('data-type');
+                   if (type && typeof UIManager !== 'undefined' && UIManager.handleSubmenuClick) {
+                       // Simulate a click event for the UIManager to handle
+                       const simulatedEvent = new MouseEvent('click', {
+                           bubbles: true,
+                           cancelable: true,
+                           view: window
+                       });
+                       UIManager.handleSubmenuClick(simulatedEvent);
+                   }
+               }
+           });
+       }
     };
- 
+  
     // Initial setup for selection descriptions
     setupSelectionDescriptions();
- 
+  
     // Re-setup when content changes (for dynamic content)
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -174,10 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
- 
+  
     // Observe the transform panel for dynamic changes
     const transformPanel = document.getElementById('move-options');
     if (transformPanel) {
         observer.observe(transformPanel, { childList: true, subtree: true });
     }
+    */
 });

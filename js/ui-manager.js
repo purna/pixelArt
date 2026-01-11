@@ -7,11 +7,12 @@ const UIManager = {
     init() {
         // Clean up any existing toolbar event listeners before setting up new ones
         this.cleanupMenuEventListeners();
-        
+         
         this.setupPanelToggle();
         this.setupUIToggle();
         this.setupContextSwitching();
         this.setupMenuSystem();
+        this.setupMenuButtonEventListeners();
         this.initDropins();
         this.initFloatingBrushSizePanel();
         // Set initial panel state for default tool (pencil)
@@ -62,14 +63,51 @@ const UIManager = {
             const clone = toolbar.cloneNode(true);
             toolbar.parentNode.replaceChild(clone, toolbar);
         }
+         
+        // Re-setup the settings button event listener after cleanup
+        this.setupSettingsButton();
+    },
+
+    setupSettingsButton() {
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            console.log('UIManager: Setting up settings button event listener');
+            
+            // Set up the event listener
+            settingsBtn.addEventListener('click', (e) => {
+                console.log('UIManager: Settings button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                // Use the new settings manager modal instead of the old panel
+                if (typeof SettingsManager !== 'undefined' && SettingsManager.toggleSettings) {
+                    console.log('UIManager: Calling SettingsManager.toggleSettings()');
+                    SettingsManager.toggleSettings();
+                } else {
+                    console.error('UIManager: SettingsManager not available, using fallback');
+                    // Fallback to old behavior if settings manager not available
+                    this.showPanelSections(['panel-settings']);
+                    this.setActiveSidebarButton('settingsBtn');
+                }
+            });
+        } else {
+            console.error('UIManager: Settings button not found!');
+        }
     },
 
     toggleSubmenu(btn) {
         const submenu = btn.querySelector('.tool-submenu');
         if (!submenu) return;
 
+        // Check if this submenu is already open
+        const isAlreadyOpen = submenu.classList.contains('visible');
+
         // Close all other submenus first
         this.closeAllSubmenus();
+
+        // If this submenu was already open, don't reopen it
+        if (isAlreadyOpen) {
+            return;
+        }
 
         // Position the submenu
         const btnRect = btn.getBoundingClientRect();
@@ -106,27 +144,84 @@ const UIManager = {
         const btn = e.target.closest('.tool-btn');
         if (!btn) return;
 
-        // Close submenu immediately
-        this.closeAllSubmenus();
-
-        // Remove active class from ALL tools first
-        document.querySelectorAll('.tool-btn').forEach(b => {
-            b.classList.remove('active');
-        });
-
-        // Add active class to clicked button
-        btn.classList.add('active');
-
-        // Mark parent menu as active
-        const parentMenu = btn.closest('.tool-submenu')?.previousElementSibling;
-        if (parentMenu && parentMenu.classList.contains('menu-parent')) {
-            parentMenu.classList.add('active');
-        }
-
         // Handle tool selection
         const action = btn.dataset.action;
         const type = btn.dataset.type;
-        if (action && type && typeof ToolManager !== 'undefined' && ToolManager.setTool) {
+        
+        // Special handling for select tools - link to move-options panel
+        if (type && (type.startsWith('select-') || type === 'select')) {
+            // For selection tools, delay closing the submenu to allow UI updates
+            setTimeout(() => {
+                this.closeAllSubmenus();
+            }, 150);
+
+            // Remove active class from ALL tools first
+            document.querySelectorAll('.tool-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+
+            // Add active class to clicked button
+            btn.classList.add('active');
+
+            // Mark parent menu as active
+            const parentMenu = btn.closest('.tool-submenu')?.previousElementSibling;
+            if (parentMenu && parentMenu.classList.contains('menu-parent')) {
+                parentMenu.classList.add('active');
+            }
+
+            // Show the transform panel and move options using selectPanelTab
+            const transformTab = document.querySelector('.panel-tab[data-content="transform-panel"]');
+            if (transformTab) {
+                selectPanelTab(transformTab);
+            }
+            
+            // Show the move-options panel
+            const moveOptionsPanel = document.getElementById('move-options');
+            if (moveOptionsPanel) {
+                moveOptionsPanel.classList.remove('hidden');
+            }
+            
+            // Update the title based on the select type
+            const titleElement = document.getElementById('title');
+            if (titleElement) {
+                const toolNames = {
+                    'select-rect': 'Rectangular',
+                    'select-circle': 'Circular',
+                    'select-lasso': 'Lasso',
+                    'select-shape': 'Shape'
+                };
+                const toolName = toolNames[type] || 'Selection';
+                titleElement.textContent = toolName;
+            }
+            
+            // Set the appropriate tool via ToolManager if available
+            if (typeof ToolManager !== 'undefined' && ToolManager.setTool) {
+                setTimeout(() => {
+                    ToolManager.setTool(type);
+                }, 50);
+            }
+        }
+        // Handle regular tools
+        else if (action && type && typeof ToolManager !== 'undefined' && ToolManager.setTool) {
+            // Close submenu immediately for regular tools
+            this.closeAllSubmenus();
+
+            // Remove active class from ALL tools first
+            document.querySelectorAll('.tool-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+
+            // Add active class to clicked button
+            btn.classList.add('active');
+
+            // Mark parent menu as active
+            const parentMenu = btn.closest('.tool-submenu')?.previousElementSibling;
+            if (parentMenu && parentMenu.classList.contains('menu-parent')) {
+                parentMenu.classList.add('active');
+            }
+
+            // Hide move-options panel for non-select tools
+            this.hideMoveOptionsPanel();
             // Small delay to ensure UI updates before tool change
             setTimeout(() => {
                 ToolManager.setTool(type);
@@ -241,13 +336,15 @@ const UIManager = {
 
     setupContextSwitching() {
         // 1. Listen for Drawing Tool Clicks (Pencil, Brush, etc) - exclude Layers/Settings/Filters/Tilemap buttons
-        const drawingToolBtns = document.querySelectorAll('[data-tool]:not(#layersBtn):not(#settingsBtn):not(#filtersBtn):not(#tilemapBtn)');
+        const drawingToolBtns = document.querySelectorAll('[data-tool]:not(#layersBtn):not(#settingsBtn):not(#filtersBtn):not(#tilemapBtn):not(#selectBtn)');
         drawingToolBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
+                // Hide move-options panel for non-select tools
+                this.hideMoveOptionsPanel();
                 // Determine tool name from data attribute
                 const toolName = btn.getAttribute('data-tool');
                 this.updatePanelForTool(toolName);
-                
+
                 // Remove active styling from Layers/Settings buttons (with null checks)
                 const layersBtn = document.getElementById('layersBtn');
                 const settingsBtn = document.getElementById('settingsBtn');
@@ -264,6 +361,8 @@ const UIManager = {
                 console.log('UIManager: Layers button clicked');
                 e.preventDefault();
                 e.stopPropagation();
+                // Hide move-options panel
+                this.hideMoveOptionsPanel();
                 console.log('UIManager: Calling slideInLayersPanel()');
                 this.slideInLayersPanel();
                 console.log('UIManager: Calling setActiveSidebarButton()');
@@ -273,33 +372,6 @@ const UIManager = {
             console.error('UIManager: Layers button not found!');
         }
 
-        // 3. Listen for Settings Button (prevent event bubbling)
-        const settingsBtn = document.getElementById('settingsBtn');
-        if (settingsBtn) {
-            console.log('UIManager: Setting up settings button event listener');
-            // Check if SettingsManager has already set up its listener
-            if (settingsBtn.hasAttribute('data-settings-listener')) {
-                console.log('UIManager: Settings button already has SettingsManager listener, skipping UIManager listener');
-            } else {
-                settingsBtn.addEventListener('click', (e) => {
-                    console.log('UIManager: Settings button clicked');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Use the new settings manager modal instead of the old panel
-                    if (typeof SettingsManager !== 'undefined' && SettingsManager.toggleSettings) {
-                        console.log('UIManager: Calling SettingsManager.toggleSettings()');
-                        SettingsManager.toggleSettings();
-                    } else {
-                        console.error('UIManager: SettingsManager not available, using fallback');
-                        // Fallback to old behavior if settings manager not available
-                        this.showPanelSections(['panel-settings']);
-                        this.setActiveSidebarButton('settingsBtn');
-                    }
-                });
-            }
-        } else {
-            console.error('UIManager: Settings button not found!');
-        }
 
         // 4. Listen for Filters Button (prevent event bubbling)
         const filtersBtn = document.getElementById('filtersBtn');
@@ -307,8 +379,22 @@ const UIManager = {
             filtersBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.showPanelSections(['panel-preview', 'panel-filters']);
+                // Hide move-options panel
+                this.hideMoveOptionsPanel();
+                // Show the effects panel instead of a non-existent filters panel
+                this.showPanelSections(['panel-preview', 'panel-effects']);
                 this.setActiveSidebarButton('filtersBtn');
+
+                // Also ensure the effects tab is switched to filters
+                if (typeof rightPanelManager !== 'undefined' && rightPanelManager.switchToEffectsTab) {
+                    rightPanelManager.switchToEffectsTab('filters');
+                }
+
+                // Ensure the filters-options panel is visible
+                const filtersOptionsPanel = document.getElementById('filters-options');
+                if (filtersOptionsPanel) {
+                    filtersOptionsPanel.classList.remove('hidden');
+                }
             });
         }
 
@@ -320,6 +406,8 @@ const UIManager = {
                 console.log('UIManager: Tilemap button clicked');
                 e.preventDefault();
                 e.stopPropagation();
+                // Hide move-options panel
+                this.hideMoveOptionsPanel();
                 this.toggleTilemapPanel();
                 this.setActiveSidebarButton('tilemapBtn');
                 // Initialize tilemap manager if not already done
@@ -366,6 +454,14 @@ const UIManager = {
                 this.showPanelSections(['panel-preview']);
                 break;
 
+            case 'select-rect':
+            case 'select-circle':
+            case 'select-lasso':
+            case 'select-shape':
+                // Selection tools need transform panel
+                this.showPanelSections(['panel-preview', 'panel-transform']);
+                break;
+
             default:
                 // Fallback
                 this.showPanelSections(['panel-preview', 'panel-palette']);
@@ -384,7 +480,6 @@ const UIManager = {
             'panel-effects',
             'panel-transform',
             'panel-layers',
-            'panel-filters',
             'panel-tilemap'
 
         ];
@@ -555,6 +650,114 @@ const UIManager = {
         }
 
         console.log(`Selected dropin: ${$el.dataset.content}`);
+    },
+
+    /**
+     * Hide the move-options panel
+     */
+    hideMoveOptionsPanel() {
+        const moveOptionsPanel = document.getElementById('move-options');
+        if (moveOptionsPanel) {
+            moveOptionsPanel.classList.add('hidden');
+        }
+    },
+
+    /**
+     * Ensure move-options panel is hidden when switching tools
+     */
+    ensureMoveOptionsPanelHidden() {
+        // Hide move-options panel
+        this.hideMoveOptionsPanel();
+        
+        // Also ensure the transform panel is hidden if no selection is active
+        const transformPanel = document.getElementById('panel-transform');
+        if (transformPanel) {
+            transformPanel.classList.add('hidden');
+        }
+    },
+
+    /**
+     * Handle tool selection from menu buttons
+     * Ensures move-options panel is hidden when switching away from select tools
+     */
+    handleToolSelection(toolType) {
+        // Hide move-options panel for non-select tools
+        if (toolType && !toolType.startsWith('select-') && toolType !== 'select') {
+            this.hideMoveOptionsPanel();
+        }
+    },
+
+    /**
+     * Handle menu button clicks to ensure move-options panel is hidden
+     * when switching away from select tools
+     */
+    setupMenuButtonEventListeners() {
+        // Get all menu buttons that are not select tools
+        const menuButtons = document.querySelectorAll('.tool-btn.menu-parent:not(#selectBtn)');
+        
+        menuButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                // Hide move-options panel when any non-select menu button is clicked
+                this.hideMoveOptionsPanel();
+                
+                // Also ensure the transform panel is hidden if no selection is active
+                const transformPanel = document.getElementById('panel-transform');
+                if (transformPanel) {
+                    transformPanel.classList.add('hidden');
+                }
+                    
+                // Don't prevent default or stop propagation as the normal menu handling should continue
+            });
+        });
+          
+        // Also set up event listener for the select button itself
+        const selectBtn = document.getElementById('selectBtn');
+        if (selectBtn) {
+            selectBtn.addEventListener('click', (e) => {
+                // Don't hide the move-options panel when select button is clicked
+                // This allows the submenu to open properly
+            });
+        }
+         
+        // Additionally, set up event listeners for all tool buttons to ensure move-options panel is hidden
+        const allToolButtons = document.querySelectorAll('.tool-btn:not(#selectBtn):not(.menu-parent)');
+        allToolButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                // Hide move-options panel when any non-select tool button is clicked
+                this.hideMoveOptionsPanel();
+                 
+                // Also ensure the transform panel is hidden if no selection is active
+                const transformPanel = document.getElementById('panel-transform');
+                if (transformPanel) {
+                    transformPanel.classList.add('hidden');
+                }
+            });
+        });
+    },
+
+    /**
+     * Ensure move-options panel is hidden when switching tools
+     */
+    ensureMoveOptionsPanelHidden() {
+        // Hide move-options panel
+        this.hideMoveOptionsPanel();
+        
+        // Also ensure the transform panel is hidden if no selection is active
+        const transformPanel = document.getElementById('panel-transform');
+        if (transformPanel) {
+            transformPanel.classList.add('hidden');
+        }
+    },
+
+    /**
+     * Handle tool selection from menu buttons
+     * Ensures move-options panel is hidden when switching away from select tools
+     */
+    handleToolSelection(toolType) {
+        // Hide move-options panel for non-select tools
+        if (toolType && !toolType.startsWith('select-') && toolType !== 'select') {
+            this.hideMoveOptionsPanel();
+        }
     },
 
     /**

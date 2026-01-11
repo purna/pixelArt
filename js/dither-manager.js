@@ -133,7 +133,7 @@ const DitherManager = {
                     const colorAtPoint = (px, py) => {
                         let useColor1 = false;
                         const patternSize = 11 - (State.ditherDensity || 5);
-                         
+                          
                         switch (pattern) {
                             case 'checkerboard':
                                 const checkerSize = Math.max(2, 11 - (State.ditherDensity || 5));
@@ -154,32 +154,33 @@ const DitherManager = {
                             default:
                                 useColor1 = (Math.floor(px) + Math.floor(py)) % (patternSize * 2) < patternSize;
                         }
-                         
+                          
                         const color = useColor1 ? color1 : color2;
                         const opacity = useColor1 ? opacity1 : opacity2;
                         return this.hexToRgba(color, opacity);
                     };
-                     
+                      
                     // Create gradient with dither colors
                     const centerColor = colorAtPoint(centerX, centerY);
                     gradient.addColorStop(0, centerColor);
                     gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                     
+                      
                     context.fillStyle = gradient;
                     context.beginPath();
                     context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
                     context.fill();
                 } else {
-                    // Standard dither tool without blur - use square brush area
+                    // Standard dither tool - use pixel-perfect drawing like pencil tool
+                    // but respect the dither brush size to draw multiple pixels with pattern
                     const offset = Math.floor(size / 2);
                     for (let dy = -offset; dy < size - offset; dy++) {
                         for (let dx = -offset; dx < size - offset; dx++) {
                             const px = centerX + dx;
                             const py = centerY + dy;
-                             
+                              
                             let useColor1 = false;
                             const patternSize = 11 - (State.ditherDensity || 5);
-                             
+                              
                             switch (pattern) {
                                 case 'checkerboard':
                                     const checkerSize = Math.max(2, 11 - (State.ditherDensity || 5));
@@ -200,7 +201,7 @@ const DitherManager = {
                                 default:
                                     useColor1 = (Math.floor(px) + Math.floor(py)) % (patternSize * 2) < patternSize;
                             }
-                             
+                              
                             const color = useColor1 ? color1 : color2;
                             const opacity = useColor1 ? opacity1 : opacity2;
                             context.fillStyle = this.hexToRgba(color, opacity);

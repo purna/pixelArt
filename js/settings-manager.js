@@ -31,47 +31,16 @@ const SettingsManager = {
         // Ensure DOM is ready before setting up event listeners
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                this.setupEventListeners();
                 this.loadSettings();
                 console.log('Settings Manager initialized (DOM ready)');
             });
         } else {
-            this.setupEventListeners();
             this.loadSettings();
             console.log('Settings Manager initialized');
         }
 
-        // Fallback: Also try to attach event listener after a short delay
-        setTimeout(() => {
-            const settingsBtn = document.getElementById('settingsBtn');
-            console.log('Fallback check - settingsBtn found:', !!settingsBtn);
-            if (settingsBtn && !settingsBtn.hasAttribute('data-settings-listener')) {
-                console.log('Attaching fallback settings button listener');
-                settingsBtn.addEventListener('click', (e) => {
-                    console.log('Settings button clicked (fallback)');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.toggleSettings();
-                });
-                settingsBtn.setAttribute('data-settings-listener', 'true');
-            }
-        }, 1000);
-    },
-
-    setupEventListeners() {
-        // Settings button click
-        const settingsBtn = document.getElementById('settingsBtn');
-        if (settingsBtn) {
-            console.log('Settings button found, attaching event listener');
-            settingsBtn.addEventListener('click', (e) => {
-                console.log('Settings button clicked');
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleSettings();
-            });
-        } else {
-            console.error('Settings button not found!');
-        }
+        // Don't set up event listeners here - let UIManager handle the button click
+        // The UIManager will call SettingsManager.toggleSettings() when the button is clicked
     },
 
     toggleSettings() {

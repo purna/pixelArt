@@ -1029,7 +1029,7 @@ const ToolManager = {
             selectionToolBtns.forEach(btn => btn.classList.add('active'));
             
             // Show the transform panel and select options
-            this.showSelectOptionsPanel();
+            this.showSelectOptionsPanel(name);
         } else {
             // For non-selection tools, use normal highlighting
             allToolButtons.forEach(b => b.classList.toggle('active', b.dataset.tool === name || b.id === name + 'Btn'));
@@ -1057,19 +1057,20 @@ const ToolManager = {
 
     /**
      * Show the Select Options panel when a selection tool is activated
+     * @param {string} toolName - Optional tool name to use for title display
      */
-    showSelectOptionsPanel() {
+    showSelectOptionsPanel(toolName) {
         // Get all panel elements
         const transformPanel = document.getElementById('transform-panel');
         const transformTab = document.querySelector('.tab[data-content="transform-panel"]');
         const dropinsContainer = document.querySelector('.dropins-container');
         const panelContents = document.querySelectorAll('.contents .content');
-        
+         
         // Show the dropins container if hidden
         if (dropinsContainer) {
             dropinsContainer.classList.add('showing');
         }
-        
+         
         // Activate the transform tab
         if (transformTab) {
             transformTab.classList.add('active');
@@ -1080,24 +1081,23 @@ const ToolManager = {
                 }
             });
         }
-        
+         
         // Show the transform panel and hide other panels
         if (panelContents) {
             panelContents.forEach(panel => {
                 if (panel.id === 'transform-panel') {
                     panel.classList.add('active');
-                    panel.style.display = 'block';
                 } else {
                     panel.classList.remove('active');
-                    panel.style.display = 'none';
                 }
             });
         }
-        
+         
         // Show the move-options section which contains the selection tools
         const moveOptions = document.getElementById('move-options');
         if (moveOptions) {
-            moveOptions.style.display = 'block';
+            moveOptions.classList.add('active');
+            moveOptions.classList.remove('hidden');
         }
         
         // Update the title in the info section
@@ -1109,7 +1109,8 @@ const ToolManager = {
                 'select-lasso': 'Lasso selection (H)',
                 'select-shape': 'Shape selection (Z)'
             };
-            titleElement.textContent = toolNames[State.tool] || 'Selection Tool';
+            // Use the provided toolName parameter instead of State.tool
+            titleElement.textContent = toolNames[toolName] || 'Selection Tool';
         }
     },
 

@@ -127,6 +127,21 @@ class RightPanelManager {
             }
         });
 
+        // Handle filters button specifically (in case it's not caught by the above)
+        document.addEventListener('click', (e) => {
+            const filtersButton = e.target.closest('#filtersBtn');
+            if (filtersButton) {
+                e.preventDefault();
+                this.setActiveEffectsTab('filters');
+                
+                // Ensure the filters-options panel is visible
+                const filtersOptionsPanel = document.getElementById('filters-options');
+                if (filtersOptionsPanel) {
+                    filtersOptionsPanel.classList.remove('hidden');
+                }
+            }
+        });
+
         // Transform panel button clicks
         document.addEventListener('click', (e) => {
             const transformButton = e.target.closest('[data-content]');
