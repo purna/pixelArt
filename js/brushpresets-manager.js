@@ -401,6 +401,10 @@ const BrushPresetsManager = {
             });
     },
 
+    loadDefaultPresets() {
+        this.loadDefaultPresetsFromFile();
+    },
+
     clearAllPresets() {
         const confirmClear = confirm('Delete ALL brush presets? This cannot be undone.');
         
