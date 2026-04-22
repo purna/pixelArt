@@ -328,22 +328,7 @@ const InputHandler = {
         // Section toggle functionality is now handled by right-panel-manager.js
         // this.setupSectionToggles();
 
-        // New Palette & Color Listeners
-        UI.saveColorBtn.addEventListener('click', () => {
-            ColorManager.saveColorToPalette(State.color);
-            this.showNotification('Color added to palette!', 'success');
-        });
-
-        // NEW: URL Import Listener
-        UI.importPaletteUrlBtn.addEventListener('click', () => {
-            const url = prompt("Enter the Coolors URL (e.g., https://coolors.co/daffed-9bf3f0-473198-4a0d67-adfc92):");
-            if (url) {
-                ColorManager.importPaletteFromUrl(url.trim());
-                this.showNotification('Palette imported!', 'success');
-            }
-        });
-
-        // Add event listeners for palette control buttons
+        // Palette control buttons
         document.querySelectorAll('.palette-control-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 if (button.id === 'saveColorBtn') {
@@ -716,9 +701,7 @@ const InputHandler = {
         UI.colorPicker.addEventListener('input', (e) => {
             State.color = e.target.value;
             UI.colorHex.textContent = e.target.value;
-            // Add the new color to history/palette
-            ColorManager.addToHistory(State.color);
-            console.log('Color picker changed to:', State.color);
+            // Just set the color - don't add to history when selecting from picker
         });
 
         // Add event listener for hex input field
@@ -728,8 +711,7 @@ const InputHandler = {
             if (/^#([0-9A-F]{3}){1,2}$/i.test(hexValue)) {
                 State.color = hexValue;
                 UI.colorPicker.value = hexValue;
-                // Add the new color to history/palette
-                ColorManager.addToHistory(State.color);
+                // Just set the color - don't add to history when typing hex
                 console.log('Hex input changed to:', State.color);
             } else {
                 console.log('Invalid hex color:', hexValue);
@@ -974,37 +956,48 @@ const InputHandler = {
         const filtersBtn = document.getElementById('filtersBtn');
         if (filtersBtn) {
             filtersBtn.addEventListener('click', (e) => {
-                console.log('Filters button clicked');
-                
                 // Use the RightPanelManager to switch to the filters tab
-                if (typeof rightPanelManager !== 'undefined' && rightPanelManager.switchToEffectsTab) {
-                    rightPanelManager.switchToEffectsTab('filters');
-                } else {
-                    // Fallback: manually show filters-options panel
-                    // Hide other sub-panels in the effects panel
-                    const mirrorOptions = document.getElementById('mirror-options');
-                    const ditherOptions = document.getElementById('dither-options');
-                    const contrastOptions = document.getElementById('contrast-options');
-                    
-                    if (mirrorOptions) mirrorOptions.classList.add('hidden');
-                    if (ditherOptions) ditherOptions.classList.add('hidden');
-                    if (contrastOptions) contrastOptions.classList.add('hidden');
-                    
-                    // Show filters-options panel
-                    const filtersOptions = document.getElementById('filters-options');
-                    if (filtersOptions) {
-                        filtersOptions.classList.remove('hidden');
-                        console.log('filters-options panel shown');
-                    } else {
-                        console.log('filters-options panel not found');
-                    }
+                if (window.rightPanelManager) {
+                    window.rightPanelManager.setActiveEffectsTab('filters');
                 }
-                
-                // Still allow the UI manager to handle showing the main filters panel
-                // Don't prevent default or stop propagation
             });
-        } else {
-            console.log('filtersBtn element not found');
+        }
+        
+        // Add handlers for other effect/transform buttons
+        const contrastBtn = document.getElementById('contrastBtn');
+        if (contrastBtn) {
+            contrastBtn.addEventListener('click', (e) => {
+                if (window.rightPanelManager) {
+                    window.rightPanelManager.setActiveEffectsTab('contrast');
+                }
+            });
+        }
+        
+        const rotateBtn = document.getElementById('rotateBtn');
+        if (rotateBtn) {
+            rotateBtn.addEventListener('click', (e) => {
+                if (window.rightPanelManager) {
+                    window.rightPanelManager.setActiveTransformTab('rotate');
+                }
+            });
+        }
+        
+        const flipBtn = document.getElementById('flipBtn');
+        if (flipBtn) {
+            flipBtn.addEventListener('click', (e) => {
+                if (window.rightPanelManager) {
+                    window.rightPanelManager.setActiveTransformTab('flip');
+                }
+            });
+        }
+        
+        const alignBtn = document.getElementById('alignBtn');
+        if (alignBtn) {
+            alignBtn.addEventListener('click', (e) => {
+                if (window.rightPanelManager) {
+                    window.rightPanelManager.setActiveTransformTab('align');
+                }
+            });
         }
         /*
 

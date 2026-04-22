@@ -52,21 +52,11 @@ const ColorManager = {
     },
     
     /**
-     * Add color to history/palette when a color is used.
+     * Add color to history when a color is used.
+     * This only updates the floating color history, not the main palette.
      */
     addToHistory(hex) {
-        // Ensure color is at the top of the palette/history and render
-        if (!State.currentPalette.includes(hex)) {
-            State.currentPalette.unshift(hex);
-        }
-        // Move to the front if it already exists (like history)
-        const index = State.currentPalette.indexOf(hex);
-        if (index > 0) {
-            State.currentPalette.splice(index, 1);
-            State.currentPalette.unshift(hex);
-        }
-
-        // Update recent colors (keep only last 4)
+        // Update recent colors (keep only last 4) - separate from main palette
         const colorIndex = State.recentColors.indexOf(hex);
         if (colorIndex > -1) {
             // Move existing color to front
@@ -78,10 +68,8 @@ const ColorManager = {
             State.recentColors = State.recentColors.slice(0, 4);
         }
 
-        // Update color history display
+        // Update color history display only, not the main palette
         this.updateColorHistoryDisplay();
-
-        this.render();
     },
 
     /**
@@ -94,23 +82,22 @@ const ColorManager = {
         this.render(); // Re-render to update the 'active' highlight
     },
     
-    /**
-     * NEW: Save current color to the active palette.
+/**
+     * Save current color to the active palette group.
      */
     saveColorToPalette(hex) {
-        // User requested to save to current one.
-        if (State.currentPalette.includes(hex)) {
-            alert('Color is already in the palette!');
+        const currentGroup = State.paletteGroups[State.activePaletteGroup];
+        if (currentGroup.colors.includes(hex)) {
             return;
         }
 
-        State.currentPalette.push(hex);
+        currentGroup.colors.push(hex);
+        State.currentPalette = currentGroup.colors;
         this.render();
-        alert(`Color ${hex} saved to the current palette!`);
     },
 
     /**
-     * NEW: Parse a Coolors URL and import the colors.
+     * Parse a Coolors URL and import the colors.
      * Example URL: https://coolors.co/daffed-9bf3f0-473198-4a0d67-adfc92
      */
     importPaletteFromUrl(url) {
@@ -119,7 +106,6 @@ const ColorManager = {
         const match = url.match(coolorsRegex);
 
         if (!match) {
-            alert('Invalid Coolors URL format. Please ensure it follows the pattern: https://coolors.co/HEX1-HEX2-HEX3...');
             return;
         }
 
@@ -133,43 +119,111 @@ const ColorManager = {
         this.importPalette(hexCodes);
     },
 
-    /**
-     * NEW: Replace current palette with new colors (from .ase import)
+/**
+     * Replace current palette with new colors (from .ase import)
      */
     importPalette(colors) {
         if (!colors || colors.length === 0) {
-             alert('No valid colors found in the imported file.');
-             return;
+            return;
         }
 
-        // Filter for valid hex colors before replacing
-        State.currentPalette = colors.filter(c => /^#([0-9A-F]{3}){1,2}$/i.test(c));        
+        // Prompt for group name
+        const groupName = prompt('Enter a name for this palette group:', 'Palette ' + (State.paletteGroups.length + 1));
+        if (!groupName) return;
+        
+        // Add as a new group
+        const newGroup = {
+            name: groupName,
+            colors: colors.filter(c => /^#([0-9A-F]{3}){1,2}$/i.test(c)),
+            collapsed: false
+        };
+        
+        State.paletteGroups.push(newGroup);
+        State.activePaletteGroup = State.paletteGroups.length - 1;
+        State.currentPalette = newGroup.colors;
+        
         // Set the first imported color as the active color
         this.setColor(State.currentPalette[0] || Config.defaultColor);
         this.render();
-        alert(`Successfully imported ${State.currentPalette.length} colors into the current palette.`);
     },
 
     /**
-     * Render color palette swatches
+     * Render color palette swatches with groups
      */
     render() {
         UI.paletteContainer.innerHTML = '';
         
-        // RENDER CURRENT PALETTE
-        State.currentPalette.forEach(color => {
-            const swatch = document.createElement('div');
-            swatch.className = 'swatch';
-            swatch.style.backgroundColor = color;
-            swatch.title = color;
-            swatch.onclick = () => this.setColor(color);
+        State.paletteGroups.forEach((group, groupIndex) => {
+            // Create group container
+            const groupContainer = document.createElement('div');
+            groupContainer.className = `palette-group ${group.collapsed ? 'collapsed' : ''}`;
             
-            // Highlight the currently selected color
-            if (color.toLowerCase() === State.color.toLowerCase()) {
-                 swatch.classList.add('active');
-            }
+            // Create group header
+            const groupHeader = document.createElement('div');
+            groupHeader.className = 'palette-group-header';
+            groupHeader.innerHTML = `
+                <span class="palette-group-toggle">${group.collapsed ? '▶' : '▼'}</span>
+                <span class="palette-group-name">${group.name}</span>
+                <button class="palette-group-delete" data-group="${groupIndex}" title="Delete group">×</button>
+            `;
             
-            UI.paletteContainer.appendChild(swatch);
+            groupHeader.querySelector('.palette-group-toggle').addEventListener('click', (e) => {
+                e.stopPropagation();
+                group.collapsed = !group.collapsed;
+                this.render();
+            });
+            
+            groupHeader.querySelector('.palette-group-delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (State.paletteGroups.length <= 1) {
+                    return;
+                }
+                if (confirm(`Delete group "${group.name}"?`)) {
+                    State.paletteGroups.splice(groupIndex, 1);
+                    if (State.activePaletteGroup >= State.paletteGroups.length) {
+                        State.activePaletteGroup = State.paletteGroups.length - 1;
+                    }
+                    State.currentPalette = State.paletteGroups[State.activePaletteGroup].colors;
+                    this.render();
+                }
+            });
+            
+            groupHeader.addEventListener('click', () => {
+                State.activePaletteGroup = groupIndex;
+                State.currentPalette = group.colors;
+                this.setColor(State.currentPalette[0] || Config.defaultColor);
+                this.render();
+            });
+            
+            groupContainer.appendChild(groupHeader);
+            
+            // Create colors container
+            const colorsContainer = document.createElement('div');
+            colorsContainer.className = 'palette-group-colors';
+            
+            group.colors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'swatch';
+                swatch.style.backgroundColor = color;
+                swatch.title = color;
+                swatch.onclick = (e) => {
+                    e.stopPropagation();
+                    this.setColor(color);
+                };
+                
+                if (color.toLowerCase() === State.color.toLowerCase()) {
+                    swatch.classList.add('active');
+                }
+                
+                if (groupIndex === State.activePaletteGroup) {
+                    swatch.classList.add('active-group');
+                }
+                
+                colorsContainer.appendChild(swatch);
+            });
+            
+            groupContainer.appendChild(colorsContainer);
+            UI.paletteContainer.appendChild(groupContainer);
         });
     }
 };

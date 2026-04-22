@@ -877,23 +877,137 @@ input[type="color"]:focus {
 /* 12. PALETTE */
 /* ============================================= */
 
-.palette-grid {
+.palette-controls {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.palette-controls input[type="color"] {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    cursor: pointer;
+}
+
+.palette-controls input[type="text"] {
+    width: 70px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-family: monospace;
+}
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 4px;
     min-height: 5px;
     padding: 5px;
     background: rgba(255, 255, 255, 0.02);
     border-radius: 4px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Palette Group Container */
+.palette-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.palette-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Palette Group Header - always visible */
+.palette-group-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 2px 4px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--bg-dark);
+    border-radius: 2px;
+}
+
+.palette-group-header:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.palette-group-toggle {
+    font-size: 8px;
+    color: var(--text-secondary);
+    width: 16px;
+    text-align: center;
+}
+
+.palette-group-name {
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.palette-group-header:hover .palette-group-name {
+    color: var(--text-primary);
+}
+
+.palette-group-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0 4px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.palette-group-header:hover .palette-group-delete {
+    opacity: 1;
+}
+
+.palette-group-delete:hover {
+    color: var(--accent-secondary);
+}
+
+/* Palette Group Colors - hidden when collapsed */
+.palette-group-colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    margin-top: 2px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Collapsed state - hide colors */
+.palette-group.collapsed .palette-group-colors {
+    display: none;
 }
 
 .swatch {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 3px;
     border: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .swatch:hover {
@@ -906,6 +1020,10 @@ input[type="color"]:focus {
     border: 2px solid var(--accent-primary);
     transform: scale(1.1);
     box-shadow: 0 0 8px var(--border-glow);
+}
+
+.swatch.active-group {
+    border-color: var(--accent-tertiary);
 }
 
 /* Preset brush sizes */

@@ -813,6 +813,15 @@
     align-items: center;
 }
 
+#panel-palette .palette-groups {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+
+
 #colorPicker {
     width: 30px;
     height: 30px;

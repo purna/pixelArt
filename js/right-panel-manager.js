@@ -154,6 +154,20 @@ class RightPanelManager {
             }
         });
 
+        // Additional explicit handlers for effect/transform buttons
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('#contrastBtn, #filtersBtn, #rotateBtn, #flipBtn, #alignBtn');
+            if (btn) {
+                e.preventDefault();
+                const id = btn.id;
+                if (id === 'contrastBtn') this.setActiveEffectsTab('contrast');
+                else if (id === 'filtersBtn') this.setActiveEffectsTab('filters');
+                else if (id === 'rotateBtn') this.setActiveTransformTab('rotate');
+                else if (id === 'flipBtn') this.setActiveTransformTab('flip');
+                else if (id === 'alignBtn') this.setActiveTransformTab('align');
+            }
+        });
+
         // Handle toggle section buttons
         document.addEventListener('click', (e) => {
             // Check if the click target is a toggle button or a child of a toggle button
