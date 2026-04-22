@@ -17,6 +17,11 @@ const UIManager = {
         this.initFloatingBrushSizePanel();
         // Set initial panel state for default tool (pencil)
         this.updatePanelForTool('pencil');
+        
+        // Initialize frame badge display
+        if (UI.frameDisplay && State.frames) {
+            UI.frameDisplay.textContent = `${State.currentFrameIndex + 1} / ${State.frames.length}`;
+        }
     },
 
     setupMenuSystem() {

@@ -241,6 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up panel toggle button for dropins-container
     setupPanelToggle();
+
+    // Set up timeline panel toggle button
+    setupTimelineToggle();
+
+    // Initialize floating panels (draggable color history and brush controls)
+    FloatingPanelManager.init();
 });
 
 // Set up the floating panel toggle button
@@ -253,12 +259,32 @@ function setupPanelToggle() {
                 container.classList.toggle('closed');
                 panelToggle.classList.toggle('closed-toggle');
 
-                // Update toggle button icon
                 const icon = panelToggle.querySelector('i');
                 if (container.classList.contains('closed')) {
                     icon.className = 'fas fa-chevron-right';
                 } else {
                     icon.className = 'fas fa-chevron-left';
+                }
+            }
+        });
+    }
+}
+
+// Set up timeline panel toggle button
+function setupTimelineToggle() {
+    const timelineToggle = document.getElementById('panel-toggle-timeline');
+    if (timelineToggle) {
+        timelineToggle.addEventListener('click', () => {
+            const timelinePanel = document.querySelector('.timeline-panel');
+            if (timelinePanel) {
+                timelinePanel.classList.toggle('closed');
+                timelineToggle.classList.toggle('closed-toggle');
+
+                const icon = timelineToggle.querySelector('i');
+                if (timelinePanel.classList.contains('closed')) {
+                    icon.className = 'fas fa-chevron-up';
+                } else {
+                    icon.className = 'fas fa-chevron-down';
                 }
             }
         });

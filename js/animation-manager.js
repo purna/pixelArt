@@ -11,7 +11,11 @@ const AnimationManager = {
         State.frames.forEach((frame, i) => {
             const div = document.createElement('div');
             div.className = `frame-thumb ${i === State.currentFrameIndex ? 'active' : ''}`;
+            div.setAttribute('data-index', i);
             div.onclick = () => this.switchFrame(i);
+            
+            // Add drag events for reordering
+            div.setAttribute('draggable', 'true');
             
             // Create thumbnail by copying from composition canvas
             const canvas = document.createElement('canvas');
@@ -41,6 +45,84 @@ const AnimationManager = {
             div.appendChild(num);
             
             UI.framesList.appendChild(div);
+        });
+        
+        this.setupDragAndDrop();
+    },
+    
+    /**
+     * Set up drag and drop for frame reordering
+     */
+    setupDragAndDrop() {
+        const frames = UI.framesList.querySelectorAll('.frame-thumb');
+        
+        frames.forEach((frame, index) => {
+            frame.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', index);
+                frame.classList.add('dragging');
+            });
+            
+            frame.addEventListener('dragend', () => {
+                frame.classList.remove('dragging');
+                frames.forEach(f => f.classList.remove('drag-over', 'drag-over-last'));
+            });
+            
+            frame.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                const rect = frame.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                frames.forEach(f => f.classList.remove('drag-over', 'drag-over-last'));
+                
+                if (e.clientY < midpoint) {
+                    frame.classList.add('drag-over');
+                } else {
+                    frame.classList.add('drag-over-last');
+                }
+            });
+            
+            frame.addEventListener('dragleave', () => {
+                frame.classList.remove('drag-over', 'drag-over-last');
+            });
+            
+            frame.addEventListener('drop', (e) => {
+                e.preventDefault();
+                
+                const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                if (isNaN(draggedIndex)) return;
+                
+                const dropIndex = parseInt(frame.getAttribute('data-index'), 10);
+                if (dropIndex === draggedIndex || dropIndex < 0) return;
+                
+                // Get the dragged frame
+                const draggedFrame = State.frames.splice(draggedIndex, 1)[0];
+                
+                // Adjust drop index if needed
+                const actualDropIndex = (draggedIndex < dropIndex) ? dropIndex : dropIndex;
+                State.frames.splice(actualDropIndex, 0, draggedFrame);
+                
+                // Update current frame index if needed
+                if (State.currentFrameIndex === draggedIndex) {
+                    State.currentFrameIndex = actualDropIndex;
+                } else if (draggedIndex < State.currentFrameIndex && actualDropIndex >= State.currentFrameIndex) {
+                    State.currentFrameIndex--;
+                } else if (draggedIndex > State.currentFrameIndex && actualDropIndex <= State.currentFrameIndex) {
+                    State.currentFrameIndex++;
+                }
+                
+                // Re-render the timeline
+                this.renderTimeline();
+                
+                // Update canvas
+                CanvasManager.render();
+                
+                // Update frame badge
+                if (UI.frameDisplay) {
+                    UI.frameDisplay.textContent = `${State.currentFrameIndex + 1} / ${State.frames.length}`;
+                }
+            });
         });
     },
 
@@ -91,6 +173,11 @@ const AnimationManager = {
                 idx <= State.currentFrameIndex + State.onionSkinFramesAfter
             );
         });
+
+        // Update frame badge
+        if (UI.frameDisplay) {
+            UI.frameDisplay.textContent = `${State.currentFrameIndex + 1} / ${State.frames.length}`;
+        }
     },
 
     /**

@@ -75,9 +75,15 @@ const CanvasManager = {
             `linear-gradient(to right, rgba(128, 128, 128, 0.3) 1px, transparent 1px),
              linear-gradient(to bottom, rgba(128, 128, 128, 0.3) 1px, transparent 1px)` : 'none';
 
-        // NEW: Update the zoom display in the header
+        // Update zoom display in header
         if (UI.zoomDisplay) {
-            UI.zoomDisplay.textContent = `${State.zoom}x`; // Using 'x' as per the index.html change
+            UI.zoomDisplay.textContent = `${State.zoom}x`;
+        }
+        
+        // Update zoom display in workspace-overlay
+        const workspaceZoomDisplay = document.querySelector('.workspace-overlay #zoomDisplay');
+        if (workspaceZoomDisplay) {
+            workspaceZoomDisplay.textContent = `${State.zoom}x`;
         }
         
         // Removed the percentage calculation and UI.zoomPercentage update since

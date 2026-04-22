@@ -59,6 +59,7 @@ const UI = {
     coords: null,
     zoomDisplay: null,
     zoomPercentage: null,
+    frameDisplay: null,
     
     // Buttons
     undoBtn: null,
@@ -165,6 +166,7 @@ const initDOM = () => {
     UI.coords = document.getElementById('coords');
     UI.zoomDisplay = document.getElementById('zoomDisplay');
     UI.zoomPercentage = document.getElementById('zoomPercentage');
+    UI.frameDisplay = document.getElementById('frameDisplay');
     
     // Buttons
     UI.undoBtn = document.getElementById('undoBtn');

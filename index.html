@@ -185,6 +185,7 @@ Hover to see all available selection tools">
 
             <!-- Floating Color History Overlay -->
             <div class="floating-color-history">
+                <span class="grippy"></span>
                 <div class="color-history-swatches">
                     <div class="color-swatch" data-color-index="0" title="Recent Color 1 (Press 1)"></div>
                     <div class="color-swatch" data-color-index="1" title="Recent Color 2 (Press 2)"></div>
@@ -193,14 +194,29 @@ Hover to see all available selection tools">
                 </div>
             </div>
 
-            <!-- Floating Brush Size Panel -->
-            <div class="floating-brush-sizes">
-                <div class="brush-size-swatches">
-                    <div class="brush-size-swatch" data-brush-size="1" title="Brush Size 1"></div>
-                    <div class="brush-size-swatch" data-brush-size="2" title="Brush Size 2"></div>
-                    <div class="brush-size-swatch" data-brush-size="3" title="Brush Size 3"></div>
-                    <div class="brush-size-swatch" data-brush-size="4" title="Brush Size 4"></div>
-                    <div class="brush-size-swatch" data-brush-size="5" title="Brush Size 5"></div>
+            <!-- Floating Brush Controls Overlay -->
+            <div class="brush-controls-overlay">
+                <div class="brush-controls">
+                    <span class="grippy"></span>
+                    <label for="brushSizeSlider">Brush Size:</label>
+                    <input type="range" id="brushSizeSlider" min="1" max="20" value="1" class="floating-brush-slider">
+                    <span id="brushSizeDisplay" class="brush-size-display">1</span>
+                    <div class="preset-sizes floating-brush-presets">
+                        <button class="preset-btn preset-brush-size" data-size="1">1</button>
+                        <button class="preset-btn preset-brush-size" data-size="3">3</button>
+                        <button class="preset-btn preset-brush-size" data-size="7">7</button>
+                        <button class="preset-btn preset-brush-size" data-size="11">11</button>
+                    </div>
+
+                    <label for="opacitySlider">Opacity:</label>
+                    <input type="range" id="opacitySlider" min="0" max="100" value="100" class="floating-opacity-slider">
+                    <span id="opacityDisplay" class="opacity-display">100</span>
+                    <div class="preset-sizes opacity-presets">
+                        <button class="preset-btn opacity-btn" data-opacity="25">25%</button>
+                        <button class="preset-btn opacity-btn" data-opacity="50">50%</button>
+                        <button class="preset-btn opacity-btn" data-opacity="75">75%</button>
+                        <button class="preset-btn opacity-btn active" data-opacity="100">100%</button>
+                    </div>
                 </div>
             </div>
 
@@ -212,10 +228,13 @@ Hover to see all available selection tools">
                     <canvas id="grid-overlay"></canvas>
                     <canvas id="tilemap-overlay"></canvas>
                 </div>
-                <!-- Zoom Info Overlay -->
-                <div class="zoom-overlay">
-                    <span id="coords">0, 0</span> | <span id="zoomDisplay">100%</span>
-                </div>
+            </div>
+
+            <!-- Zoom Info Overlay - top right of workspace -->
+            <div class="workspace-overlay">
+                <div class="badge" id="coordsBadge"><i class="fas fa-crosshairs"></i> <span id="coords">0, 0</span></div>
+                <div class="badge" id="zoomBadge"><i class="fas fa-search"></i> <span id="zoomDisplay">100%</span></div>
+                <div class="badge" id="frameBadge"><i class="fas fa-film"></i> <span id="frameDisplay">1 / 1</span></div>
             </div>
 
 
@@ -230,8 +249,9 @@ Hover to see all available selection tools">
 
                         <div class="fps-spacer"></div>
                         <label class="fps-label">
-                            FPS: <span id="fpsDisplay">12</span>
-                            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="fps-slider">
+                            FPS:  <input type="range" id="fpsSlider" min="1" max="60" value="12" class="fps-slider">
+                            <span id="fpsDisplay">12</span>
+                           
                         </label>
                     </div>
                     <div class="frame-controls">
@@ -246,6 +266,11 @@ Hover to see all available selection tools">
                 <div id="frames-list" class="timeline-frames">
                     <!-- Frames injected here -->
                 </div>
+            </div>
+
+            <!-- Timeline Panel Toggle -->
+            <div id="panel-toggle-timeline" title="Toggle Timeline">
+                <i class="fas fa-chevron-down"></i>
             </div>
 
         </div>
@@ -726,8 +751,6 @@ Hover to see all available selection tools">
                                             </div>
                                         </div>
 
-                                    </div>
-
                                     <div class="mirror-note">
                                         <small>
                                             <i class="fas fa-info-circle"></i>
@@ -863,10 +886,9 @@ Hover to see all available selection tools">
                                             <div class="icon-stack">
                                                 <i class="fas fa-mouse-pointer base-icon"></i>
                                                 <i class="far fa-square overlay-icon"></i>
-                                            </div>
-                                         
-                                         </div>
-                                        <div class="tool-btn" data-action="tool" data-type="select-circle" data-tooltip="**Circular Selection**
+                                        </div>
+
+                                    <div class="tool-btn" data-action="tool" data-type="select-circle" data-tooltip="**Circular Selection**
                                         Draw circular selections" >
                                             <div class="icon-stack">
                                                 <i class="fas fa-mouse-pointer base-icon"></i>
@@ -1836,6 +1858,7 @@ Hover to see all available selection tools">
         <script src="js/tooltip.js"></script>
 
         <script src="js/brushpresets-manager.js"></script>
+        <script src="js/floating-panel-manager.js"></script>
         <script src="js/right-panel-manager.js"></script>
         <script src="js/tool-manager.js"></script>
         <script src="js/selectionToolManager.js"></script>

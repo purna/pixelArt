@@ -46,7 +46,9 @@ const InputHandler = {
         State.shiftKey = e.shiftKey;
         
         if (x >= 0 && x < State.width && y >= 0 && y < State.height) {
-            UI.coords.textContent = `${x}, ${y}`;
+            const formattedX = x.toString().padStart(4, '0');
+            const formattedY = y.toString().padStart(4, '0');
+            UI.coords.textContent = `${formattedX}, ${formattedY}`;
             
             if (State.isDrawing) {
                 ToolManager.move(x, y);
@@ -766,12 +768,32 @@ const InputHandler = {
         UI.opacitySlider.addEventListener('input', (e) => {
             State.opacity = parseFloat(e.target.value) / 100;
             UI.opacityDisplay.textContent = e.target.value;
+            // Sync floating panel
+            const floatingOpacitySlider = document.getElementById('opacitySlider');
+            const floatingOpacityDisplay = document.getElementById('opacityDisplay');
+            if (floatingOpacitySlider) floatingOpacitySlider.value = e.target.value;
+            if (floatingOpacityDisplay) floatingOpacityDisplay.textContent = e.target.value;
+            document.querySelectorAll('.opacity-presets .preset-btn').forEach(btn => {
+                const btnOpacity = parseInt(btn.dataset.opacity);
+                if (btnOpacity === parseInt(e.target.value)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
         });
 
         UI.brushSizeSlider.addEventListener('input', (e) => {
             State.brushSize = parseInt(e.target.value);
             UI.brushSizeDisplay.textContent = State.brushSize;
             this.updatePresetBrushButtons(State.brushSize);
+            // Sync floating panel
+            const floatingBrushSlider = document.getElementById('brushSizeSlider');
+            const floatingBrushDisplay = document.getElementById('brushSizeDisplay');
+            if (floatingBrushSlider) floatingBrushSlider.value = e.target.value;
+            if (floatingBrushDisplay) floatingBrushDisplay.textContent = e.target.value;
+            document.querySelectorAll('.floating-brush-presets .preset-btn').forEach(btn => {
+                const btnSize = parseInt(btn.dataset.size);
+                if (btnSize === parseInt(e.target.value)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
         });
 
         UI.blurSlider.addEventListener('input', (e) => {
@@ -812,6 +834,16 @@ const InputHandler = {
                 UI.brushSizeSlider.value = size;
                 UI.brushSizeDisplay.textContent = size;
                 this.updatePresetBrushButtons(size);
+                // Sync floating panel
+                const floatingBrushSlider = document.getElementById('brushSizeSlider');
+                const floatingBrushDisplay = document.getElementById('brushSizeDisplay');
+                if (floatingBrushSlider) floatingBrushSlider.value = size;
+                if (floatingBrushDisplay) floatingBrushDisplay.textContent = size;
+                document.querySelectorAll('.floating-brush-presets .preset-btn').forEach(btn => {
+                    const btnSize = parseInt(btn.dataset.size);
+                    if (btnSize === size) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
             });
         });
 
