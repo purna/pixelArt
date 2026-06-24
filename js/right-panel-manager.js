@@ -116,57 +116,48 @@ class RightPanelManager {
      */
     bindEvents() {
         // Effects panel button clicks
-        document.addEventListener('click', (e) => {
-            const effectButton = e.target.closest('[data-content]');
-            if (effectButton && effectButton.closest('#effects-container')) {
-                e.preventDefault();
+        const effectsContainer = document.getElementById('effects-container');
+        if (effectsContainer) {
+            effectsContainer.addEventListener('click', (e) => {
+                const effectButton = e.target.closest('[data-content]');
+                if (!effectButton) return;
+
+                e.preventDefault(); e.stopPropagation();
                 const contentId = effectButton.dataset.content;
-                // Extract the effect type from the content ID (e.g., "mirror-options" -> "mirror")
-                const effectType = contentId.replace('-options', '');
-                this.setActiveEffectsTab(effectType);
-            }
-        });
-
-        // Handle filters button specifically (in case it's not caught by the above)
-        document.addEventListener('click', (e) => {
-            const filtersButton = e.target.closest('#filtersBtn');
-            if (filtersButton) {
-                e.preventDefault();
-                this.setActiveEffectsTab('filters');
+                const effectType = contentId.replace('-options', ''); // e.g., "mirror-options" -> "mirror"
                 
-                // Ensure the filters-options panel is visible
-                const filtersOptionsPanel = document.getElementById('filters-options');
-                if (filtersOptionsPanel) {
-                    filtersOptionsPanel.classList.remove('hidden');
+                // First, ensure the parent 'Effects' tab is active
+                const effectsTab = document.querySelector('.panel-tab[data-content="effects-panel"]');
+                if (effectsTab && !effectsTab.classList.contains('active')) {
+                    selectPanelTab(effectsTab);
                 }
-            }
-        });
 
-        // Transform panel button clicks
-        document.addEventListener('click', (e) => {
-            const transformButton = e.target.closest('[data-content]');
-            if (transformButton && transformButton.closest('#transform-container')) {
-                e.preventDefault();
+                // Then, set the active sub-tab
+                this.setActiveEffectsTab(effectType); 
+            });
+        }
+
+        // Transform panel button clicks - This is the key fix
+        const transformContainer = document.getElementById('transform-container');
+        if (transformContainer) {
+            transformContainer.addEventListener('click', (e) => {
+                const transformButton = e.target.closest('[data-content]');
+                if (!transformButton) return;
+
+                e.preventDefault(); e.stopPropagation();
                 const contentId = transformButton.dataset.content;
-                // Extract the transform type from the content ID (e.g., "move-options" -> "move")
                 const transformType = contentId.replace('-options', '');
-                this.setActiveTransformTab(transformType);
-            }
-        });
 
-        // Additional explicit handlers for effect/transform buttons
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('#contrastBtn, #filtersBtn, #rotateBtn, #flipBtn, #alignBtn');
-            if (btn) {
-                e.preventDefault();
-                const id = btn.id;
-                if (id === 'contrastBtn') this.setActiveEffectsTab('contrast');
-                else if (id === 'filtersBtn') this.setActiveEffectsTab('filters');
-                else if (id === 'rotateBtn') this.setActiveTransformTab('rotate');
-                else if (id === 'flipBtn') this.setActiveTransformTab('flip');
-                else if (id === 'alignBtn') this.setActiveTransformTab('align');
-            }
-        });
+                // First, ensure the parent 'Transform' tab is active
+                const transformTab = document.querySelector('.panel-tab[data-content="transform-panel"]');
+                if (transformTab && !transformTab.classList.contains('active')) {
+                    selectPanelTab(transformTab);
+                }
+
+                // Then, set the active sub-tab
+                this.setActiveTransformTab(transformType);
+            });
+        }
 
         // Handle toggle section buttons
         document.addEventListener('click', (e) => {
@@ -375,6 +366,18 @@ function selectPanelTab(el) {
     // Add active class to the tab
     el.classList.add('active');
 
+    // Special handling for effects panel - ensure panel-effects is visible
+    if (el.dataset.content === 'effects-panel') {
+        const panelEffects = document.getElementById('effects-panel');
+        if (panelEffects) panelEffects.classList.remove('hidden');
+    }
+
+    // Special handling for transform panel - ensure transform-container is visible
+    if (el.dataset.content === 'transform-panel') {
+        const transformContainer = document.getElementById('transform-container');
+        if (transformContainer) transformContainer.classList.remove('hidden');
+    }
+
     // Add active class to the target panel content
     targetPanelContent.classList.add('active');
 
@@ -383,31 +386,6 @@ function selectPanelTab(el) {
         container.classList.add("showing");
     }
 
-    // Update the panel toggle button icon to reflect the showing state
-    updatePanelToggleIcon();
-
-    // Debug: log what we're working with
-    console.log('Tab clicked:', el.dataset.content);
-    console.log('Content element found:', relContent);
-    console.log('Target panel content:', targetPanelContent);
-
-    // Special handling for effects panel - ensure panel-effects is visible
-    if (el.dataset.content === 'effects-panel') {
-        const panelEffects = document.getElementById('panel-effects');
-        if (panelEffects) {
-            panelEffects.classList.remove('hidden');
-            console.log('Ensured panel-effects is visible');
-        }
-    }
-
-    // Special handling for transform panel - ensure transform-container is visible
-    if (el.dataset.content === 'transform-panel') {
-        const transformContainer = document.getElementById('transform-container');
-        if (transformContainer) {
-            transformContainer.classList.remove('hidden');
-            console.log('Ensured transform-container is visible');
-        }
-    }
 }
 
 
@@ -434,5 +412,3 @@ function updatePanelToggleIcon() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = RightPanelManager;
 }
-
-

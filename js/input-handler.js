@@ -952,53 +952,6 @@ const InputHandler = {
             });
         }
         
-        // Add specific handler for filters button to show filters-options panel
-        const filtersBtn = document.getElementById('filtersBtn');
-        if (filtersBtn) {
-            filtersBtn.addEventListener('click', (e) => {
-                // Use the RightPanelManager to switch to the filters tab
-                if (window.rightPanelManager) {
-                    window.rightPanelManager.setActiveEffectsTab('filters');
-                }
-            });
-        }
-        
-        // Add handlers for other effect/transform buttons
-        const contrastBtn = document.getElementById('contrastBtn');
-        if (contrastBtn) {
-            contrastBtn.addEventListener('click', (e) => {
-                if (window.rightPanelManager) {
-                    window.rightPanelManager.setActiveEffectsTab('contrast');
-                }
-            });
-        }
-        
-        const rotateBtn = document.getElementById('rotateBtn');
-        if (rotateBtn) {
-            rotateBtn.addEventListener('click', (e) => {
-                if (window.rightPanelManager) {
-                    window.rightPanelManager.setActiveTransformTab('rotate');
-                }
-            });
-        }
-        
-        const flipBtn = document.getElementById('flipBtn');
-        if (flipBtn) {
-            flipBtn.addEventListener('click', (e) => {
-                if (window.rightPanelManager) {
-                    window.rightPanelManager.setActiveTransformTab('flip');
-                }
-            });
-        }
-        
-        const alignBtn = document.getElementById('alignBtn');
-        if (alignBtn) {
-            alignBtn.addEventListener('click', (e) => {
-                if (window.rightPanelManager) {
-                    window.rightPanelManager.setActiveTransformTab('align');
-                }
-            });
-        }
         /*
 
         // Add event listeners for transform buttons

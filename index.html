@@ -636,7 +636,73 @@ Hover to see all available selection tools">
                                     </div>
                                 </div>
 
-                                <div id="dither-options" class="sub-panel-section">
+                                <div id="filters-options" class="sub-panel-section hidden">
+                                    <div class="section-title">
+                                        <span>Filter Options</span>
+                                        <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
+                                            Choose a filter to apply to a layer
+                                        </div>
+                                    </div>
+                                    <div id="filters-container">
+
+                                        <!-- Filters will be loaded here -->
+
+                                    </div>
+                                    <div class="mirror-note">
+                                        <small>
+                                            <i class="fas fa-info-circle" ></i>
+                                            Select a filter
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div id="contrast-options" class="sub-panel-section hidden">
+                                    <div class="section-title">
+                                        <span>Contrast Options</span>
+                                        <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
+                                            Choose a contrast to apply to a layer
+                                        </div>
+                                    </div>
+                                   
+
+                                    <!-- Brightness/Contrast Slider -->
+                                    <div class="tool-options-control brightness-control">
+                                        <label class="tool-option-label">Brightness/Contrast</label>
+                                        <div class="slider-value-container">
+                                            <div class="slider-container" style="width: 80%;">
+                                                <input type="range" id="brightnessContrastSlider" min="0.5" max="2.0" value="1.0" step="0.1"
+                                                    class="tool-option-slider">
+                                            </div>
+                                            <div class="value-container" style="width: 20%; text-align: right;">
+                                                <span id="brightnessContrastDisplay">1.0</span>x
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Preset Buttons -->
+                                    <div class="brightness-presets">
+                                        <button class="brightness-preset" data-factor="0.5">Darken</button>
+                                        <button class="brightness-preset" data-factor="0.8">Slight Darken</button>
+                                        <button class="brightness-preset" data-factor="1.0">Normal</button>
+                                        <button class="brightness-preset" data-factor="1.2">Slight Lighten</button>
+                                        <button class="brightness-preset" data-factor="2.0">Lighten</button>
+                                    </div>
+
+                                    <!-- Apply Button -->
+                                    <button id="applyBrightnessContrastBtn" class="btn" style="width: 100%; margin-top: 10px;">
+                                        <i class="fas fa-magic"></i> Apply to Selected Layer
+                                    </button>
+
+                                    <div class="mirror-note">
+                                        <small>
+                                            <i class="fas fa-info-circle"></i>
+                                            Adjust brightness/contrast and apply to the selected layer
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <div id="dither-options" class="sub-panel-section hidden">
                                     <div class="section-title">
                                         <span>Dither Options</span>
                                         <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
@@ -759,71 +825,9 @@ Hover to see all available selection tools">
                                     </div>
                                 </div>
 
-                                <div id="contrast-options" class="sub-panel-section">
-                                    <div class="section-title">
-                                        <span>Contrast Options</span>
-                                        <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
-                                            Choose a contrast to apply to a layer
-                                        </div>
-                                    </div>
-                                   
+                         
 
-                                    <!-- Brightness/Contrast Slider -->
-                                    <div class="tool-options-control brightness-control">
-                                        <label class="tool-option-label">Brightness/Contrast</label>
-                                        <div class="slider-value-container">
-                                            <div class="slider-container" style="width: 80%;">
-                                                <input type="range" id="brightnessContrastSlider" min="0.5" max="2.0" value="1.0" step="0.1"
-                                                    class="tool-option-slider">
-                                            </div>
-                                            <div class="value-container" style="width: 20%; text-align: right;">
-                                                <span id="brightnessContrastDisplay">1.0</span>x
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Preset Buttons -->
-                                    <div class="brightness-presets">
-                                        <button class="brightness-preset" data-factor="0.5">Darken</button>
-                                        <button class="brightness-preset" data-factor="0.8">Slight Darken</button>
-                                        <button class="brightness-preset" data-factor="1.0">Normal</button>
-                                        <button class="brightness-preset" data-factor="1.2">Slight Lighten</button>
-                                        <button class="brightness-preset" data-factor="2.0">Lighten</button>
-                                    </div>
-
-                                    <!-- Apply Button -->
-                                    <button id="applyBrightnessContrastBtn" class="btn" style="width: 100%; margin-top: 10px;">
-                                        <i class="fas fa-magic"></i> Apply to Selected Layer
-                                    </button>
-
-                                    <div class="mirror-note">
-                                        <small>
-                                            <i class="fas fa-info-circle"></i>
-                                            Adjust brightness/contrast and apply to the selected layer
-                                        </small>
-                                    </div>
-
-                                </div>
-
-                                <div id="filters-options" class="sub-panel-section hidden">
-                                    <div class="section-title">
-                                        <span>Filter Options</span>
-                                        <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
-                                            Choose a filter to apply to a layer
-                                        </div>
-                                    </div>
-                                    <div id="filters-container">
-
-                                        <!-- Filters will be loaded here -->
-
-                                    </div>
-                                    <div class="mirror-note">
-                                        <small>
-                                            <i class="fas fa-info-circle" ></i>
-                                            Select a filter
-                                        </small>
-                                    </div>
-                                </div>
+                             
 
                             </div>
                         </div>
@@ -884,34 +888,29 @@ Hover to see all available selection tools">
                                         <div class="tool-btn" data-action="tool" data-type="select-rect" data-tooltip="**Rectangular Selection**
                                         Draw rectangular selections" >
                                             <div class="icon-stack">
-                                                <i class="fas fa-mouse-pointer base-icon"></i>
-                                                <i class="far fa-square overlay-icon"></i>
+                                                <i class="fas fa-mouse-pointer base-icon"></i> <i class="far fa-square overlay-icon"></i>
+                                            </div>
                                         </div>
 
-                                    <div class="tool-btn" data-action="tool" data-type="select-circle" data-tooltip="**Circular Selection**
+                                        <div class="tool-btn" data-action="tool" data-type="select-circle" data-tooltip="**Circular Selection**
                                         Draw circular selections" >
                                             <div class="icon-stack">
-                                                <i class="fas fa-mouse-pointer base-icon"></i>
-                                                <i class="far fa-circle overlay-icon"></i>
+                                                <i class="fas fa-mouse-pointer base-icon"></i> <i class="far fa-circle overlay-icon"></i>
                                             </div>
-
-                                       
                                         </div>
+
                                         <div class="tool-btn" data-action="tool" data-type="select-lasso" data-tooltip="**Lasso Selection**
                                         Draw freehand selections" >
                                             <div class="icon-stack">
-                                                <i class="fas fa-mouse-pointer base-icon"></i>
-                                                <i class="fas fa-draw-polygon overlay-icon"></i>
+                                                <i class="fas fa-mouse-pointer base-icon"></i> <i class="fas fa-draw-polygon overlay-icon"></i>
                                             </div>
-                                           
                                         </div>
+
                                          <div class="tool-btn" data-action="tool" data-type="select-shape" data-tooltip="**Shape Selection**
                                         Click shape for selections" >
                                             <div class="icon-stack">
-                                                <i class="fas fa-mouse-pointer base-icon"></i>
-                                                <i class="fa-solid fa-bacterium  overlay-icon"></i>
+                                                <i class="fas fa-mouse-pointer base-icon"></i> <i class="fa-solid fa-bacterium  overlay-icon"></i>
                                             </div>
-                                          
                                         </div>
 
                                 </div>
@@ -931,7 +930,7 @@ Hover to see all available selection tools">
                                     </small>
                                 </div>
 
-                            </div>
+                            </div> <!-- End of move-options -->
 
                             <div id="rotate-options" class="sub-panel-section">
                                 <div class="section-title">
@@ -973,7 +972,7 @@ Hover to see all available selection tools">
                                     </small>
                                 </div>
 
-                            </div>
+                            </div> <!-- End of rotate-options -->
 
 
                             <div id="flip-options" class="sub-panel-section">
@@ -1071,7 +1070,7 @@ Hover to see all available selection tools">
                                     </small>
                                 </div>
 
-                            </div>
+                            </div> <!-- End of flip-options -->
 
                             <div id="align-options" class="sub-panel-section">
                                 <div class="section-title">
@@ -1260,7 +1259,7 @@ Hover to see all available selection tools">
                                     </small>
                                 </div>
 
-                            </div>
+                            </div> <!-- End of align-options -->
 
                         </div>
 

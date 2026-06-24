@@ -381,26 +381,7 @@ const UIManager = {
         // 4. Listen for Filters Button (prevent event bubbling)
         const filtersBtn = document.getElementById('filtersBtn');
         if (filtersBtn) {
-            filtersBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Hide move-options panel
-                this.hideMoveOptionsPanel();
-                // Show the effects panel instead of a non-existent filters panel
-                this.showPanelSections(['panel-preview', 'panel-effects']);
-                this.setActiveSidebarButton('filtersBtn');
-
-                // Also ensure the effects tab is switched to filters
-                if (typeof rightPanelManager !== 'undefined' && rightPanelManager.switchToEffectsTab) {
-                    rightPanelManager.switchToEffectsTab('filters');
-                }
-
-                // Ensure the filters-options panel is visible
-                const filtersOptionsPanel = document.getElementById('filters-options');
-                if (filtersOptionsPanel) {
-                    filtersOptionsPanel.classList.remove('hidden');
-                }
-            });
+            // This logic is now handled by right-panel-manager.js
         }
 
         // 5. Listen for Tilemap Button (prevent event bubbling)
