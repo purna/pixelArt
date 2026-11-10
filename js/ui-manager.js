@@ -15,6 +15,7 @@ const UIManager = {
         this.setupMenuButtonEventListeners();
         this.initDropins();
         this.initFloatingBrushSizePanel();
+        this.setupMoveModeButtons();
         // Set initial panel state for default tool (pencil)
         this.updatePanelForTool('pencil');
         
@@ -806,5 +807,28 @@ const UIManager = {
         });
 
         console.log('Floating brush size panel initialized');
+    },
+
+    setupMoveModeButtons() {
+        const moveModeControl = document.getElementById('moveModeControl');
+        if (!moveModeControl) return;
+
+        const modeButtons = moveModeControl.querySelectorAll('.move-mode-btn');
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const mode = btn.dataset.mode;
+                if (mode === 'pan' || mode === 'layer') {
+                    State.moveToolMode = mode;
+                    // Update button states
+                    modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+                    
+                    if (typeof InputHandler !== 'undefined') {
+                        InputHandler.showNotification(`Move tool: ${mode === 'pan' ? 'Pan Canvas' : 'Move Layer'}`, 'info');
+                    }
+                }
+            });
+        });
     }
 };

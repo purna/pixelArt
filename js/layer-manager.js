@@ -64,7 +64,8 @@ const LayerManager = {
         console.log('Drag started:', {
             layerIndex: index,
             layerName: layer.name,
-            sourceFolderId: folderId
+            sourceFolderId: folderId,
+            dataTransfer: e.dataTransfer
         });
     },
 
@@ -72,11 +73,14 @@ const LayerManager = {
      * Handle drag over event
      */
     handleDragOver(e) {
+        console.log('handleDragOver called', e.target.className);
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
 
-        // Handle folder drop targets
+        // Handle folder drop targets - check if we're over a folder header or folder-contents
         const folderHeader = e.target.closest('.folder-header');
+        const folderContents = e.target.closest('.folder-contents');
+        
         if (folderHeader) {
             // Remove previous drop targets from layers only
             const previousLayerDropTargets = document.querySelectorAll('.layer-item.drag-over');
@@ -100,8 +104,28 @@ const LayerManager = {
             }
             return;
         }
+        
+        if (folderContents) {
+            // Also allow dropping on folder contents area
+            const folderItem = folderContents.closest('.layer-folder-item');
+            if (folderItem) {
+                // Remove previous drop targets from layers only
+                const previousLayerDropTargets = document.querySelectorAll('.layer-item.drag-over');
+                previousLayerDropTargets.forEach(el => el.classList.remove('drag-over'));
 
-        // Handle layer drop targets
+                // Remove drag-over from other folders
+                const previousFolderDropTargets = document.querySelectorAll('.folder-header.drag-over');
+                previousFolderDropTargets.forEach(el => el.classList.remove('drag-over'));
+                
+                const header = folderItem.querySelector('.folder-header');
+                if (header) header.classList.add('drag-over');
+                
+                this.dragState.targetFolderId = folderItem.dataset.folderId;
+            }
+            return;
+        }
+
+        // Handle layer drop targets - check both .layer-item and its children
         const targetElement = e.target.closest('.layer-item');
         if (!targetElement || targetElement === this.dragState.draggedElement) {
             // Remove folder drag-over if we're not over a folder anymore
@@ -122,6 +146,7 @@ const LayerManager = {
         targetElement.classList.add('drag-over');
         this.dragState.dropIndex = parseInt(targetElement.dataset.index);
         this.dragState.targetFolderId = null; // Not dropping on a folder
+        console.log('Drop target set to index:', this.dragState.dropIndex);
     },
 
     /**
@@ -327,6 +352,11 @@ const LayerManager = {
         // Re-render the layer list and canvas
         this.renderList();
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -343,6 +373,11 @@ const LayerManager = {
         State.activeLayerIndex = State.frames[0].layers.length - 1;
         this.renderList();
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -404,6 +439,11 @@ const LayerManager = {
         }
 
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -432,6 +472,11 @@ const LayerManager = {
         // Update UI
         this.renderList();
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -445,6 +490,11 @@ const LayerManager = {
         this.folders.splice(folderIndex, 1);
         this.renderList();
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -468,6 +518,11 @@ const LayerManager = {
 
         this.renderList();
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -480,6 +535,11 @@ const LayerManager = {
 
         this.renderList();
         CanvasManager.render();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -501,6 +561,11 @@ const LayerManager = {
         });
 
         this.renderList();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -613,7 +678,7 @@ const LayerManager = {
                 // Add drag and drop event listeners
                 layerDiv.draggable = true;
                 layerDiv.addEventListener('dragstart', (e) => {
-                    console.log('Layer dragstart:', layer.name, 'Index:', layerIndex);
+                    console.log('Layer dragstart (in folder):', layer.name, 'Index:', layerIndex, 'draggable:', layerDiv.draggable);
                     this.handleDragStart(e);
                 });
                 layerDiv.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -710,7 +775,7 @@ const LayerManager = {
         // Add drag and drop event listeners
         div.draggable = true;
         div.addEventListener('dragstart', (e) => {
-            console.log('Layer dragstart:', layer.name, 'Index:', index);
+            console.log('Layer dragstart:', layer.name, 'Index:', index, 'draggable:', div.draggable);
             this.handleDragStart(e);
         });
         div.addEventListener('dragover', (e) => this.handleDragOver(e));

@@ -1893,9 +1893,8 @@ transform: translateY(-50%) scale(1.1);
 }
 
 .preset-item.active {
-    background: rgba(0, 255, 65, 0.1);
+    background: rgba(0, 255, 65, 0.05);
     border-color: var(--accent-primary);
-    box-shadow: 0 0 8px var(--border-glow);
 }
 
 /* Preset Preview Swatch */

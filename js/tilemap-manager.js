@@ -9,6 +9,9 @@ const TilemapManager = {
     isDrawing: false,
     currentBrush: null,
     TILE_DIM: 32, // Will be updated from actual canvas size
+    // New: Independent tile editing
+    tileData: [], // Array of 9 ImageData objects, one per tile
+    activeTileIndex: 4, // Center tile (1,1) is index 4
     
     /**
      * Initialize the tilemap manager
@@ -20,11 +23,78 @@ const TilemapManager = {
             return;
         }
         
+        // Initialize tile data with empty layers
+        this.initTileData();
+        
         this.setupTilemapGrid();
         this.setupSeamlessGrid();
         this.attachEventListeners();
     },
-
+    
+    /**
+     * Initialize tile data for all 9 tiles
+     */
+    initTileData() {
+        this.tileData = [];
+        for (let i = 0; i < 9; i++) {
+            this.tileData.push(new ImageData(State.width, State.height));
+        }
+        // Copy current layer data to center tile
+        const currentLayer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
+        this.tileData[4] = new ImageData(new Uint8ClampedArray(currentLayer.data.data), State.width, State.height);
+    },
+    
+    /**
+     * Get the currently active tile's ImageData
+     */
+    getActiveTileData() {
+        return this.tileData[this.activeTileIndex];
+    },
+    
+    /**
+     * Set the active tile index (0-8)
+     */
+    setActiveTile(index) {
+        if (index < 0 || index >= 9) return;
+        
+        // Save current canvas content to previous active tile
+        if (this.activeTileIndex !== null && UI.compositionCanvas) {
+            const ctx = UI.compositionCanvas.getContext('2d');
+            this.tileData[this.activeTileIndex] = ctx.getImageData(0, 0, State.width, State.height);
+        }
+        
+        this.activeTileIndex = index;
+        
+        // Load new active tile content to main canvas
+        const ctx = UI.compositionCanvas.getContext('2d');
+        ctx.putImageData(this.tileData[index], 0, 0);
+        
+        // Update layer data
+        const currentLayer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
+        currentLayer.data = new ImageData(new Uint8ClampedArray(this.tileData[index].data), State.width, State.height);
+        
+        CanvasManager.render();
+        this.updateTilePreviewHighlight();
+        
+        // Update seamless grid if enabled
+        if (this.isSeamlessModeEnabled) {
+            this.updateAllSeamlessCanvases();
+        }
+    },
+    
+    /**
+     * Update visual highlight of active tile in preview grid
+     */
+    updateTilePreviewHighlight() {
+        document.querySelectorAll('.tilemap-square').forEach(square => {
+            square.classList.remove('active-tile');
+            const tileIndex = parseInt(square.dataset.tileIndex);
+            if (tileIndex === this.activeTileIndex) {
+                square.classList.add('active-tile');
+            }
+        });
+    },
+    
     /**
      * Setup the original 3x3 tilemap preview grid
      */
@@ -41,6 +111,7 @@ const TilemapManager = {
                 square.className = 'tilemap-square';
                 square.dataset.row = r;
                 square.dataset.col = c;
+                square.dataset.tileIndex = r * 3 + c;
 
                 // Center square (1,1)
                 if (r === 1 && c === 1) {
@@ -54,12 +125,32 @@ const TilemapManager = {
                 canvas.height = canvasSize;
                 square.appendChild(canvas);
 
-                square.addEventListener('click', () => this.toggleSquare(r, c));
+                // Make each tile clickable for editing
+                square.addEventListener('click', (e) => {
+                    if (this.isSeamlessModeEnabled) {
+                        // In seamless mode, clicking a tile switches the active tile for editing
+                        this.setActiveTile(r * 3 + c);
+                    } else {
+                        this.toggleSquare(r, c);
+                    }
+                });
+
                 grid.appendChild(square);
             }
         }
 
         this.refresh();
+    },
+    
+    /**
+     * Highlight a tile briefly when clicked in seamless mode
+     */
+    highlightTile(row, col) {
+        const square = document.querySelector(`.tilemap-square[data-row="${row}"][data-col="${col}"]`);
+        if (square) {
+            square.classList.add('editing');
+            setTimeout(() => square.classList.remove('editing'), 200);
+        }
     },
 
     /**
@@ -81,6 +172,7 @@ const TilemapManager = {
                     cell.className = 'seamless-grid-cell';
                     cell.dataset.gridR = r;
                     cell.dataset.gridC = c;
+                    cell.dataset.tileIndex = r * 3 + c;
                     
                     // Center cell (1,1) is the main canvas
                     if (r === 1 && c === 1) {
@@ -169,29 +261,35 @@ const TilemapManager = {
             const canvas = cell.querySelector('canvas');
             if (!canvas) return;
 
-            // Mouse events
-            canvas.addEventListener('mousedown', (e) => this.handleSeamlessDrawStart(e, cell));
-            canvas.addEventListener('mousemove', (e) => this.handleSeamlessDrawMove(e, cell));
-            canvas.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                this.handleSeamlessDrawStart(e, cell);
+            const gridR = parseInt(cell.dataset.gridR);
+            const gridC = parseInt(cell.dataset.gridC);
+            const isCenter = (gridR === 1 && gridC === 1);
+
+            if (isCenter) {
+                // Center tile is the main canvas - no overlay handlers needed
+                // Main canvas handles drawing through normal flow
+                canvas.style.display = 'none';
+                canvas.style.pointerEvents = 'none';
+                return;
+            }
+
+            // Non-center tiles: click to select tile for editing
+            canvas.addEventListener('click', (e) => {
+                if (!this.isSeamlessModeEnabled) return;
+                // Select this tile for editing on main canvas
+                this.setActiveTile(gridR * 3 + gridC);
             });
 
-            // Touch events
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.handleSeamlessDrawStart(e, cell);
+            // Hover effect
+            canvas.addEventListener('mouseenter', () => {
+                if (this.isSeamlessModeEnabled) {
+                    cell.style.borderColor = 'rgba(0, 255, 65, 0.8)';
+                }
             });
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                this.handleSeamlessDrawMove(e, cell);
+            canvas.addEventListener('mouseleave', () => {
+                cell.style.borderColor = 'rgba(0, 255, 65, 0.2)';
             });
         });
-
-        // Global mouse/touch up events
-        document.body.addEventListener('mouseup', () => this.handleSeamlessDrawEnd());
-        document.body.addEventListener('touchend', () => this.handleSeamlessDrawEnd());
-        document.body.addEventListener('touchcancel', () => this.handleSeamlessDrawEnd());
     },
 
     /**
@@ -217,6 +315,9 @@ const TilemapManager = {
 
     /**
      * Handle drawing move on seamless canvas
+     * Key fix: When drawing on any of the 9 grid cells, the drawing wraps to the main canvas
+     * The 9 cells represent the same canvas content offset by (-1, 0, 1) * canvas_size in each direction
+     * When drawing on center cell, also wrap to opposite edges for seamless tiling
      */
     handleSeamlessDrawMove(e, cell) {
         if (!this.isDrawing || !this.isSeamlessModeEnabled) return;
@@ -233,41 +334,108 @@ const TilemapManager = {
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
-        // Convert to tile coordinates
+        // Convert to canvas coordinates
         const zoom = State.zoom;
         const tileX = Math.floor(x / zoom);
         const tileY = Math.floor(y / zoom);
 
         if (tileX < 0 || tileX >= this.TILE_DIM || tileY < 0 || tileY >= this.TILE_DIM) return;
 
-        // Calculate offset from center cell (1,1)
+        // Calculate which tile in the 3x3 grid this cell represents
+        // gridR, gridC are 0, 1, 2 for the 3x3 grid
+        // Center is at (1, 1) 
         const gridR = parseInt(cell.dataset.gridR);
         const gridC = parseInt(cell.dataset.gridC);
+        
+        // Offset from center tile in canvas coordinates
+        // Center tile (1,1) has offset (0, 0)
+        // Tile (0,1) - left of center - has offset (-width, 0)
+        // Tile (2,1) - right of center - has offset (+width, 0)
+        // etc.
         const deltaX = (gridC - 1) * this.TILE_DIM;
         const deltaY = (gridR - 1) * this.TILE_DIM;
 
-        // Calculate absolute tile coordinate
-        const absTileX = tileX + deltaX;
-        const absTileY = tileY + deltaY;
-
         // Draw with brush size
-        const brushR = State.brushSize;
+        const brushR = Math.floor(State.brushSize / 2);
+        
+        // Get the current layer data from the main canvas
+        const layerData = CanvasManager.getCurrentLayerData();
+        
+        // Determine if we're drawing on the center tile (which should wrap edges)
+        const isCenterTile = (gridR === 1 && gridC === 1);
         
         for (let dx = -brushR; dx <= brushR; dx++) {
             for (let dy = -brushR; dy <= brushR; dy++) {
-                const brushAbsX = absTileX + dx;
-                const brushAbsY = absTileY + dy;
+                // Position on the current tile being drawn
+                const brushTileX = tileX + dx;
+                const brushTileY = tileY + dy;
 
-                // Wrap to main canvas coordinates
-                let drawX = ((brushAbsX % this.TILE_DIM) + this.TILE_DIM) % this.TILE_DIM;
-                let drawY = ((brushAbsY % this.TILE_DIM) + this.TILE_DIM) % this.TILE_DIM;
+                // Convert to absolute position (including tile offset)
+                const absX = brushTileX + deltaX;
+                const absY = brushTileY + deltaY;
+
+                // Wrap to main canvas coordinates using modulo
+                // This is the key fix: properly wrap negative values
+                let drawX = ((absX % this.TILE_DIM) + this.TILE_DIM) % this.TILE_DIM;
+                let drawY = ((absY % this.TILE_DIM) + this.TILE_DIM) % this.TILE_DIM;
 
                 // Draw on main canvas layer
-                this.drawPixelOnMainCanvas(drawX, drawY);
+                const index = (drawY * State.width + drawX) * 4;
+
+                if (this.currentBrush === 'rgba(255, 255, 255, 1)') {
+                    // Eraser - set to transparent
+                    layerData.data[index] = 0;
+                    layerData.data[index + 1] = 0;
+                    layerData.data[index + 2] = 0;
+                    layerData.data[index + 3] = 0;
+                } else {
+                    // Extract RGBA from current brush
+                    const match = this.currentBrush.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/);
+                    if (match) {
+                        const r = parseInt(match[1]);
+                        const g = parseInt(match[2]);
+                        const b = parseInt(match[3]);
+                        const a = match[4] ? parseFloat(match[4]) * 255 : 255;
+
+                        layerData.data[index] = r;
+                        layerData.data[index + 1] = g;
+                        layerData.data[index + 2] = b;
+                        layerData.data[index + 3] = a;
+                    }
+                }
+                
+                // If drawing on center tile, also draw on wrapped positions for seamless edges
+                if (isCenterTile) {
+                    // Check if we're near edges and need to wrap
+                    // Right edge wraps to left
+                    if (brushTileX + brushR >= this.TILE_DIM - 1) {
+                        const wrapX = ((absX + this.TILE_DIM) % this.TILE_DIM + this.TILE_DIM) % this.TILE_DIM;
+                        const wrapIndex = (drawY * State.width + wrapX) * 4;
+                        this.applyBrushToLayer(layerData, wrapIndex);
+                    }
+                    // Left edge wraps to right
+                    if (brushTileX - brushR <= 0) {
+                        const wrapX = ((absX - this.TILE_DIM) % this.TILE_DIM + this.TILE_DIM) % this.TILE_DIM;
+                        const wrapIndex = (drawY * State.width + wrapX) * 4;
+                        this.applyBrushToLayer(layerData, wrapIndex);
+                    }
+                    // Bottom edge wraps to top
+                    if (brushTileY + brushR >= this.TILE_DIM - 1) {
+                        const wrapY = ((absY + this.TILE_DIM) % this.TILE_DIM + this.TILE_DIM) % this.TILE_DIM;
+                        const wrapIndex = (wrapY * State.width + drawX) * 4;
+                        this.applyBrushToLayer(layerData, wrapIndex);
+                    }
+                    // Top edge wraps to bottom
+                    if (brushTileY - brushR <= 0) {
+                        const wrapY = ((absY - this.TILE_DIM) % this.TILE_DIM + this.TILE_DIM) % this.TILE_DIM;
+                        const wrapIndex = (wrapY * State.width + drawX) * 4;
+                        this.applyBrushToLayer(layerData, wrapIndex);
+                    }
+                }
             }
         }
 
-        // Update all seamless canvases
+        // Update all seamless canvases to reflect changes
         this.updateAllSeamlessCanvases();
     },
 
@@ -287,12 +455,29 @@ const TilemapManager = {
     },
 
     /**
-     * Draw a single pixel on the main canvas at the current layer
+     * Update all seamless canvases with each tile's independent content
+     * Each of the 9 canvases shows its own tile content
      */
-    drawPixelOnMainCanvas(x, y) {
-        const layerData = CanvasManager.getCurrentLayerData();
-        const index = (y * State.width + x) * 4;
+    updateAllSeamlessCanvases() {
+        if (!this.seamlessContexts.length) return;
+        
+        // Each seamless canvas shows its corresponding tile data
+        this.seamlessContexts.forEach((ctx, index) => {
+            if (this.tileData[index]) {
+                ctx.putImageData(this.tileData[index], 0, 0);
+            }
+        });
+        
+        // Draw seam lines between adjacent tiles to show seamless boundaries
+        if (this.isSeamlessModeEnabled) {
+            this.drawSeamLines();
+        }
+    },
 
+    /**
+     * Apply current brush color to a specific pixel index in layer data
+     */
+    applyBrushToLayer(layerData, index) {
         if (this.currentBrush === 'rgba(255, 255, 255, 1)') {
             // Eraser - set to transparent
             layerData.data[index] = 0;
@@ -315,19 +500,144 @@ const TilemapManager = {
             }
         }
     },
-
+    
     /**
-     * Update all seamless canvases with the current main canvas content
+     * Draw seam lines between adjacent tiles to show seamless boundaries
      */
-    updateAllSeamlessCanvases() {
-        if (!UI.compositionCanvas) return;
+    drawSeamLines() {
+        const w = State.width;
+        const h = State.height;
         
-        const sourceCtx = UI.compositionCanvas.getContext('2d');
-        const imageData = sourceCtx.getImageData(0, 0, State.width, State.height);
-
-        this.seamlessContexts.forEach(ctx => {
-            ctx.putImageData(imageData, 0, 0);
-        });
+        // Draw vertical and horizontal lines at tile boundaries on all non-center tiles
+        for (let i = 0; i < 9; i++) {
+            if (i === 4) continue; // Skip center tile
+            
+            const ctx = this.seamlessContexts[i];
+            if (!ctx) continue;
+            
+            const gridR = Math.floor(i / 3);
+            const gridC = i % 3;
+            
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; // Red semi-transparent for seam lines
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            
+            // Draw vertical seam line if not on left edge
+            if (gridC > 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, h);
+                ctx.stroke();
+            }
+            
+            // Draw vertical seam line if not on right edge
+            if (gridC < 2) {
+                ctx.beginPath();
+                ctx.moveTo(w - 1, 0);
+                ctx.lineTo(w - 1, h);
+                ctx.stroke();
+            }
+            
+            // Draw horizontal seam line if not on top edge
+            if (gridR > 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+            }
+            
+            // Draw horizontal seam line if not on bottom edge
+            if (gridR < 2) {
+                ctx.beginPath();
+                ctx.moveTo(0, h - 1);
+                ctx.lineTo(w, h - 1);
+                ctx.stroke();
+            }
+            
+            // Draw cross-hair marks at corners where 4 tiles meet
+            ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)'; // Yellow for cross marks
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            
+            // Corner tiles - draw cross at the corner where 4 tiles meet
+            // Top-left corner
+            if (gridC === 0 && gridR === 0) {
+                ctx.beginPath();
+                ctx.moveTo(w - 1, h - 6);
+                ctx.lineTo(w - 1, h + 1);
+                ctx.moveTo(w - 6, h - 1);
+                ctx.lineTo(w + 1, h - 1);
+                ctx.stroke();
+            }
+            // Top-right corner
+            else if (gridC === 2 && gridR === 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, h - 6);
+                ctx.lineTo(0, h + 1);
+                ctx.moveTo(-1, h - 1);
+                ctx.lineTo(6, h - 1);
+                ctx.stroke();
+            }
+            // Bottom-left corner
+            else if (gridC === 0 && gridR === 2) {
+                ctx.beginPath();
+                ctx.moveTo(w - 1, 0);
+                ctx.lineTo(w - 1, 6);
+                ctx.moveTo(w - 6, 0);
+                ctx.lineTo(w + 1, 0);
+                ctx.stroke();
+            }
+            // Bottom-right corner
+            else if (gridC === 2 && gridR === 2) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, 6);
+                ctx.moveTo(-1, 0);
+                ctx.lineTo(6, 0);
+                ctx.stroke();
+            }
+            // Middle column (not center) - draw horizontal cross marks at top/bottom
+            else if (gridC === 1 && gridR === 0) {
+                // Top middle - draw cross at bottom edge
+                ctx.beginPath();
+                ctx.moveTo(w / 2 - 5, h - 1);
+                ctx.lineTo(w / 2 + 5, h - 1);
+                ctx.moveTo(w / 2, h - 6);
+                ctx.lineTo(w / 2, h + 1);
+                ctx.stroke();
+            }
+            else if (gridC === 1 && gridR === 2) {
+                // Bottom middle - draw cross at top edge
+                ctx.beginPath();
+                ctx.moveTo(w / 2 - 5, 0);
+                ctx.lineTo(w / 2 + 5, 0);
+                ctx.moveTo(w / 2, -1);
+                ctx.lineTo(w / 2, 6);
+                ctx.stroke();
+            }
+            // Middle row (not center) - draw vertical cross marks at left/right
+            else if (gridC === 0 && gridR === 1) {
+                // Left middle - draw cross at right edge
+                ctx.beginPath();
+                ctx.moveTo(w - 1, h / 2 - 5);
+                ctx.lineTo(w - 1, h / 2 + 5);
+                ctx.moveTo(w - 6, h / 2);
+                ctx.lineTo(w + 1, h / 2);
+                ctx.stroke();
+            }
+            else if (gridC === 2 && gridR === 1) {
+                // Right middle - draw cross at left edge
+                ctx.beginPath();
+                ctx.moveTo(0, h / 2 - 5);
+                ctx.lineTo(0, h / 2 + 5);
+                ctx.moveTo(-1, h / 2);
+                ctx.lineTo(6, h / 2);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
     },
 
     /**
@@ -337,23 +647,77 @@ const TilemapManager = {
         this.isSeamlessModeEnabled = !this.isSeamlessModeEnabled;
         
         const overlay = document.getElementById('seamlessGridOverlay');
+        const toggleBtn = document.getElementById('toggleSeamlessModeBtn');
         const toggleText = document.getElementById('toggleSeamlessModeText');
         
-        if (overlay) {
-            if (this.isSeamlessModeEnabled) {
-                overlay.classList.add('enabled');
-                if (toggleText) toggleText.textContent = 'Disable Seamless Grid';
-                this.updateAllSeamlessCanvases();
-                this.updateSeamlessGridVisibility();
-            } else {
-                overlay.classList.remove('enabled');
-                if (toggleText) toggleText.textContent = 'Enable Seamless Grid';
+        if (this.isSeamlessModeEnabled) {
+            // Enable seamless mode - show overlay
+            overlay.classList.add('enabled');
+            if (toggleBtn) toggleBtn.classList.add('active');
+            if (toggleText) toggleText.textContent = 'Disable Seamless Grid';
+            
+            // Initialize tile data: copy current canvas to all tiles
+            this.initTileData();
+            this.activeTileIndex = 4; // Center tile
+            
+            // Update tilemap grid UI for editing mode
+            this.updateTilemapGridForSeamlessMode();
+            
+            // Update all seamless canvases with current canvas content
+            this.updateAllSeamlessCanvases();
+        } else {
+            // Disable seamless mode - hide overlay
+            overlay.classList.remove('enabled');
+            if (toggleBtn) toggleBtn.classList.remove('active');
+            if (toggleText) toggleText.textContent = 'Enable Seamless Grid';
+            
+            // Update tilemap grid UI for preview mode
+            this.updateTilemapGridForPreviewMode();
+            
+            // When disabling, merge active tile back to main canvas
+            if (this.activeTileIndex !== null && UI.compositionCanvas) {
+                const ctx = UI.compositionCanvas.getContext('2d');
+                ctx.putImageData(this.tileData[this.activeTileIndex], 0, 0);
+                
+                // Update layer data
+                const currentLayer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
+                currentLayer.data = new ImageData(new Uint8ClampedArray(this.tileData[this.activeTileIndex].data), State.width, State.height);
+                
+                CanvasManager.render();
             }
         }
         
-        CanvasManager.updateZoom();
+        // Update seamless grid visibility
+        this.updateSeamlessGridVisibility();
     },
 
+    /**
+     * Update tilemap grid UI for seamless editing mode
+     */
+    updateTilemapGridForSeamlessMode() {
+        const squares = document.querySelectorAll('.tilemap-square');
+        squares.forEach(sq => {
+            sq.title = `Edit Tile ${sq.dataset.row},${sq.dataset.col} (all tiles mirror main canvas)`;
+            sq.classList.remove('active'); // Clear preview active state
+        });
+    },
+    
+    /**
+     * Update tilemap grid UI for preview mode
+     */
+    updateTilemapGridForPreviewMode() {
+        const squares = document.querySelectorAll('.tilemap-square');
+        squares.forEach(sq => {
+            sq.title = `Toggle Tile ${sq.dataset.row},${sq.dataset.col} Preview`;
+            sq.classList.remove('editing');
+        });
+        // Restore active squares from preview mode
+        this.activeSquares.forEach(index => {
+            const sq = document.querySelector(`.tilemap-square[data-tile-index="${index}"]`);
+            if (sq) sq.classList.add('active');
+        });
+    },
+    
     /**
      * Update visibility of seamless grid cells based on active tilemap squares
      */
@@ -364,102 +728,165 @@ const TilemapManager = {
         const cells = overlay.querySelectorAll('.seamless-grid-cell');
         
         cells.forEach(cell => {
-            const gridR = parseInt(cell.dataset.gridR);
-            const gridC = parseInt(cell.dataset.gridC);
+            const tileIndex = parseInt(cell.dataset.tileIndex);
+            const isCenter = tileIndex === 4;
             
-            // Center cell is always visible
-            if (gridR === 1 && gridC === 1) {
-                cell.style.display = 'block';
-                return;
+            if (this.isSeamlessModeEnabled) {
+                // In seamless mode, all non-center cells are editable
+                if (!isCenter) {
+                    cell.style.opacity = '0.5';
+                    cell.style.pointerEvents = 'auto';
+                }
+            } else {
+                // In preview mode, show only active squares (non-center)
+                if (!isCenter && this.activeSquares.has(tileIndex)) {
+                    cell.style.opacity = '0.5';
+                    cell.style.pointerEvents = 'none';
+                } else if (!isCenter) {
+                    cell.style.opacity = '0';
+                    cell.style.pointerEvents = 'none';
+                }
             }
-            
-            // Check if this position is active in tilemap
-            const key = `${gridR}-${gridC}`;
-            const isActive = this.activeSquares.has(key);
-            
-            cell.style.display = isActive ? 'block' : 'none';
         });
     },
 
     /**
-     * Toggle a tilemap square
+     * Toggle a square in the tilemap preview grid (preview mode only)
      */
     toggleSquare(row, col) {
-        // Can't toggle center square
-        if (row === 1 && col === 1) return;
-
-        const key = `${row}-${col}`;
-        const grid = document.getElementById('tilemapGrid');
-        const square = grid.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-
-        if (this.activeSquares.has(key)) {
-            this.activeSquares.delete(key);
-            square.classList.remove('active');
-        } else {
-            this.activeSquares.add(key);
-            square.classList.add('active');
-        }
-
-        this.refresh();
+        if (this.isSeamlessModeEnabled) return; // Don't toggle in editing mode
         
-        // Update seamless grid visibility if enabled
-        if (this.isSeamlessModeEnabled) {
-            this.updateSeamlessGridVisibility();
+        const index = row * 3 + col;
+        
+        if (this.activeSquares.has(index)) {
+            this.activeSquares.delete(index);
+        } else {
+            this.activeSquares.add(index);
         }
+        
+        // Update UI
+        const square = document.querySelector(`.tilemap-square[data-row="${row}"][data-col="${col}"]`);
+        if (square) {
+            square.classList.toggle('active', this.activeSquares.has(index));
+        }
+        
+        // Update seamless grid visibility
+        this.updateSeamlessGridVisibility();
+        
+        // Refresh preview
+        this.refresh();
     },
 
     /**
-     * Clear all active squares
+     * Clear all tilemap data
      */
     clearAll() {
         this.activeSquares.clear();
-        const squares = document.querySelectorAll('.tilemap-square:not(.center)');
-        squares.forEach(sq => sq.classList.remove('active'));
-        this.refresh();
         
-        if (this.isSeamlessModeEnabled) {
-            this.updateSeamlessGridVisibility();
+        // Update UI
+        const squares = document.querySelectorAll('.tilemap-square');
+        squares.forEach(sq => {
+            sq.classList.remove('active', 'editing');
+        });
+        
+        // Clear seamless grid
+        this.seamlessContexts.forEach(ctx => {
+            ctx.clearRect(0, 0, State.width, State.height);
+        });
+        
+        // Clear main canvas layer
+        const layerData = CanvasManager.getCurrentLayerData();
+        const data = layerData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = 0;
+            data[i + 1] = 0;
+            data[i + 2] = 0;
+            data[i + 3] = 0;
         }
+        
+        // Save state
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
+        
+        // Re-render
+        CanvasManager.saveLayerChange();
     },
-
+    
     /**
-     * Refresh tilemap preview
+     * Refresh the tilemap preview grid (uses activeSquares for preview mode)
      */
     refresh() {
         const grid = document.getElementById('tilemapGrid');
-        if (!grid || !UI.compositionCanvas) {
-            console.warn('TilemapManager.refresh: Required elements not available');
-            return;
-        }
+        if (!grid) return;
 
-        // Get context - willReadFrequently should be set in dom.js initialization
-        const sourceCtx = UI.compositionCanvas.getContext('2d');
-        if (!sourceCtx) {
-            console.warn('TilemapManager.refresh: Could not get canvas context');
-            return;
-        }
+        const squares = grid.querySelectorAll('.tilemap-square');
+        
+        squares.forEach(square => {
+            const row = parseInt(square.dataset.row);
+            const col = parseInt(square.dataset.col);
+            const index = row * 3 + col;
+            const canvas = square.querySelector('canvas');
+            if (!canvas) return;
 
-        const imageData = sourceCtx.getImageData(0, 0, State.width, State.height);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Update all squares
-        for (let r = 0; r < 3; r++) {
-            for (let c = 0; c < 3; c++) {
-                const square = grid.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-                const canvas = square?.querySelector('canvas');
-                
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Draw white background
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Draw the image data
-                    ctx.putImageData(imageData, 0, 0);
+            // Get tile data
+            let tileImageData;
+            if (this.isSeamlessModeEnabled) {
+                // In seamless mode, show each tile's independent content
+                tileImageData = this.tileData[index];
+            } else {
+                // In preview mode, center square shows current frame, others show if active
+                if (row === 1 && col === 1) {
+                    const currentFrame = State.frames[State.currentFrameIndex];
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = State.width;
+                    tempCanvas.height = State.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+
+                    currentFrame.layers.forEach(layer => {
+                        if (layer.visible) {
+                            tempCtx.putImageData(layer.data, 0, 0);
+                        }
+                    });
+
+                    ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+                    return;
+                } else if (this.activeSquares.has(index)) {
+                    const currentFrame = State.frames[State.currentFrameIndex];
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = State.width;
+                    tempCanvas.height = State.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+
+                    currentFrame.layers.forEach(layer => {
+                        if (layer.visible) {
+                            tempCtx.putImageData(layer.data, 0, 0);
+                        }
+                    });
+
+                    ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+                    return;
+                } else {
+                    return; // Inactive squares in preview mode are empty
                 }
             }
-        }
+            
+            // Draw tile content to preview
+            if (tileImageData) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = State.width;
+                tempCanvas.height = State.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(tileImageData, 0, 0);
+                ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+            }
+        });
+        
+        // Update active tile highlight
+        this.updateTilePreviewHighlight();
     }
 };
 

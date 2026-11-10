@@ -192,6 +192,11 @@ const AnimationManager = {
         State.frames.splice(State.currentFrameIndex + 1, 0, { layers: newLayers });
         this.switchFrame(State.currentFrameIndex + 1);
         this.renderTimeline();
+        
+        // Save state for undo
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
     },
 
     /**
@@ -233,11 +238,10 @@ const AnimationManager = {
         this.renderTimeline();
     },
 
-    /**
+/**
      * Start animation playback
      */
     play() {
-        // If already playing, just return (don't restart)
         if (State.isPlaying) {
             return;
         }
@@ -245,28 +249,39 @@ const AnimationManager = {
         State.isPlaying = true;
         this.syncUIState();
 
-        let frameIndex = 0;
-        const loop = () => {
+        // Use time-based loop to avoid dropped frames
+        let lastFrameTime = performance.now();
+        let frameIndex = State.currentFrameIndex;
+
+        const loop = (now) => {
             if (!State.isPlaying) return;
 
-            prevCtx.clearRect(0, 0, State.width, State.height);
+            const elapsed = now - lastFrameTime;
+            const frameDuration = 1000 / State.fps;
 
-            // Composite frame layers
-            State.frames[frameIndex].layers.forEach(layer => {
-                if (layer.visible) {
-                    const temp = document.createElement('canvas');
-                    temp.width = State.width;
-                    temp.height = State.height;
-                    temp.getContext('2d').putImageData(layer.data, 0, 0);
-                    prevCtx.drawImage(temp, 0, 0);
+            if (elapsed >= frameDuration) {
+                // Render this frame
+                State.currentFrameIndex = frameIndex;
+                CanvasManager.render();
+
+                // Update timeline active state
+                Array.from(UI.framesList.children).forEach((el, idx) => {
+                    el.classList.toggle('active', idx === frameIndex);
+                });
+
+                // Update frame badge
+                if (UI.frameDisplay) {
+                    UI.frameDisplay.textContent = `${frameIndex + 1} / ${State.frames.length}`;
                 }
-            });
 
-            frameIndex = (frameIndex + 1) % State.frames.length;
-            State.timer = setTimeout(loop, 1000 / State.fps);
+                frameIndex = (frameIndex + 1) % State.frames.length;
+                lastFrameTime = now;
+            }
+
+            State.aniFrameRequest = requestAnimationFrame(loop);
         };
 
-        loop();
+        State.aniFrameRequest = requestAnimationFrame(loop);
     },
 
     /**
@@ -274,9 +289,18 @@ const AnimationManager = {
      */
     stop() {
         State.isPlaying = false;
+        if (State.aniFrameRequest) {
+            cancelAnimationFrame(State.aniFrameRequest);
+            State.aniFrameRequest = null;
+        }
         clearTimeout(State.timer);
         this.syncUIState();
-        CanvasManager.render(); // Restore current frame view
+
+        // Restore current frame view and update badge
+        CanvasManager.render();
+        if (UI.frameDisplay) {
+            UI.frameDisplay.textContent = `${State.currentFrameIndex + 1} / ${State.frames.length}`;
+        }
     },
 
     /**
@@ -298,32 +322,9 @@ const AnimationManager = {
         UI.fpsDisplay.textContent = `${fps} FPS`;
 
         if (State.isPlaying) {
-            // Clear the existing timer
-            clearTimeout(State.timer);
-
-            // Restart the animation loop with the new FPS
-            let frameIndex = 0;
-            const loop = () => {
-                if (!State.isPlaying) return;
-
-                prevCtx.clearRect(0, 0, State.width, State.height);
-
-                // Composite frame layers
-                State.frames[frameIndex].layers.forEach(layer => {
-                    if (layer.visible) {
-                        const temp = document.createElement('canvas');
-                        temp.width = State.width;
-                        temp.height = State.height;
-                        temp.getContext('2d').putImageData(layer.data, 0, 0);
-                        prevCtx.drawImage(temp, 0, 0);
-                    }
-                });
-
-                frameIndex = (frameIndex + 1) % State.frames.length;
-                State.timer = setTimeout(loop, 1000 / State.fps);
-            };
-
-            loop();
+            // Stop and restart the animation loop with the new FPS
+            this.stop();
+            this.play();
         }
 
         // Ensure UI state is synchronized

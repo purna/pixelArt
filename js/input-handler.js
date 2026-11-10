@@ -3,7 +3,12 @@
 
 const InputHandler = {
     isPanningMap: false,
+    isPanningCanvas: false,
     shiftKeyPressed: false,
+    panStartX: 0,
+    panStartY: 0,
+    panScrollLeft: 0,
+    panScrollTop: 0,
 
     /**
      * Get canvas coordinates from mouse/touch event
@@ -123,11 +128,55 @@ const InputHandler = {
     },
 
     /**
+     * Handle canvas panning start (viewport panning)
+     */
+    onPanStart(e) {
+        // Middle mouse button (button 1) or space+left click
+        if (e.button === 1 || (e.button === 0 && State.spaceKey)) {
+            e.preventDefault();
+            this.isPanningCanvas = true;
+            this.panStartX = e.clientX;
+            this.panStartY = e.clientY;
+            this.panScrollLeft = UI.wrapper.scrollLeft;
+            this.panScrollTop = UI.wrapper.scrollTop;
+            UI.wrapper.style.cursor = 'grabbing';
+        }
+    },
+
+    /**
+     * Handle canvas pan movement
+     */
+    onPanMove(e) {
+        if (!this.isPanningCanvas) return;
+        
+        e.preventDefault();
+        const dx = e.clientX - this.panStartX;
+        const dy = e.clientY - this.panStartY;
+        
+        UI.wrapper.scrollLeft = this.panScrollLeft - dx;
+        UI.wrapper.scrollTop = this.panScrollTop - dy;
+        
+        CanvasManager.updateMinimap();
+    },
+
+    /**
+     * Handle canvas pan end
+     */
+    onPanEnd(e) {
+        if (!this.isPanningCanvas) return;
+        
+        this.isPanningCanvas = false;
+        UI.wrapper.style.cursor = '';
+    },
+
+    /**
      * Handle keyboard shortcuts
      */
     onKeyDown(e) {
         // Track shift key state
         State.shiftKey = e.shiftKey;
+        // Track space key state
+        State.spaceKey = e.code === 'Space';
         
         // Don't trigger shortcuts when typing in inputs
         if (e.target.tagName === 'INPUT') return;
@@ -368,11 +417,16 @@ const InputHandler = {
         // Setup dither mode controls
         this.setupDitherModeControls();
 
-        // Drawing events
+// Drawing events
         UI.previewLayer.addEventListener('mousedown', (e) => this.onDrawStart(e));
         window.addEventListener('mousemove', (e) => this.onDrawMove(e));
         window.addEventListener('mouseup', (e) => this.onDrawEnd(e));
-        
+
+        // Canvas panning (viewport panning) - middle mouse button or space+left click on wrapper
+        UI.wrapper.addEventListener('mousedown', (e) => this.onPanStart(e));
+        window.addEventListener('mousemove', (e) => this.onPanMove(e));
+        window.addEventListener('mouseup', (e) => this.onPanEnd(e));
+
         UI.previewLayer.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.onDrawStart(e);
@@ -400,6 +454,8 @@ const InputHandler = {
         window.addEventListener('keyup', (e) => {
             // Track shift key release
             State.shiftKey = e.shiftKey;
+            // Track space key release
+            State.spaceKey = e.code === 'Space';
         });
 
         // UI Controls - only for drawing tools (exclude layer/settings buttons)
@@ -782,6 +838,17 @@ const InputHandler = {
             State.brushBlur = parseInt(e.target.value);
             UI.blurDisplay.textContent = State.brushBlur;
         });
+
+        // Mirror distance slider
+        const mirrorDistanceSlider = document.getElementById('mirrorDistanceSlider');
+        const mirrorDistanceDisplay = document.getElementById('mirrorDistanceDisplay');
+        
+        if (mirrorDistanceSlider && mirrorDistanceDisplay) {
+            mirrorDistanceSlider.addEventListener('input', (e) => {
+                State.mirrorDistance = parseInt(e.target.value);
+                mirrorDistanceDisplay.textContent = State.mirrorDistance;
+            });
+        }
 
         // Dither brush size slider
         const ditherBrushSizeSlider = document.getElementById('ditherbrushSizeSlider');
@@ -1340,8 +1407,26 @@ const InputHandler = {
         // Limit history size
         if (State.history.length > State.maxHistory) {
             State.history.shift();
-        } else {
-            State.historyIndex++;
+        }
+        
+        State.historyIndex = State.history.length - 1;
+        this.updateUndoRedoButtons();
+    },
+
+    /**
+     * Update undo/redo button states
+     */
+    updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        
+        if (undoBtn) {
+            undoBtn.disabled = State.historyIndex <= 0;
+            undoBtn.style.opacity = State.historyIndex <= 0 ? '0.4' : '1';
+        }
+        if (redoBtn) {
+            redoBtn.disabled = State.historyIndex >= State.history.length - 1;
+            redoBtn.style.opacity = State.historyIndex >= State.history.length - 1 ? '0.4' : '1';
         }
     },
 
@@ -1357,6 +1442,7 @@ const InputHandler = {
         } else {
             console.log('Nothing to undo');
         }
+        this.updateUndoRedoButtons();
     },
 
     /**
@@ -1371,6 +1457,7 @@ const InputHandler = {
         } else {
             console.log('Nothing to redo');
         }
+        this.updateUndoRedoButtons();
     },
 
     /**

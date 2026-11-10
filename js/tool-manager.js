@@ -176,6 +176,9 @@ const ToolManager = {
             return;
         }
 
+        // Get mirror distance (default to 1 if not set)
+        const mirrorDistance = State.mirrorDistance || 1;
+
         // Draw the original line with current tool settings
         this.drawLine(x0, y0, x1, y1, color, ctx, false);
 
@@ -183,10 +186,24 @@ const ToolManager = {
         const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
         const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
 
-        // Calculate mirrored coordinates
+        // Calculate mirrored coordinates with distance offset
+        const centerX = State.width / 2;
+        const centerY = State.height / 2;
+        
         const mirrorPoint = (x, y) => {
-            const mirroredX = mirrorX ? State.width - 1 - x : x;
-            const mirroredY = mirrorY ? State.height - 1 - y : y;
+            let mirroredX = x;
+            let mirroredY = y;
+            
+            if (mirrorX) {
+                // Mirror across vertical axis with distance offset
+                const offset = (x - centerX) > 0 ? -mirrorDistance : mirrorDistance;
+                mirroredX = State.width - 1 - x + offset;
+            }
+            if (mirrorY) {
+                // Mirror across horizontal axis with distance offset
+                const offset = (y - centerY) > 0 ? -mirrorDistance : mirrorDistance;
+                mirroredY = State.height - 1 - y + offset;
+            }
             return { x: mirroredX, y: mirroredY };
         };
 
@@ -196,18 +213,18 @@ const ToolManager = {
         // Draw mirrored lines with current tool settings
         if (mirrorX && !mirrorY) {
             // X-axis only
-            this.drawLine(State.width - 1 - x0, y0, State.width - 1 - x1, y1, color, ctx, false);
+            this.drawLine(startMirrored.x, y0, endMirrored.x, y1, color, ctx, false);
         } else if (!mirrorX && mirrorY) {
             // Y-axis only
-            this.drawLine(x0, State.height - 1 - y0, x1, State.height - 1 - y1, color, ctx, false);
+            this.drawLine(x0, startMirrored.y, x1, endMirrored.y, color, ctx, false);
         } else if (mirrorX && mirrorY) {
             // Both axes (draw all combinations)
             // X-axis mirror
-            this.drawLine(State.width - 1 - x0, y0, State.width - 1 - x1, y1, color, ctx, false);
+            this.drawLine(startMirrored.x, y0, endMirrored.x, y1, color, ctx, false);
             // Y-axis mirror
-            this.drawLine(x0, State.height - 1 - y0, x1, State.height - 1 - y1, color, ctx, false);
+            this.drawLine(x0, startMirrored.y, x1, endMirrored.y, color, ctx, false);
             // Both axes mirror
-            this.drawLine(State.width - 1 - x0, State.height - 1 - y0, State.width - 1 - x1, State.height - 1 - y1, color, ctx, false);
+            this.drawLine(startMirrored.x, startMirrored.y, endMirrored.x, endMirrored.y, color, ctx, false);
         }
     },
 
@@ -327,7 +344,20 @@ const ToolManager = {
             this.setTool('pencil');
             console.log('Eyedropper tool completed, color set to:', State.color);
         } else if (State.tool === 'move') {
-            // Do nothing on start, wait for move
+            if (State.moveToolMode === 'pan') {
+                // Pan canvas mode - delegate to InputHandler
+                InputHandler.onPanStart({ 
+                    clientX: x * State.zoom + UI.drawingArea.getBoundingClientRect().left,
+                    clientY: y * State.zoom + UI.drawingArea.getBoundingClientRect().top,
+                    button: 0
+                });
+            } else {
+                // Move layer mode - Copy layer data to layerCtx for move preview
+                const currentFrame = State.frames[State.currentFrameIndex];
+                const layer = currentFrame.layers[State.activeLayerIndex];
+                layerCtx.putImageData(layer.data, 0, 0);
+                console.log('Move tool started, layerCtx populated');
+            }
         } else if (State.tool === 'mirror') {
             // Mirror tool behaves like a drawing tool - just start drawing
             // The actual mirroring logic is handled in move() and end() methods
@@ -363,24 +393,33 @@ const ToolManager = {
                 // Draw the original line
                 this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
                 
+                // Get mirror distance
+                const mirrorDistance = State.mirrorDistance || 1;
+                const centerX = State.width / 2;
+                const centerY = State.height / 2;
+                
                 // Draw mirrored lines based on mirror axis settings
                 const mirrorX = State.mirrorAxis === 'x' || State.mirrorAxis === 'both';
                 const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
                 
                 if (mirrorX) {
-                    // Mirror on X axis (horizontal)
-                    this.drawLine(State.width - 1 - State.dragStart.x, State.dragStart.y,
-                                  State.width - 1 - x, y, rgba, layerCtx, isEraser);
+                    // Mirror on X axis (horizontal) with distance offset
+                    const offset = (State.dragStart.x - centerX) > 0 ? -mirrorDistance : mirrorDistance;
+                    this.drawLine(State.width - 1 - State.dragStart.x + offset, State.dragStart.y,
+                                  State.width - 1 - x + offset, y, rgba, layerCtx, isEraser);
                 }
                 if (mirrorY) {
-                    // Mirror on Y axis (vertical)
-                    this.drawLine(State.dragStart.x, State.height - 1 - State.dragStart.y,
-                                  x, State.height - 1 - y, rgba, layerCtx, isEraser);
+                    // Mirror on Y axis (vertical) with distance offset
+                    const offset = (State.dragStart.y - centerY) > 0 ? -mirrorDistance : mirrorDistance;
+                    this.drawLine(State.dragStart.x, State.height - 1 - State.dragStart.y + offset,
+                                  x, State.height - 1 - y + offset, rgba, layerCtx, isEraser);
                 }
                 if (mirrorX && mirrorY) {
                     // Mirror on both axes
-                    this.drawLine(State.width - 1 - State.dragStart.x, State.height - 1 - State.dragStart.y,
-                                  State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, isEraser);
+                    const offsetX = (State.dragStart.x - centerX) > 0 ? -mirrorDistance : mirrorDistance;
+                    const offsetY = (State.dragStart.y - centerY) > 0 ? -mirrorDistance : mirrorDistance;
+                    this.drawLine(State.width - 1 - State.dragStart.x + offsetX, State.height - 1 - State.dragStart.y + offsetY,
+                                  State.width - 1 - x + offsetX, State.height - 1 - y + offsetY, rgba, layerCtx, isEraser);
                 }
             } else {
                 // Normal drawing without mirroring
@@ -398,6 +437,11 @@ const ToolManager = {
                 // Just draw normally without mirroring
                 this.plot(x, y, rgba, layerCtx, false);
             } else {
+                // Get mirror distance
+                const mirrorDistance = State.mirrorDistance || 1;
+                const centerX = State.width / 2;
+                const centerY = State.height / 2;
+                
                 // Draw the original point with current tool settings
                 this.plot(x, y, rgba, layerCtx, false);
                 
@@ -406,13 +450,17 @@ const ToolManager = {
                 const mirrorY = State.mirrorAxis === 'y' || State.mirrorAxis === 'both';
                 
                 if (mirrorX) {
-                    this.plot(State.width - 1 - x, y, rgba, layerCtx, false);
+                    const offset = (x - centerX) > 0 ? -mirrorDistance : mirrorDistance;
+                    this.plot(State.width - 1 - x + offset, y, rgba, layerCtx, false);
                 }
                 if (mirrorY) {
-                    this.plot(x, State.height - 1 - y, rgba, layerCtx, false);
+                    const offset = (y - centerY) > 0 ? -mirrorDistance : mirrorDistance;
+                    this.plot(x, State.height - 1 - y + offset, rgba, layerCtx, false);
                 }
                 if (mirrorX && mirrorY) {
-                    this.plot(State.width - 1 - x, State.height - 1 - y, rgba, layerCtx, false);
+                    const offsetX = (x - centerX) > 0 ? -mirrorDistance : mirrorDistance;
+                    const offsetY = (y - centerY) > 0 ? -mirrorDistance : mirrorDistance;
+                    this.plot(State.width - 1 - x + offsetX, State.height - 1 - y + offsetY, rgba, layerCtx, false);
                 }
             }
             
@@ -423,8 +471,16 @@ const ToolManager = {
             if (State.tool === 'rect') this.drawRect(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx);
             if (State.tool === 'circle') this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx);
         } else if (State.tool === 'move') {
-            // Show move preview during drag
-            this.showMovePreview(x, y);
+            if (State.moveToolMode === 'pan') {
+                // Pan canvas mode - delegate to InputHandler
+                InputHandler.onPanMove({ 
+                    clientX: x * State.zoom + UI.drawingArea.getBoundingClientRect().left,
+                    clientY: y * State.zoom + UI.drawingArea.getBoundingClientRect().top
+                });
+            } else {
+                // Show move preview during drag
+                this.showMovePreview(x, y);
+            }
         }
     },
 
@@ -452,15 +508,21 @@ const ToolManager = {
             // Use DitherManager for dither tool
             DitherManager.end(x, y);
         } else if (State.tool === 'move') {
-            const dx = x - State.dragStart.x;
-            const dy = y - State.dragStart.y;
+            if (State.moveToolMode === 'pan') {
+                // Pan canvas mode - delegate to InputHandler
+                InputHandler.onPanEnd({});
+            } else {
+                const dx = x - State.dragStart.x;
+                const dy = y - State.dragStart.y;
 
-            // Clear the preview after move is complete
-            pCtx.clearRect(0, 0, State.width, State.height);
-            pCtx.setLineDash([]);
+                // Clear the preview after move is complete
+                pCtx.clearRect(0, 0, State.width, State.height);
+                pCtx.setLineDash([]);
 
-            this.shiftLayer(dx, dy);
-            InputHandler.showNotification('Layer content moved!', 'success');
+                this.shiftLayer(dx, dy);
+                CanvasManager.clearPreviewLayer();
+                InputHandler.showNotification('Layer content moved!', 'success');
+            }
         } else if (State.tool.startsWith('select-')) {
             // Delegate to SelectionToolManager - don't call old methods
             if (typeof SelectionToolManager !== 'undefined') {
@@ -489,6 +551,11 @@ const ToolManager = {
         // Update tilemap preview if available
         if (typeof TilemapManager !== 'undefined' && TilemapManager.refresh) {
             TilemapManager.refresh();
+        }
+        
+        // Update seamless grid tile data if in seamless editing mode
+        if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled && TilemapManager.activeTileIndex !== null) {
+            TilemapManager.tileData[TilemapManager.activeTileIndex] = newData;
         }
         
         // Update seamless grid overlay if enabled
@@ -669,10 +736,26 @@ const ToolManager = {
      * Shift layer content
      */
     shiftLayer(dx, dy) {
-        const data = layerCtx.getImageData(0, 0, State.width, State.height);
+        console.log('shiftLayer called with dx:', dx, 'dy:', dy);
+        
+        // Use a temporary canvas for robust shifting
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = State.width;
+        tempCanvas.height = State.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Draw current layer content to temp canvas
+        tempCtx.putImageData(layerCtx.getImageData(0, 0, State.width, State.height), 0, 0);
+        
+        // Clear layer canvas
         layerCtx.clearRect(0, 0, State.width, State.height);
-        layerCtx.putImageData(data, dx, dy);
+        
+        // Draw shifted content back to layer canvas
+        layerCtx.drawImage(tempCanvas, dx, dy);
+        
+        console.log('Put image data at offset');
         this.updateLayerFromCtx();
+        console.log('Updated layer from ctx');
     },
 
     /**
@@ -1051,6 +1134,21 @@ const ToolManager = {
             }
             if (UI.blurDisplay) {
                 UI.blurDisplay.textContent = 1;
+            }
+        }
+
+        // Show/hide move mode control for move tool
+        const moveModeControl = document.getElementById('moveModeControl');
+        if (moveModeControl) {
+            if (name === 'move') {
+                moveModeControl.style.display = 'block';
+                // Update button states
+                const modeButtons = moveModeControl.querySelectorAll('.move-mode-btn');
+                modeButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === State.moveToolMode);
+                });
+            } else {
+                moveModeControl.style.display = 'none';
             }
         }
     },

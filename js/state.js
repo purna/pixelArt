@@ -15,6 +15,7 @@ var State = {
     brushBlur: 0,
     isDrawing: false,
     mirrorAxis: 'none', // 'none', 'x', 'y', or 'both'
+    mirrorDistance: 1, // Distance from center for mirrored strokes
 
     // Dither tool settings
     ditherDensity: 5,
@@ -62,5 +63,8 @@ var State = {
     layerCanvas: document.createElement('canvas'),
     
     // Selection tools state
-    copiedSelection: null
+    copiedSelection: null,
+    
+    // Move tool mode: 'layer' (move layer content) or 'pan' (pan canvas viewport)
+    moveToolMode: 'pan'
 };

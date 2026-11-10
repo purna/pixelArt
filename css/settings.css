@@ -682,3 +682,130 @@
     color: #94a3b8;
     margin-bottom: 15px;
 }
+
+/* =============================================
+   13. AI SETTINGS STYLES
+   ============================================= */
+
+.ai-settings-input {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    width: 100%;
+    margin-top: 6px;
+    box-sizing: border-box;
+}
+
+.ai-settings-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+.ai-settings-input[type="password"] {
+    font-family: monospace;
+}
+
+.ai-settings-note {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.ai-provider-fields {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.ai-provider-fields .property-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.ai-provider-fields input,
+.ai-provider-fields select {
+    margin-bottom: 10px;
+}
+
+.ai-provider-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ai-openrouter-fallback-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.ai-openrouter-fallback-toggle input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+#ai-openrouter-free-models {
+    margin-bottom: 8px;
+}
+
+#ai-openrouter-model-status {
+    font-size: 0.7rem;
+    color: var(--accent-tertiary);
+    margin-top: 4px;
+}
+
+/* =============================================
+   14. MOVE TOOL MODE BUTTONS
+   ============================================= */
+
+.move-mode-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.move-mode-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.move-mode-btn:hover {
+    background: var(--bg-medium);
+    border-color: var(--accent-primary);
+}
+
+.move-mode-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: var(--bg-dark);
+    font-weight: 600;
+}
+
+.move-mode-btn i {
+    font-size: 0.85rem;
+}

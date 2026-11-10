@@ -104,7 +104,7 @@ const UI = {
 };
 
 // 2. Define global context variables (will be assigned later in initDOM)
-let ctx, pCtx, offCtx, layerCtx, prevCtx, tilemapCtx;
+var ctx, pCtx, offCtx, layerCtx, prevCtx, tilemapCtx;
 
 // 3. Initialization function to be called after DOMContentLoaded
 const initDOM = () => {

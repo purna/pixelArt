@@ -25,6 +25,7 @@ const BrushPresetsManager = {
         const addPresetBtn = document.getElementById('addPresetBtn');
         const savePresetBtn = document.getElementById('savePresetBtn');
         const cancelPresetBtn = document.getElementById('cancelPresetBtn');
+        const cancelPresetBtn2 = document.getElementById('cancelPresetBtn2');
         const loadDefaultPresetsBtn = document.getElementById('loadDefaultPresetsBtn');
         
         if (addPresetBtn) {
@@ -37,6 +38,10 @@ const BrushPresetsManager = {
         
         if (cancelPresetBtn) {
             cancelPresetBtn.addEventListener('click', () => this.hidePresetDialog());
+        }
+        
+        if (cancelPresetBtn2) {
+            cancelPresetBtn2.addEventListener('click', () => this.hidePresetDialog());
         }
         
         if (loadDefaultPresetsBtn) {
@@ -60,6 +65,11 @@ const BrushPresetsManager = {
         if (presetDialog) {
             presetDialog.style.display = 'none';
         }
+        // Reset dialog title and button text for next use
+        const dialogTitle = document.querySelector('.preset-dialog-title');
+        const saveBtn = document.getElementById('savePresetBtn');
+        if (dialogTitle) dialogTitle.textContent = 'Create Brush Preset';
+        if (saveBtn) saveBtn.textContent = 'Save Preset';
     },
 
     savePreset() {
@@ -80,18 +90,25 @@ const BrushPresetsManager = {
         
         // Create preset object
         const preset = {
-            id: Date.now().toString(),
+            id: this.currentPresetIndex !== null ? this.presets[this.currentPresetIndex].id : Date.now().toString(),
             name: presetName,
             brushSize: brushSize,
             brushBlur: brushBlur,
             opacity: opacity,
             color: color,
-            createdAt: new Date().toISOString(),
+            createdAt: this.currentPresetIndex !== null ? this.presets[this.currentPresetIndex].createdAt : new Date().toISOString(),
             lastUsed: null
         };
         
-        // Add to presets array
-        this.presets.push(preset);
+        // Add to presets array or update existing
+        if (this.currentPresetIndex !== null) {
+            // Editing existing preset
+            this.presets[this.currentPresetIndex] = preset;
+            this.currentPresetIndex = null;
+        } else {
+            // Creating new preset
+            this.presets.push(preset);
+        }
         
         // Save and update UI
         this.savePresets();
@@ -171,15 +188,6 @@ const BrushPresetsManager = {
             const actionsElement = document.createElement('div');
             actionsElement.className = 'preset-actions';
             
-            const applyBtn = document.createElement('button');
-            applyBtn.className = 'preset-action-btn apply-btn';
-            applyBtn.innerHTML = '<i class="fas fa-check"></i>';
-            applyBtn.title = 'Apply Preset';
-            applyBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.applyPreset(index);
-            });
-            
             const editBtn = document.createElement('button');
             editBtn.className = 'preset-action-btn edit-btn';
             editBtn.innerHTML = '<i class="fas fa-edit"></i>';
@@ -199,7 +207,6 @@ const BrushPresetsManager = {
             });
             
             // Assemble elements
-            actionsElement.appendChild(applyBtn);
             actionsElement.appendChild(editBtn);
             actionsElement.appendChild(deleteBtn);
             
@@ -275,6 +282,30 @@ const BrushPresetsManager = {
         if (presetNameInput) {
             presetNameInput.value = preset.name;
             this.currentPresetIndex = index;
+            // Update dialog for editing
+            const dialogTitle = document.querySelector('.preset-dialog-title');
+            const saveBtn = document.getElementById('savePresetBtn');
+            if (dialogTitle) dialogTitle.textContent = 'Edit Brush Preset';
+            if (saveBtn) saveBtn.textContent = 'Update Preset';
+            
+            // Pre-populate sliders with preset values
+            if (document.getElementById('brushSizeSlider')) {
+                document.getElementById('brushSizeSlider').value = preset.brushSize;
+                document.getElementById('brushSizeDisplay').textContent = preset.brushSize;
+            }
+            if (document.getElementById('blurSlider')) {
+                document.getElementById('blurSlider').value = preset.brushBlur;
+                document.getElementById('blurDisplay').textContent = preset.brushBlur;
+            }
+            if (document.getElementById('opacitySlider')) {
+                document.getElementById('opacitySlider').value = preset.opacity;
+                document.getElementById('opacityDisplay').textContent = preset.opacity;
+            }
+            if (document.getElementById('colorPicker')) {
+                document.getElementById('colorPicker').value = preset.color;
+                document.getElementById('colorHex').value = preset.color;
+            }
+            
             this.showAddPresetDialog();
         }
     },

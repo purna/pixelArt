@@ -370,12 +370,20 @@ function selectPanelTab(el) {
     if (el.dataset.content === 'effects-panel') {
         const panelEffects = document.getElementById('effects-panel');
         if (panelEffects) panelEffects.classList.remove('hidden');
+        // Also ensure the first effects sub-tab (mirror) is active
+        if (window.rightPanelManager) {
+            window.rightPanelManager.setActiveEffectsTab('mirror');
+        }
     }
 
     // Special handling for transform panel - ensure transform-container is visible
     if (el.dataset.content === 'transform-panel') {
         const transformContainer = document.getElementById('transform-container');
         if (transformContainer) transformContainer.classList.remove('hidden');
+        // Also ensure the first transform sub-tab (move) is active
+        if (window.rightPanelManager) {
+            window.rightPanelManager.setActiveTransformTab('move');
+        }
     }
 
     // Add active class to the target panel content
