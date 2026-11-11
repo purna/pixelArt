@@ -128,40 +128,6 @@ const SettingsManager = {
         if (showMinimapCheckbox) showMinimapCheckbox.checked = this.settings.showMinimap;
         if (snapToGridCheckbox) snapToGridCheckbox.checked = this.settings.snapToGrid;
         // if (loadDefaultPresetsCheckbox) loadDefaultPresetsCheckbox.checked = this.settings.loadDefaultBrushPresets;
-
-        // Load AI settings
-        this.updateAIFormFromSettings();
-    },
-
-    updateAIFormFromSettings() {
-        if (typeof AIManagerInstance !== 'undefined' && AIManagerInstance.settings) {
-            const aiSettings = AIManagerInstance.settings;
-            
-            const aiProviderSelect = document.getElementById('ai-provider');
-            const aiGeminiKey = document.getElementById('ai-gemini-key');
-            const aiGeminiModel = document.getElementById('ai-gemini-model');
-            const aiOpenAIKey = document.getElementById('ai-openai-key');
-            const aiOpenAIModel = document.getElementById('ai-openai-model');
-            const aiClaudeKey = document.getElementById('ai-claude-key');
-            const aiClaudeModel = document.getElementById('ai-claude-model');
-            const aiOpenRouterKey = document.getElementById('ai-openrouter-key');
-            const aiOpenRouterModel = document.getElementById('ai-openrouter-model');
-            const aiOpenRouterFallback = document.getElementById('ai-openrouter-fallback-enabled');
-
-            if (aiProviderSelect) aiProviderSelect.value = aiSettings.provider || 'gemini';
-            if (aiGeminiKey) aiGeminiKey.value = aiSettings.gemini?.apiKey || '';
-            if (aiGeminiModel) aiGeminiModel.value = aiSettings.gemini?.model || 'gemini-1.5-flash';
-            if (aiOpenAIKey) aiOpenAIKey.value = aiSettings.openai?.apiKey || '';
-            if (aiOpenAIModel) aiOpenAIModel.value = aiSettings.openai?.model || 'gpt-4.1-mini';
-            if (aiClaudeKey) aiClaudeKey.value = aiSettings.claude?.apiKey || '';
-            if (aiClaudeModel) aiClaudeModel.value = aiSettings.claude?.model || 'claude-3-5-sonnet-20241022';
-            if (aiOpenRouterKey) aiOpenRouterKey.value = aiSettings.openrouter?.apiKey || '';
-            if (aiOpenRouterModel) aiOpenRouterModel.value = aiSettings.openrouter?.model || 'openrouter/auto';
-            if (aiOpenRouterFallback) aiOpenRouterFallback.checked = aiSettings.openrouterFallbackEnabled || false;
-
-            // Update provider fields visibility
-            this.updateAIProviderFields(aiSettings.provider || 'gemini');
-        }
     },
 
     closeSettings() {
@@ -254,23 +220,7 @@ const SettingsManager = {
                 if (content) {
                     content.classList.add('active');
                 }
-            });
-        });
-
-        // AI Provider change handler
-        const aiProviderSelect = document.getElementById('ai-provider');
-        if (aiProviderSelect) {
-            aiProviderSelect.addEventListener('change', (e) => {
-                this.updateAIProviderFields(e.target.value);
-            });
-        }
-
-        // OpenRouter load free models button
-        const openRouterLoadBtn = document.getElementById('ai-openrouter-load-free-models');
-        if (openRouterLoadBtn) {
-            openRouterLoadBtn.addEventListener('click', async () => {
-                await this.loadOpenRouterFreeModels();
-            });
+});
         }
 
         // Export resolution change handler
@@ -287,20 +237,6 @@ const SettingsManager = {
             });
         }
     },
-
-    updateAIProviderFields(selectedProvider) {
-        const providerFields = document.querySelectorAll('.ai-provider-fields');
-        providerFields.forEach(field => {
-            const provider = field.dataset.providerFields;
-            if (provider === selectedProvider) {
-                field.style.display = 'block';
-            } else {
-                field.style.display = 'none';
-            }
-        });
-    },
-
-    async loadOpenRouterFreeModels() {
         const statusEl = document.getElementById('ai-openrouter-model-status');
         const selectEl = document.getElementById('ai-openrouter-free-models');
         const loadBtn = document.getElementById('ai-openrouter-load-free-models');
@@ -312,8 +248,8 @@ const SettingsManager = {
         if (statusEl) statusEl.textContent = 'Loading free models...';
 
         try {
-            if (typeof AIManagerInstance !== 'undefined' && AIManagerInstance.getOpenRouterFreeModels) {
-                const models = await AIManagerInstance.getOpenRouterFreeModels();
+            if (typeof window.PixelAIProvider !== 'undefined' && window.PixelAIProvider.getOpenRouterFreeModels) {
+                const models = await window.PixelAIProvider.getOpenRouterFreeModels();
                 selectEl.innerHTML = '';
                 models.forEach(model => {
                     const option = document.createElement('option');
@@ -374,9 +310,6 @@ const SettingsManager = {
         this.settings.snapToGrid = snapToGridCheckbox ? snapToGridCheckbox.checked : false;
         // this.settings.loadDefaultBrushPresets = loadDefaultPresetsCheckbox ? loadDefaultPresetsCheckbox.checked : true;
 
-        // Save AI settings
-        this.saveAISettings();
-
         // Apply settings
         this.applySettings();
 
@@ -386,44 +319,6 @@ const SettingsManager = {
         if (typeof Notifications !== 'undefined') {
             const notifications = new Notifications();
             notifications.success('Settings saved successfully');
-        }
-    },
-
-    saveAISettings() {
-        if (typeof AIManagerInstance !== 'undefined') {
-            const aiProviderSelect = document.getElementById('ai-provider');
-            const aiGeminiKey = document.getElementById('ai-gemini-key');
-            const aiGeminiModel = document.getElementById('ai-gemini-model');
-            const aiOpenAIKey = document.getElementById('ai-openai-key');
-            const aiOpenAIModel = document.getElementById('ai-openai-model');
-            const aiClaudeKey = document.getElementById('ai-claude-key');
-            const aiClaudeModel = document.getElementById('ai-claude-model');
-            const aiOpenRouterKey = document.getElementById('ai-openrouter-key');
-            const aiOpenRouterModel = document.getElementById('ai-openrouter-model');
-            const aiOpenRouterFallback = document.getElementById('ai-openrouter-fallback-enabled');
-
-            const aiSettings = {
-                provider: aiProviderSelect ? aiProviderSelect.value : 'gemini',
-                gemini: {
-                    apiKey: aiGeminiKey ? aiGeminiKey.value : '',
-                    model: aiGeminiModel ? aiGeminiModel.value : 'gemini-1.5-flash'
-                },
-                openai: {
-                    apiKey: aiOpenAIKey ? aiOpenAIKey.value : '',
-                    model: aiOpenAIModel ? aiOpenAIModel.value : 'gpt-4.1-mini'
-                },
-                claude: {
-                    apiKey: aiClaudeKey ? aiClaudeKey.value : '',
-                    model: aiClaudeModel ? aiClaudeModel.value : 'claude-3-5-sonnet-20241022'
-                },
-                openrouter: {
-                    apiKey: aiOpenRouterKey ? aiOpenRouterKey.value : '',
-                    model: aiOpenRouterModel ? aiOpenRouterModel.value : 'openrouter/auto'
-                },
-                openrouterFallbackEnabled: aiOpenRouterFallback ? aiOpenRouterFallback.checked : false
-            };
-
-            AIManagerInstance.saveSettings(aiSettings);
         }
     },
 
@@ -454,18 +349,6 @@ const SettingsManager = {
 
             // Update HTML form
             this.updateFormFromSettings();
-
-            // Reset AI settings to defaults
-            if (typeof AIManagerInstance !== 'undefined') {
-                AIManagerInstance.saveSettings({
-                    provider: 'gemini',
-                    gemini: { apiKey: '', model: 'gemini-1.5-flash' },
-                    openai: { apiKey: '', model: 'gpt-4.1-mini' },
-                    claude: { apiKey: '', model: 'claude-3-5-sonnet-20241022' },
-                    openrouter: { apiKey: '', model: 'openrouter/auto' },
-                    openrouterFallbackEnabled: false
-                });
-            }
 
             // Apply settings
             this.applySettings();

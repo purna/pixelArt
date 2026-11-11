@@ -131,8 +131,9 @@ const InputHandler = {
      * Handle canvas panning start (viewport panning)
      */
     onPanStart(e) {
-        // Middle mouse button (button 1) or space+left click
-        if (e.button === 1 || (e.button === 0 && State.spaceKey)) {
+        // Middle mouse button (button 1) or space+left click or move tool in pan mode
+        const isMoveToolPan = State.tool === 'move' && State.moveToolMode === 'pan';
+        if (e.button === 1 || (e.button === 0 && State.spaceKey) || (e.button === 0 && isMoveToolPan)) {
             e.preventDefault();
             this.isPanningCanvas = true;
             this.panStartX = e.clientX;

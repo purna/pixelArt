@@ -824,6 +824,11 @@ const UIManager = {
                     // Update button states
                     modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
                     
+                    // Update cursor for pan mode
+                    if (UI.previewLayer) {
+                        UI.previewLayer.style.cursor = mode === 'pan' ? 'grab' : '';
+                    }
+
                     if (typeof InputHandler !== 'undefined') {
                         InputHandler.showNotification(`Move tool: ${mode === 'pan' ? 'Pan Canvas' : 'Move Layer'}`, 'info');
                     }

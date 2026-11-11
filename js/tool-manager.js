@@ -1147,9 +1147,19 @@ const ToolManager = {
                 modeButtons.forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.mode === State.moveToolMode);
                 });
+
+                // Update cursor for pan mode
+                if (State.moveToolMode === 'pan' && UI.previewLayer) {
+                    UI.previewLayer.style.cursor = 'grab';
+                }
             } else {
                 moveModeControl.style.display = 'none';
             }
+        }
+
+        // Reset cursor when switching away from move tool in pan mode
+        if (name !== 'move' && UI.previewLayer) {
+            UI.previewLayer.style.cursor = '';
         }
     },
 

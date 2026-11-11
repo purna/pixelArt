@@ -1644,9 +1644,6 @@ Hover to see all available selection tools">
                         <button class="settings-tab" data-content="settings-tutorial" id="tab-tutorial">
                             <i class="fas fa-graduation-cap"></i> Tutorial
                         </button>
-                        <button class="settings-tab" data-content="settings-ai" id="tab-ai">
-                            <i class="fas fa-wand-magic-sparkles"></i> AI
-                        </button>
                     </div>
                 </header>
 
@@ -1842,57 +1839,6 @@ Hover to see all available selection tools">
                         </div>
                     </div>
 
-                    <div class="settings-tab-content" id="settings-ai">
-                        <div class="settings-content">
-                            <div class="property-group">
-                                <label class="property-label" for="ai-provider">Provider used for generation</label>
-                                <select id="ai-provider" class="ai-settings-input" style="width: 100%; margin-top: 6px;">
-                                    <option value="gemini">Google Gemini</option>
-                                    <option value="openai">OpenAI API (ChatGPT models)</option>
-                                    <option value="claude">Claude (Anthropic)</option>
-                                    <option value="openrouter">OpenRouter (Free models)</option>
-                                </select>
-                                <p class="ai-settings-note" style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; margin-bottom: 16px;">
-                                    Add API keys from the provider's developer platform. A ChatGPT subscription does not include OpenAI API usage. Keys are saved in this browser only.
-                                </p>
-                            </div>
-
-                            <div class="property-group ai-provider-fields" data-provider-fields="gemini">
-                                <label class="property-label" for="ai-gemini-key">Gemini API key</label>
-                                <input class="ai-settings-input" id="ai-gemini-key" type="password" autocomplete="off" placeholder="Google AI Studio API key" style="width: 100%; margin-top: 6px; margin-bottom: 12px;">
-                                <label class="property-label" for="ai-gemini-model">Gemini model</label>
-                                <input class="ai-settings-input" id="ai-gemini-model" type="text" value="gemini-1.5-flash" style="width: 100%; margin-top: 6px;">
-                            </div>
-
-                            <div class="property-group ai-provider-fields" data-provider-fields="openai" style="display: none;">
-                                <label class="property-label" for="ai-openai-key">OpenAI API key</label>
-                                <input class="ai-settings-input" id="ai-openai-key" type="password" autocomplete="off" placeholder="OpenAI API key" style="width: 100%; margin-top: 6px; margin-bottom: 12px;">
-                                <label class="property-label" for="ai-openai-model">OpenAI model</label>
-                                <input class="ai-settings-input" id="ai-openai-model" type="text" value="gpt-4.1-mini" style="width: 100%; margin-top: 6px;">
-                            </div>
-
-                            <div class="property-group ai-provider-fields" data-provider-fields="claude" style="display: none;">
-                                <label class="property-label" for="ai-claude-key">Claude API key</label>
-                                <input class="ai-settings-input" id="ai-claude-key" type="password" autocomplete="off" placeholder="Claude API key" style="width: 100%; margin-top: 6px; margin-bottom: 12px;">
-                                <label class="property-label" for="ai-claude-model">Claude model</label>
-                                <input class="ai-settings-input" id="ai-claude-model" type="text" value="claude-3-5-sonnet-20241022" style="width: 100%; margin-top: 6px;">
-                            </div>
-
-                            <div class="property-group ai-provider-fields" data-provider-fields="openrouter" style="display: none;">
-                                <label class="property-label" for="ai-openrouter-key">OpenRouter API key</label>
-                                <input class="ai-settings-input" id="ai-openrouter-key" type="password" autocomplete="off" placeholder="OpenRouter API key" style="width: 100%; margin-top: 6px; margin-bottom: 12px;">
-                                <label class="property-label" for="ai-openrouter-model">OpenRouter model</label>
-                                <input class="ai-settings-input" id="ai-openrouter-model" type="text" value="openrouter/auto" style="width: 100%; margin-top: 6px; margin-bottom: 12px;">
-                                <button class="btn" type="button" id="ai-openrouter-load-free-models" style="margin-bottom: 8px;">Load free models</button>
-                                <select class="ai-settings-input" id="ai-openrouter-free-models" style="width: 100%; margin-bottom: 8px; display: none;"></select>
-                                <p class="ai-settings-note" id="ai-openrouter-model-status" role="status" style="font-size: 11px; color: var(--text-secondary);"></p>
-                                <label class="property-label ai-openrouter-fallback-toggle" style="margin-top: 12px;">
-                                    <input type="checkbox" id="ai-openrouter-fallback-enabled"> If this free model is rate-limited or unavailable, automatically try the next free model
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
                 <footer>
                     <div class="modal-actions">
@@ -1958,7 +1904,6 @@ Hover to see all available selection tools">
         <script src="js/tilemap-manager.js"></script>
         <script src="js/tutorialConfig.js"></script>
         <script src="js/tutorialSystem.js"></script>
-        <script src="js/ai-manager.js"></script>
         <script src="js/settings-manager.js"></script>
         <script src="js/notifications.js"></script>
         <script src="js/app.js"></script>
