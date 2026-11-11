@@ -220,8 +220,8 @@ const SettingsManager = {
                 if (content) {
                     content.classList.add('active');
                 }
-});
-        }
+            });
+        });
 
         // Export resolution change handler
         const exportResolutionSelect = document.getElementById('setting-export-resolution');
@@ -235,39 +235,6 @@ const SettingsManager = {
                     customResolutionGroup.style.display = 'none';
                 }
             });
-        }
-    },
-        const statusEl = document.getElementById('ai-openrouter-model-status');
-        const selectEl = document.getElementById('ai-openrouter-free-models');
-        const loadBtn = document.getElementById('ai-openrouter-load-free-models');
-
-        if (!selectEl || !loadBtn) return;
-
-        loadBtn.disabled = true;
-        loadBtn.textContent = 'Loading...';
-        if (statusEl) statusEl.textContent = 'Loading free models...';
-
-        try {
-            if (typeof window.PixelAIProvider !== 'undefined' && window.PixelAIProvider.getOpenRouterFreeModels) {
-                const models = await window.PixelAIProvider.getOpenRouterFreeModels();
-                selectEl.innerHTML = '';
-                models.forEach(model => {
-                    const option = document.createElement('option');
-                    option.value = model.id;
-                    option.textContent = model.id;
-                    selectEl.appendChild(option);
-                });
-                selectEl.style.display = 'block';
-                if (statusEl) statusEl.textContent = `Found ${models.length} free models`;
-            } else {
-                throw new Error('AI Manager not available');
-            }
-        } catch (error) {
-            console.error('Failed to load OpenRouter free models:', error);
-            if (statusEl) statusEl.textContent = 'Failed to load free models: ' + error.message;
-        } finally {
-            loadBtn.disabled = false;
-            loadBtn.textContent = 'Load free models';
         }
     },
 
