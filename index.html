@@ -1864,8 +1864,38 @@ Hover to see all available selection tools">
             <div class="preset-dialog-content">
                 <label for="presetName" style="display: block; margin-bottom: 6px; font-size: 12px; color: var(--text-secondary);">Preset Name</label>
                 <input type="text" id="presetName" class="preset-dialog-input" placeholder="e.g., Soft Brush, Hard Edge, Sketching">
-                <div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px;">
-                    This preset will save your current brush settings (size, blur, opacity, color)
+                
+                <div class="preset-dialog-brush-settings" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">Brush Parameters</div>
+                    
+                    <div class="preset-setting-row" style="margin-bottom: 12px;">
+                        <label for="presetBrushSize" style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Brush Size</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="range" id="presetBrushSize" min="1" max="50" value="1" class="preset-dialog-slider" style="flex: 1;">
+                            <input type="number" id="presetBrushSizeInput" min="1" max="50" value="1" style="width: 60px; padding: 4px 8px; background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 12px;">
+                        </div>
+                    </div>
+                    
+                    <div class="preset-setting-row" style="margin-bottom: 12px;">
+                        <label for="presetBrushBlur" style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Brush Blur</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="range" id="presetBrushBlur" min="0" max="20" value="0" class="preset-dialog-slider" style="flex: 1;">
+                            <input type="number" id="presetBrushBlurInput" min="0" max="20" value="0" style="width: 60px; padding: 4px 8px; background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 12px;">
+                        </div>
+                    </div>
+                    
+                    <div class="preset-setting-row" style="margin-bottom: 12px;">
+                        <label for="presetOpacity" style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Opacity</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="range" id="presetOpacity" min="1" max="100" value="100" class="preset-dialog-slider" style="flex: 1;">
+                            <input type="number" id="presetOpacityInput" min="1" max="100" value="100" style="width: 60px; padding: 4px 8px; background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 12px;">
+                        </div>
+                    </div>
+                    
+                    <div class="preset-setting-row">
+                        <label for="presetColor" style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Color</label>
+                        <input type="color" id="presetColor" value="#00ff41" style="width: 60px; height: 30px; border: none; border-radius: 4px; cursor: pointer;">
+                    </div>
                 </div>
             </div>
             <div class="preset-dialog-actions">

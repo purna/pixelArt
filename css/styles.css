@@ -2135,6 +2135,52 @@ transform: translateY(-50%) scale(1.1);
     box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.2);
 }
 
+.preset-dialog-brush-settings {
+    /* Additional brush settings in preset dialog */
+}
+
+.preset-dialog-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-light);
+    outline: none;
+}
+
+.preset-dialog-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s ease;
+}
+
+.preset-dialog-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.preset-dialog-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.preset-setting-row label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    display: block;
+}
+
 .preset-dialog-actions {
     display: flex;
     justify-content: flex-end;

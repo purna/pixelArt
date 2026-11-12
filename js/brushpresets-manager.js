@@ -47,6 +47,31 @@ const BrushPresetsManager = {
         if (loadDefaultPresetsBtn) {
             loadDefaultPresetsBtn.addEventListener('click', () => this.loadDefaultPresetsFromFile());
         }
+
+        // Sync preset dialog sliders and number inputs
+        this.setupPresetDialogSync();
+    },
+
+    setupPresetDialogSync() {
+        const syncSliderAndInput = (sliderId, inputId) => {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            if (slider && input) {
+                slider.addEventListener('input', () => {
+                    input.value = slider.value;
+                });
+                input.addEventListener('input', () => {
+                    const val = parseInt(input.value);
+                    if (!isNaN(val) && val >= parseInt(slider.min) && val <= parseInt(slider.max)) {
+                        slider.value = val;
+                    }
+                });
+            }
+        };
+
+        syncSliderAndInput('presetBrushSize', 'presetBrushSizeInput');
+        syncSliderAndInput('presetBrushBlur', 'presetBrushBlurInput');
+        syncSliderAndInput('presetOpacity', 'presetOpacityInput');
     },
 
     showAddPresetDialog() {
@@ -57,7 +82,25 @@ const BrushPresetsManager = {
             presetNameInput.value = '';
             presetDialog.style.display = 'block';
             presetNameInput.focus();
+            
+            // Populate brush settings from current toolbar values
+            this.populatePresetDialogFromToolbar();
         }
+    },
+
+    populatePresetDialogFromToolbar() {
+        const brushSize = parseInt(document.getElementById('brushSizeSlider')?.value) || 1;
+        const brushBlur = parseInt(document.getElementById('blurSlider')?.value) || 0;
+        const opacity = parseInt(document.getElementById('opacitySlider')?.value) || 100;
+        const color = document.getElementById('colorPicker')?.value || '#00ff41';
+        
+        if (document.getElementById('presetBrushSize')) document.getElementById('presetBrushSize').value = brushSize;
+        if (document.getElementById('presetBrushSizeInput')) document.getElementById('presetBrushSizeInput').value = brushSize;
+        if (document.getElementById('presetBrushBlur')) document.getElementById('presetBrushBlur').value = brushBlur;
+        if (document.getElementById('presetBrushBlurInput')) document.getElementById('presetBrushBlurInput').value = brushBlur;
+        if (document.getElementById('presetOpacity')) document.getElementById('presetOpacity').value = opacity;
+        if (document.getElementById('presetOpacityInput')) document.getElementById('presetOpacityInput').value = opacity;
+        if (document.getElementById('presetColor')) document.getElementById('presetColor').value = color;
     },
 
     hidePresetDialog() {
@@ -70,6 +113,7 @@ const BrushPresetsManager = {
         const saveBtn = document.getElementById('savePresetBtn');
         if (dialogTitle) dialogTitle.textContent = 'Create Brush Preset';
         if (saveBtn) saveBtn.textContent = 'Save Preset';
+        this.currentPresetIndex = null;
     },
 
     savePreset() {
@@ -82,11 +126,11 @@ const BrushPresetsManager = {
             return;
         }
         
-        // Get current brush settings
-        const brushSize = parseInt(document.getElementById('brushSizeSlider')?.value) || 1;
-        const brushBlur = parseInt(document.getElementById('blurSlider')?.value) || 0;
-        const opacity = parseInt(document.getElementById('opacitySlider')?.value) || 100;
-        const color = document.getElementById('colorPicker')?.value || '#00ff41';
+        // Get brush settings from dialog controls
+        const brushSize = parseInt(document.getElementById('presetBrushSize')?.value) || 1;
+        const brushBlur = parseInt(document.getElementById('presetBrushBlur')?.value) || 0;
+        const opacity = parseInt(document.getElementById('presetOpacity')?.value) || 100;
+        const color = document.getElementById('presetColor')?.value || '#00ff41';
         
         // Create preset object
         const preset = {
@@ -288,23 +332,14 @@ const BrushPresetsManager = {
             if (dialogTitle) dialogTitle.textContent = 'Edit Brush Preset';
             if (saveBtn) saveBtn.textContent = 'Update Preset';
             
-            // Pre-populate sliders with preset values
-            if (document.getElementById('brushSizeSlider')) {
-                document.getElementById('brushSizeSlider').value = preset.brushSize;
-                document.getElementById('brushSizeDisplay').textContent = preset.brushSize;
-            }
-            if (document.getElementById('blurSlider')) {
-                document.getElementById('blurSlider').value = preset.brushBlur;
-                document.getElementById('blurDisplay').textContent = preset.brushBlur;
-            }
-            if (document.getElementById('opacitySlider')) {
-                document.getElementById('opacitySlider').value = preset.opacity;
-                document.getElementById('opacityDisplay').textContent = preset.opacity;
-            }
-            if (document.getElementById('colorPicker')) {
-                document.getElementById('colorPicker').value = preset.color;
-                document.getElementById('colorHex').value = preset.color;
-            }
+            // Pre-populate dialog controls with preset values
+            if (document.getElementById('presetBrushSize')) document.getElementById('presetBrushSize').value = preset.brushSize;
+            if (document.getElementById('presetBrushSizeInput')) document.getElementById('presetBrushSizeInput').value = preset.brushSize;
+            if (document.getElementById('presetBrushBlur')) document.getElementById('presetBrushBlur').value = preset.brushBlur;
+            if (document.getElementById('presetBrushBlurInput')) document.getElementById('presetBrushBlurInput').value = preset.brushBlur;
+            if (document.getElementById('presetOpacity')) document.getElementById('presetOpacity').value = preset.opacity;
+            if (document.getElementById('presetOpacityInput')) document.getElementById('presetOpacityInput').value = preset.opacity;
+            if (document.getElementById('presetColor')) document.getElementById('presetColor').value = preset.color;
             
             this.showAddPresetDialog();
         }
